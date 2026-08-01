@@ -1004,7 +1004,7 @@ input,select,textarea{font-family:inherit;font-size:1rem}
     <div id="ach-preview" class="screen">
       <div class="builder-head"><span class="back" onclick="go('achievement')">→ رجوع للتعديل</span><h2>ملف الأداء الوظيفي — جاهز</h2></div>
       <p class="builder-sub">غلاف + فهرس + ترقيم + أقسام مصنّفة — بدون أي تدخل يدوي.</p>
-      <div class="doc-wrap"><div class="doc-toolbar no-print"><span class="dt">معاينة الملف</span><div class="acts"><button class="btn btn-ghost btn-sm" onclick="window.print()">🖨️ طباعة / PDF</button><button class="btn btn-primary btn-sm" onclick="exportDocx('ach-doc','ملف_الإنجاز')">⬇️ تصدير Word</button></div></div><div id="pf-theme-bar"></div><div class="doc" id="ach-doc"></div></div>
+      <div class="doc-wrap"><div class="doc-toolbar no-print"><span class="dt">معاينة الملف</span><div class="acts"><button class="btn btn-ghost btn-sm" onclick="window.print()">🖨️ طباعة / PDF</button><button class="btn btn-primary btn-sm" onclick="saveAsPdf('ach-doc','ملف_الإنجاز',this)">⬇️ تنزيل PDF</button><button class="btn btn-ghost btn-sm" onclick="exportDocx('ach-doc','ملف_الإنجاز')">⬇️ تصدير Word</button></div></div><div id="pf-theme-bar"></div><div class="doc" id="ach-doc"></div></div>
     </div>
 
     <div id="excellence" class="screen">
@@ -6038,7 +6038,13 @@ async function docToPdfBlob(containerId,sizeName){
   await ensureHtml2Canvas();await ensureJsPdf();
   const {jsPDF}=window.jspdf;
   const container=$(containerId);if(!container)throw new Error('no container');
-  const pageEls=containerId==='certs-doc'?[...container.querySelectorAll('.cert')]:[container];
+  /* صفحات ملف الإنجاز تُصدَّر بملء الصفحة تمامًا (بلا هوامش المتصفح)،
+     والملحق المتدفّق يُحتوى داخل الصفحة حفاظًا على نسبته. */
+  const pageEls=containerId==='certs-doc'
+    ?[...container.querySelectorAll('.cert')]
+    :(container.querySelector('.pf-page')
+      ?[...container.querySelectorAll('.pf-page,.pf-apx-flow')]
+      :[container]);
   if(!pageEls.length)throw new Error('empty');
   const fmt={A4:'a4',A5:'a5',LETTER:'letter'}[sizeName]||'a4';
   const pdf=new jsPDF({orientation:'p',unit:'pt',format:fmt});
@@ -6046,10 +6052,15 @@ async function docToPdfBlob(containerId,sizeName){
     const canvas=await window.html2canvas(pageEls[i],{scale:2,useCORS:true,backgroundColor:'#ffffff'});
     const imgData=canvas.toDataURL('image/jpeg',0.92);
     const pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight();
-    const ratio=Math.min(pw/canvas.width,ph/canvas.height);
-    const w=canvas.width*ratio,h=canvas.height*ratio;
     if(i>0)pdf.addPage(fmt,'p');
-    pdf.addImage(imgData,'JPEG',(pw-w)/2,(ph-h)/2,w,h);
+    if(pageEls[i].classList.contains('pf-page')){
+      /* نسبة الصفحة على الشاشة هي نسبة A4 نفسها، فالتمديد لملء الورقة بلا تشويه */
+      pdf.addImage(imgData,'JPEG',0,0,pw,ph);
+    }else{
+      const ratio=Math.min(pw/canvas.width,ph/canvas.height);
+      const w=canvas.width*ratio,h=canvas.height*ratio;
+      pdf.addImage(imgData,'JPEG',(pw-w)/2,(ph-h)/2,w,h);
+    }
   }
   return pdf.output('blob');
 }
