@@ -425,6 +425,17 @@ input,select,textarea{font-family:inherit;font-size:1rem}
   @page{size:A4 portrait;margin:0}
 }
 .pf-wave{position:absolute;top:0;left:0;width:100%;height:100%;z-index:0}
+/* --- تصميم «إطار كلاسيكي»: إطار مزدوج على كل صفحة بدل الزخرفة الجانبية --- */
+.pf-frame-band{background:var(--pf-tint)}
+.pf-doc[data-pl="frame"] .pf-page::before,
+.pf-doc[data-pl="frame"] .pf-page::after{content:"";position:absolute;z-index:1;pointer-events:none}
+.pf-doc[data-pl="frame"] .pf-page::before{inset:2.4cqw;border:.5cqw solid var(--pf-w3)}
+.pf-doc[data-pl="frame"] .pf-page::after{inset:3.5cqw;border:.14cqw solid var(--pf-w2)}
+/* الغلاف والفواصل تتوسّط الصفحة لغياب الزخرفة الجانبية */
+.pf-doc[data-pl="frame"] .pf-cover-in{padding:0 13%;text-align:center;align-items:center}
+.pf-doc[data-pl="frame"] .pf-cover-badge{align-self:center}
+.pf-doc[data-pl="frame"] .pf-div-in{padding:0 13%;justify-content:center}
+.pf-doc[data-pl="frame"] .pf-div-t{text-align:center}
 .pf-num{position:absolute;bottom:2.4cqw;left:3.4cqw;z-index:3;font-size:1.4cqw;color:#5A5A5A;font-weight:600}
 
 /* --- الغلاف --- */
@@ -2079,7 +2090,7 @@ function roleStandards(key){const r=ROLES[key]||(S.customRoles&&S.customRoles[ke
 function roleLabel(key){const r=ROLES[key]||(S.customRoles&&S.customRoles[key]);if(!r)return{m:'معلم',f:'معلمة'};return r.label}
 function applyRole(key){S.role=key;S.standards=roleStandards(key)}
 let hasOnboarded=false;
-const S={gender:'m',role:'teacher',customRoles:{},calendar:'hijri',theme:'green',pfTheme:'green',name:'',school:'',region:'',subject:'',subjects:[],principal:'',phone:'',email:'',grade:'',term:'',
+const S={gender:'m',role:'teacher',customRoles:{},calendar:'hijri',theme:'green',pfTheme:'green',pfLayout:'wave',name:'',school:'',region:'',subject:'',subjects:[],principal:'',phone:'',email:'',grade:'',term:'',
   photo:'',employeeId:'',specialization:'',classesTaught:'',yearsExp:'',homeroom:false,homeroomClass:'',
   authEmail:'',authPass:'',registeredAt:'',lockReminderDismissed:false,biometricEnabled:false,biometricCredId:'',
   customCertTemplates:[],seenBadges:{},budget:{items:[],invoices:[]},annualPlan:[],teacherEvals:[],prepGrade:'',circulars:[],
@@ -3826,6 +3837,19 @@ function pfApplyTheme(k){
 function pfSwatches(){
   return `<div class="pf-swatches no-print"><span style="font-size:.8rem;color:var(--ink-soft)">هوية الملف:</span>${PF_THEMES.map(([k,label,c])=>`<span class="pf-sw${(S.pfTheme||'green')===k?' sel':''}" data-k="${k}" title="${label}" style="background:${c}" onclick="pfApplyTheme('${k}')"></span>`).join('')}</div>`;
 }
+/* ===== تصاميم ملف الإنجاز الثلاثة =====
+   التصميم يغيّر الزخرفة وتوزيع الغلاف فقط؛ بنية الصفحات وتقسيمها للطباعة تبقى كما هي. */
+const PF_LAYOUTS=[['wave','أمواج'],['geo','هندسي'],['frame','إطار كلاسيكي']];
+function pfApplyLayout(k){
+  S.pfLayout=k||'wave';
+  const d=$('ach-doc');if(d)d.setAttribute('data-pl',S.pfLayout);
+  document.querySelectorAll('.pf-lay').forEach(el=>el.classList.toggle('sel',el.dataset.k===S.pfLayout));
+}
+/* الزخرفة مضمّنة في HTML وقت التوليد، فتغيير التصميم يعيد بناء الملف */
+function pfPickLayout(k){S.pfLayout=k||'wave';saveState();generateAchievement()}
+function pfLayoutPicker(){
+  return `<div class="pf-swatches no-print"><span style="font-size:.8rem;color:var(--ink-soft)">تصميم الملف:</span>${PF_LAYOUTS.map(([k,label])=>`<button class="chip pf-lay${(S.pfLayout||'wave')===k?' sel':''}" data-k="${k}" onclick="pfPickLayout('${k}')">${label}</button>`).join('')}</div>`;
+}
 function setEvRecord(i,j,v){S.standards[i].ev[j].record=v||'';saveState()}
 function recordSelect(i,j,e){return `<select onchange="setEvRecord(${i},${j},this.value)" style="width:100%;padding:9px 12px;border:1.5px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:.85rem;background:#fff"><option value="">— السجل (اختياري): الشواهد بنفس السجل تُجمع في صفحة واحدة —</option>${((S.standards[i]||{}).ex||[]).map(r=>`<option ${e.record===r?'selected':''}>${esc(r)}</option>`).join('')}</select>`}
 function toggleSubDone(i,k,checked){
@@ -4047,13 +4071,22 @@ function pfWeight(s){return stdWeight(s)}
 /* صفحة الشاهد "مفتوحة": تتّسع بحسب عدد شواهد السجل، بسقف 6 حفاظًا على وضوح الطباعة */
 function pfPerPage(n){return n<=1?1:n<=2?2:n<=4?4:6}
 function pfWave(){return `<svg class="pf-wave" viewBox="0 0 595 842" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"><path d="M0 0 H236 C214 150 268 268 196 402 C132 522 226 640 168 842 H0 Z" fill="var(--pf-w1)"/><path d="M0 0 H150 C138 158 190 272 118 410 C58 528 140 648 84 842 H0 Z" fill="var(--pf-w2)"/><path d="M0 296 C58 396 26 500 92 620 C130 690 96 772 118 842 H0 Z" fill="var(--pf-w3)"/><path d="M0 520 C44 592 22 680 58 842 H0 Z" fill="var(--pf-w4)"/></svg>`}
+/* زخرفة هندسية: طبقات مائلة متدرّجة على حافة الصفحة */
+function pfGeo(){return `<svg class="pf-wave" viewBox="0 0 595 842" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" width="238" height="842" fill="var(--pf-w1)"/><polygon points="0,0 238,0 238,286 0,452" fill="var(--pf-w2)"/><polygon points="0,452 238,286 238,592 0,706" fill="var(--pf-w3)"/><polygon points="0,706 238,592 238,842 0,842" fill="var(--pf-w4)"/></svg>`}
+/* الزخرفة المختارة حسب تصميم الملف */
+function pfArt(){
+  const l=S.pfLayout||'wave';
+  if(l==='geo')return pfGeo();
+  if(l==='frame')return '<div class="pf-wave pf-frame-band"></div>';
+  return pfWave();
+}
 let pfN=0;
 function pfPage(inner,opt){
   pfN++;opt=opt||{};
   const foot=opt.foot
     ?`<div class="pf-foot"><div class="pf-foot-line"></div><div class="pf-foot-in"><span class="pf-foot-brand">ملف إنجاز</span><span>${pfN}</span></div><div class="pf-foot-bar"></div></div>`
     :`<div class="pf-num">${pfN}</div>`;
-  return `<div class="pf-page">${opt.wave?pfWave():''}${inner}${foot}</div>`;
+  return `<div class="pf-page">${opt.wave?pfArt():''}${inner}${foot}</div>`;
 }
 function generateAchievement(){
   const totalEv=S.standards.reduce((a,s)=>a+s.ev.length,0);
@@ -4189,8 +4222,9 @@ function generateAchievement(){
   </div>`;
 
   const d=$('ach-doc');d.classList.add('pf-doc');d.innerHTML=html;
-  const bar=$('pf-theme-bar');if(bar)bar.innerHTML=pfSwatches();
+  const bar=$('pf-theme-bar');if(bar)bar.innerHTML=pfLayoutPicker()+pfSwatches();
   pfApplyTheme(S.pfTheme||'green');
+  pfApplyLayout(S.pfLayout||'wave');
   go('ach-preview');
 }
 
@@ -4420,19 +4454,58 @@ function optsWithOther(list,cur){let o=list.map(x=>`<option ${cur===x?'selected'
 function lessonSel(el,i,field){if(el.value==='__other__'){const inp=document.createElement('input');inp.placeholder='اكتب '+(field==='strat'?'الاستراتيجية':'أداة التقويم')+'...';inp.value='';inp.oninput=()=>{S.lessons[i][field]=inp.value};el.parentNode.replaceChild(inp,el);inp.focus();S.lessons[i][field]=''}else{S.lessons[i][field]=el.value}}
 /* QR scan + image/PDF capture for curriculum */
 let qrStream=null,qrLoop=null;
+/* BarcodeDetector غير مدعوم في سفاري/آيفون وفايرفوكس، لذا نعتمد jsQR كبديل
+   يعمل على كل المتصفحات، مع خيار قراءة الرمز من صورة إن تعذّرت الكاميرا. */
+function ensureJsQR(){return new Promise((res,rej)=>{if(window.jsQR)return res();const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.js';s.onload=()=>res();s.onerror=()=>{const s2=document.createElement('script');s2.src='https://unpkg.com/jsqr@1.4.0/dist/jsQR.js';s2.onload=()=>res();s2.onerror=()=>rej();document.head.appendChild(s2)};document.head.appendChild(s)})}
+function qrFileBtn(){return `<input type="file" id="qr-file" accept="image/*" style="display:none" onchange="qrFromImage(this)"><button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="document.getElementById('qr-file').click()">🖼️ اقرأ الرمز من صورة</button>`}
+function qrDecodeCanvas(c){const ctx=c.getContext('2d',{willReadFrequently:true});const d=ctx.getImageData(0,0,c.width,c.height);const r=window.jsQR?window.jsQR(d.data,d.width,d.height):null;return (r&&r.data)?r.data:''}
+function qrFromVideo(v){if(!window.jsQR||!v.videoWidth)return '';const c=$('qr-canvas');if(!c)return '';c.width=v.videoWidth;c.height=v.videoHeight;c.getContext('2d',{willReadFrequently:true}).drawImage(v,0,0,c.width,c.height);return qrDecodeCanvas(c)}
+async function qrFromImage(input){
+  const f=input.files&&input.files[0];if(!f)return;input.value='';
+  try{
+    await ensureJsQR();
+    const url=URL.createObjectURL(f);
+    const img=new Image();
+    await new Promise((res,rej)=>{img.onload=res;img.onerror=rej;img.src=url});
+    const c=document.createElement('canvas');
+    const k=Math.min(1,1600/Math.max(img.width,img.height));
+    c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);
+    c.getContext('2d',{willReadFrequently:true}).drawImage(img,0,0,c.width,c.height);
+    URL.revokeObjectURL(url);
+    const val=qrDecodeCanvas(c);
+    if(val){onQR(val);toast('✓ قُرئ الرمز من الصورة')}
+    else toast('لم أجد رمز QR واضحًا في الصورة — جرّب لقطة أقرب وأوضح');
+  }catch(e){toast('تعذّرت قراءة الصورة')}
+}
 async function startQR(){
   const wrap=$('qr-wrap');if(!wrap)return;
-  if(!('BarcodeDetector' in window)){wrap.innerHTML='<div class="note"><span class="ni">ℹ️</span><div>متصفحك لا يدعم قراءة QR مباشرة. في النسخة الكاملة يُدعم على كل الأجهزة. مؤقتًا الصق العنوان أو ارفع صورة.</div></div>';wrap.style.display='block';return}
+  wrap.style.display='block';
+  const native='BarcodeDetector' in window;
+  if(!native){
+    wrap.innerHTML='<div class="note"><span class="ni">⏳</span><div>يجهّز قارئ الرمز...</div></div>';
+    try{await ensureJsQR()}
+    catch(e){wrap.innerHTML='<div class="note"><span class="ni">⚠️</span><div>تعذّر تحميل قارئ الرمز — تحقّق من اتصالك بالإنترنت، أو الصق عنوان الدرس يدويًا.</div></div>';return}
+  }
   try{
-    wrap.style.display='block';wrap.innerHTML='<video id="qr-video" playsinline style="width:100%;border-radius:12px;background:#000"></video><div id="qr-out" style="font-size:.85rem;color:var(--teal);margin-top:8px;text-align:center">وجّه الكاميرا لرمز QR في الكتاب...</div><button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="stopQR()">إيقاف الكاميرا</button>';
+    wrap.innerHTML=`<video id="qr-video" playsinline muted style="width:100%;border-radius:12px;background:#000"></video><canvas id="qr-canvas" style="display:none"></canvas><div id="qr-out" style="font-size:.85rem;color:var(--teal);margin-top:8px;text-align:center">وجّه الكاميرا لرمز QR في الكتاب...</div><button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="stopQR()">إيقاف الكاميرا</button>${qrFileBtn()}`;
     qrStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
-    const v=$('qr-video');v.srcObject=qrStream;await v.play();
-    const det=new BarcodeDetector({formats:['qr_code']});
-    qrLoop=setInterval(async()=>{try{const codes=await det.detect(v);if(codes.length){const val=codes[0].rawValue;onQR(val)}}catch(e){}},700);
-  }catch(e){$('qr-wrap').innerHTML='<div class="note"><span class="ni">⚠️</span><div>تعذّر فتح الكاميرا — اسمح بالإذن أو ارفع صورة بدلًا من ذلك.</div></div>'}
+    const v=$('qr-video');v.srcObject=qrStream;v.setAttribute('playsinline','');await v.play();
+    const det=native?new BarcodeDetector({formats:['qr_code']}):null;
+    qrLoop=setInterval(async()=>{
+      try{
+        if(det){const codes=await det.detect(v);if(codes.length)onQR(codes[0].rawValue);return}
+        const val=qrFromVideo(v);if(val)onQR(val);
+      }catch(e){}
+    },600);
+  }catch(e){
+    wrap.innerHTML=`<div class="note"><span class="ni">⚠️</span><div>تعذّر فتح الكاميرا — اسمح بإذن الكاميرا من إعدادات المتصفح، أو اقرأ الرمز من صورة.</div></div>${qrFileBtn()}`;
+  }
 }
 function stopQR(){if(qrLoop){clearInterval(qrLoop);qrLoop=null}if(qrStream){qrStream.getTracks().forEach(t=>t.stop());qrStream=null}const w=$('qr-wrap');if(w)w.style.display='none'}
 function onQR(val){
+  /* الرمز يبقى أمام الكاميرا عدة دورات، فنوقف المسح بعد أول قراءة ناجحة
+     حتى لا يتكرّر العنوان نفسه في القائمة */
+  if(qrLoop){clearInterval(qrLoop);qrLoop=null}
   // Extract a lesson title from the scanned value (link or text) — safe, legal: title only
   let title=val;
   try{if(/^https?:/i.test(val)){const u=new URL(val);title=decodeURIComponent((u.searchParams.get('title')||u.searchParams.get('lesson')||u.pathname.split('/').filter(Boolean).pop()||val)).replace(/[-_]/g,' ')}}catch(e){}
