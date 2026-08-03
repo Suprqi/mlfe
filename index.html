@@ -4506,12 +4506,61 @@ function onQR(val){
   /* الرمز يبقى أمام الكاميرا عدة دورات، فنوقف المسح بعد أول قراءة ناجحة
      حتى لا يتكرّر العنوان نفسه في القائمة */
   if(qrLoop){clearInterval(qrLoop);qrLoop=null}
-  // Extract a lesson title from the scanned value (link or text) — safe, legal: title only
-  let title=val;
-  try{if(/^https?:/i.test(val)){const u=new URL(val);title=decodeURIComponent((u.searchParams.get('title')||u.searchParams.get('lesson')||u.pathname.split('/').filter(Boolean).pop()||val)).replace(/[-_]/g,' ')}}catch(e){}
-  const out=$('qr-out');if(out)out.innerHTML=`✓ التُقط: <b>${esc(title)}</b>`;
+  const title=qrTitle(val);
+  const out=$('qr-out');
+  if(!title){
+    /* أغلب رموز الكتب تحمل رابطًا برقم معرّف فقط بلا اسم درس،
+       فإدخاله في قائمة المنهج يعطي نصًا ملخبطًا — نطلب الاسم يدويًا بدل ذلك */
+    if(out)out.innerHTML=`⚠️ هذا الرمز يحمل رابطًا بلا اسم درس واضح:<br><small style="direction:ltr;display:inline-block;word-break:break-all;opacity:.75">${esc(String(val).slice(0,120))}</small><br>اكتب اسم الدرس يدويًا في الصندوق أعلاه.`;
+    toast('الرمز فيه رابط بدون اسم درس — اكتب الاسم يدويًا');
+    return;
+  }
+  if(out)out.innerHTML=`✓ التُقط: <b>${esc(title)}</b>`;
   const ta=$('curr-text');if(ta){ta.value=(ta.value?ta.value.trim()+'\n':'')+title;$('curr-import').style.display='block'}
   toast('✓ أُضيف من المسح — راجعه واحفظ المنهج');
+}
+/* استخراج اسم درس مقروء من محتوى الرمز.
+   يعيد نصًا فارغًا إن لم يوجد اسم مفهوم، حتى لا نحشو المنهج بروابط وأرقام. */
+/* كلمات مسار عامة ليست أسماء دروس */
+const QR_STOP=new Set(['lesson','lessons','unit','units','view','page','pages','index','home','course','courses','subject','subjects','video','videos','content','contents','item','items','detail','details','chapter','chapters','book','books','main','default','app','web','www','edu','com','net','org','gov','ar','en','sa','id','play','watch','open','share','link','links','file','files','doc','docs','info','list','show','search','media','student','teacher','portal']);
+function qrLatinOk(t){
+  /* اسم لاتيني مقبول: حروف فقط، لا أرقام (تستبعد المعرّفات مثل l-778 وaB3xZ)،
+     وليس كله كلمات مسار عامة */
+  if(t.length<4)return false;
+  if(!/^[a-zA-Z][a-zA-Z ]*$/.test(t))return false;
+  return !t.split(' ').filter(Boolean).every(w=>QR_STOP.has(w.toLowerCase()));
+}
+function qrTitle(val){
+  const raw=String(val==null?'':val).trim();
+  if(!raw)return '';
+  const dec=s=>{try{return decodeURIComponent(s)}catch(e){return s}};
+  const clean=s=>dec(s).replace(/[-_+]+/g,' ').replace(/\s+/g,' ').trim();
+  const hasAr=s=>/[؀-ۿ]/.test(s);
+  const titleOk=s=>{const t=clean(s);return hasAr(t)?(t.length>=2&&!/^\d+$/.test(t)):qrLatinOk(t)};
+  /* نص مباشر (ليس رابطًا): هو الاسم غالبًا */
+  if(!/^https?:\/\//i.test(raw))return raw.replace(/\s+/g,' ').trim();
+  let u;try{u=new URL(raw)}catch(e){return ''}
+  const hash=u.hash?u.hash.replace(/^#\/?/,''):'';
+  /* 1) معاملات صريحة تحمل الاسم — في الرابط أو بعد # */
+  const sets=[];
+  try{sets.push(u.searchParams)}catch(e){}
+  if(hash.includes('?')){try{sets.push(new URLSearchParams(hash.slice(hash.indexOf('?')+1)))}catch(e){}}
+  for(const p of sets){
+    for(const k of ['title','lesson','name','subject','topic','q','text']){
+      const v=p&&p.get?p.get(k):'';
+      if(v&&titleOk(v))return clean(v);
+    }
+  }
+  /* 2) مقاطع المسار/الهاش — العربي أولى، ثم اللاتيني المفهوم */
+  const segs=[...u.pathname.split('/'),...hash.split(/[/?&=]/)]
+    .map(s=>dec(s).trim())
+    .map(s=>s.replace(/\.(html?|php|aspx?|pdf|jsp)$/i,''))
+    .filter(Boolean);
+  const ar=segs.filter(s=>hasAr(s)&&!/^\d+$/.test(s));
+  if(ar.length)return clean(ar[ar.length-1]);
+  const lat=segs.filter(s=>qrLatinOk(clean(s)));
+  if(lat.length)return clean(lat[lat.length-1]);
+  return '';
 }
 function captureImg(input){
   const f=input.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{const box=$('curr-img-prev');box.innerHTML=`<img src="${e.target.result}" style="width:100%;border-radius:12px;border:1px solid var(--line)"><div class="note" style="margin-top:8px"><span class="ni">ℹ️</span><div>حُفظت صورة الفهرس كمرجع. اكتب العناوين في الصندوق أعلاه (استخراج النص تلقائيًا من الصورة يُفعّل في النسخة الكاملة).</div></div>`;box.style.display='block';$('curr-import').style.display='block'};r.readAsDataURL(f);input.value=''}
