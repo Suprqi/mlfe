@@ -4498,41 +4498,82 @@ function entryOf(raw){
   if(title.split(/\s+/).length>10)return null;
   return {ch:+arDigits(m[1]),ls:+arDigits(m[2]),title};
 }
+/* الكتب الإنسانية تكتب «الوحدة الأولى: العنوان» و«الدرس الأول: العنوان».
+   بعض الكتب يتلف فيها ترميز الكلمة الترتيبية (ا䐣لول) بينما يبقى العنوان سليمًا،
+   لذا نرتكز على النقطتين لا على الكلمة الترتيبية. */
+const CURR_ORD=/^(الوحدة|الدرس|درس)\s*([^:：]{0,25})[:：]\s*(.{3,})$/;
+function ordEntries(line){
+  const out=[];
+  /* التطويل يُزال أولًا وإلا لم ينطبق الفصل على «الـدرس» */
+  normAr(line).split(/(?=(?:الوحدة|الدرس)\s)/).forEach(part=>{
+    const m=normAr(part).match(CURR_ORD);
+    if(!m)return;
+    /* تُزال النقاط أولًا ثم رقم الصفحة، وإلا حَجَبت النقاطُ الرقمَ عن الحذف */
+    let title=currStripPage(String(m[3]).replace(/[.…·]{2,}.*$/,'')).trim();
+    if(!title||title.length<3||currCorrupt(title)||CURR_BODY.test(title))return;
+    if(title.split(/\s+/).length>12)return;
+    out.push({unit:m[1]==='الوحدة',title});
+  });
+  return out;
+}
+function pageEntries(lines){
+  const out=[];
+  for(let i=0;i<lines.length;i++){
+    let hit=false;
+    for(const cand of [lines[i].rtl,lines[i].ltr]){
+      /* النمط المرقّم (١-١) في كتب العلوم والرياضيات */
+      const e=entryOf(cand);
+      if(e){out.push({unit:false,title:e.title,ch:e.ch,ls:e.ls});hit=true;break}
+      /* نمط الوحدة/الدرس بالكلمات — قد يتكرر عدة مرات في السطر نفسه */
+      const ords=ordEntries(cand);
+      if(ords.length){out.push(...ords);hit=true;break}
+      /* رقم الدرس وحده والعنوان في السطر التالي */
+      const m=normAr(cand).match(CURR_NUMONLY);
+      if(m){
+        for(let k=i+1;k<=i+2&&k<lines.length;k++){
+          const nxt=normAr(lines[k].rtl);
+          if(nxt&&!currCorrupt(nxt)&&!CURR_BODY.test(nxt)&&nxt.length>=3&&!CURR_ENTRY.test(nxt)&&!CURR_NUMONLY.test(nxt)){
+            const t=currStripPage(nxt);
+            if(t.length>=3){out.push({unit:false,title:t,ch:+arDigits(m[1]),ls:+arDigits(m[2])});hit=true;break}
+          }
+        }
+      }
+      if(hit)break;
+    }
+  }
+  return out;
+}
 function extractLessonIndex(pages){
   const all=[];
   pages.forEach(lines=>{
-    const found=[];
-    for(let i=0;i<lines.length;i++){
-      let e=null;
-      for(const cand of [lines[i].rtl,lines[i].ltr]){
-        e=entryOf(cand);
-        if(e)break;
-        /* رقم الدرس وحده في سطر والعنوان في الذي يليه */
-        const m=normAr(cand).match(CURR_NUMONLY);
-        if(m){
-          for(let k=i+1;k<=i+2&&k<lines.length;k++){
-            const nxt=normAr(lines[k].rtl);
-            if(nxt&&!currCorrupt(nxt)&&!CURR_BODY.test(nxt)&&nxt.length>=3&&!CURR_ENTRY.test(nxt)&&!CURR_NUMONLY.test(nxt)){
-              const t=currStripPage(nxt);
-              if(t.length>=3){e={ch:+arDigits(m[1]),ls:+arDigits(m[2]),title:t};break}
-            }
-          }
-          if(e)break;
-        }
-      }
-      if(e)found.push(e);
-    }
-    /* صفحة الفهرس تحوي مدخلات كثيرة؛ الصفحة ذات المدخلة أو المدخلتين متن */
-    if(found.length>=4)all.push(...found);
+    const found=pageEntries(lines);
+    /* صفحة الفهرس أو مفتتح الوحدة تحوي عدة مدخلات؛ المدخلة الواحدة غالبًا ترويسة متن */
+    if(found.length>=2)all.push(...found);
   });
-  const seen=new Set();
-  return all.filter(e=>{const k=e.ch+'-'+e.ls;if(seen.has(k))return false;seen.add(k);return true})
-            .sort((a,b)=>a.ch-b.ch||a.ls-b.ls);
+  /* إزالة التكرار بالعنوان — الترويسات الجارية تعيد العنوان في كل صفحة */
+  const seen=new Set(),out=[];
+  all.forEach(e=>{
+    const k=(e.unit?'u:':'l:')+normAr(e.title).replace(/\s+/g,'');
+    if(seen.has(k))return;
+    seen.add(k);out.push(e);
+  });
+  /* النمط المرقّم يُرتَّب رقميًا؛ نمط الكلمات يبقى بترتيب ورودها في الكتاب */
+  const numbered=out.filter(e=>e.ch!=null),worded=out.filter(e=>e.ch==null);
+  if(numbered.length>=4&&worded.length<numbered.length)
+    return numbered.sort((a,b)=>a.ch-b.ch||a.ls-b.ls);
+  return out;
 }
 function indexToText(items){
-  const out=[];let cur=null;
-  items.forEach(e=>{if(e.ch!==cur){cur=e.ch;out.push('الفصل '+e.ch)}out.push(e.title)});
-  return out.join('\n');
+  const lines=[];let cur=null;
+  items.forEach(e=>{
+    if(e.ch!=null){
+      if(e.ch!==cur){cur=e.ch;lines.push('الفصل '+e.ch)}
+      lines.push(e.title);
+    }else{
+      lines.push(e.unit?('الوحدة: '+e.title):e.title);
+    }
+  });
+  return lines.join('\n');
 }
 function currPasteFallback(msg){
   const b=$('curr-import');if(b)b.style.display='block';
@@ -4547,12 +4588,15 @@ async function importPdfCurr(input){
     if(!window.pdfjsLib){await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'}
     const buf=await f.arrayBuffer();
     const pdf=await window.pdfjsLib.getDocument({data:buf}).promise;
-    const N=Math.min(pdf.numPages,25);
+    /* فهرس بعض الكتب يذكر الوحدات فقط، وأسماء الدروس تظهر في مفتتح كل وحدة
+       موزّعة على الكتاب كله، لذا نمسح الكتاب بأكمله بسقف يمنع تعليق الجوال */
+    const N=Math.min(pdf.numPages,400);
     const pages=[];let anyText=false;
     for(let p=1;p<=N;p++){
       const c=await (await pdf.getPage(p)).getTextContent();
       if(c.items&&c.items.length)anyText=true;
       pages.push(pdfLines(c.items));
+      if(p%40===0){toast(`⏳ قراءة الكتاب… ${p}/${N}`);await new Promise(r=>setTimeout(r,0))}
     }
     if(!anyText){
       currPasteFallback('هذا الملف صور بلا نص (كتاب ممسوح ضوئيًا)، فلا يمكن استخراج الفهرس منه. الصق توزيع المنهج يدويًا في الصندوق.');
@@ -4560,7 +4604,7 @@ async function importPdfCurr(input){
     }
     const items=extractLessonIndex(pages);
     if(items.length<4){
-      currPasteFallback(`لم أجد فهرس دروس مرقّمًا (مثل ١-١، ١-٢) في أول ${N} صفحة. الاستخراج يعمل على الكتب ذات الدروس المرقّمة؛ والنسخ المعاد ضغطها غالبًا تفقد صفحات الفهرس أو تُتلف الخطوط. الأفضل: الصق توزيع المنهج الذي توزّعه الإدارة.`);
+      currPasteFallback(`قرأت ${N} صفحة ولم أجد فهرس دروس واضحًا (لا «١-١» ولا «الدرس الأول: …»). بعض الكتب خطوطها بترميز خاص فيخرج النص غير مقروء، والنسخ المعاد ضغطها تفقد صفحات الفهرس. الأفضل: الصق توزيع المنهج الذي توزّعه الإدارة.`);
       toast('تعذّر استخراج الفهرس — الصق التوزيع يدويًا');input.value='';return;
     }
     const ta=$('curr-text');ta.value=indexToText(items);
@@ -4586,7 +4630,8 @@ function renderCurrStatus(){
 function normAr(str){
   let s=String(str==null?'':str);
   try{s=s.normalize('NFKC')}catch(e){}
-  return s.replace(/[‪-‮‎‏⁦-⁩]/g,'').replace(/\s+/g,' ').trim();
+  /* التطويل (ـ) زخرفة تمطّ الحروف داخل الكلمة فتكسر المطابقة: الـدرس، الخلفـاء */
+  return s.replace(/[‪-‮‎‏⁦-⁩]/g,'').replace(/ـ+/g,'').replace(/\s+/g,' ').trim();
 }
 function currCorrupt(str){
   const s=normAr(str);
