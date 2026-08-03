@@ -1052,10 +1052,9 @@ input,select,textarea{font-family:inherit;font-size:1rem}
         <div class="panel-title">📚 منهج مادتي <span style="font-size:.76rem;color:var(--ink-soft);font-weight:400">(الصق فهرس دروسك مرة — يتولّد التحضير على دروسك الفعلية)</span></div>
         <div class="panel-desc">انسخ فهرس الوحدات والدروس من كتاب مادتك (<span id="cur-subj-lbl"></span>) والصقها هنا (درس بكل سطر). تُحفظ كمنهج مادتك، وتقدر تعتمد قالب زملائك لاحقًا.</div>
         <div id="curr-status" style="font-size:.85rem;color:var(--teal);margin-bottom:10px"></div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="chip" onclick="toggleCurrImport()">📋 لصق فهرس الدروس</button><button class="chip" onclick="startQR()">📷 مسح QR من الكتاب</button><button class="chip" onclick="document.getElementById('curr-img').click()">🖼️ التقاط/رفع صورة</button><button class="chip" onclick="document.getElementById('curr-pdf').click()">📄 استيراد PDF</button><button class="chip" id="seed-btn" style="display:none" onclick="useSeedCurriculum()">⚡ اعتمد قالب جاهز</button><button class="chip" onclick="clearCurriculum()">🗑️ مسح المنهج</button></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="chip" onclick="toggleCurrImport()">📋 لصق فهرس الدروس</button><button class="chip" onclick="document.getElementById('curr-img').click()">🖼️ التقاط/رفع صورة</button><button class="chip" onclick="document.getElementById('curr-pdf').click()">📄 استيراد PDF</button><button class="chip" id="seed-btn" style="display:none" onclick="useSeedCurriculum()">⚡ اعتمد قالب جاهز</button><button class="chip" onclick="clearCurriculum()">🗑️ مسح المنهج</button></div>
         <input type="file" id="curr-img" accept="image/*" capture="environment" style="display:none" onchange="captureImg(this)">
         <input type="file" id="curr-pdf" accept="application/pdf" style="display:none" onchange="importPdfCurr(this)">
-        <div id="qr-wrap" style="display:none;margin-top:12px"></div>
         <div id="curr-img-prev" style="display:none;margin-top:12px"></div>
         <div id="curr-import" style="display:none;margin-top:12px">
           <textarea id="curr-text" placeholder="مثال:
@@ -1064,7 +1063,8 @@ input,select,textarea{font-family:inherit;font-size:1rem}
 جمع الكسور المتشابهة
 طرح الكسور المتشابهة
 الوحدة الثانية: الأعداد العشرية
-..." style="width:100%;min-height:150px;padding:12px;border:1.5px solid var(--line);border-radius:12px;font-size:.9rem"></textarea>
+..." oninput="updateCurrPreview()" style="width:100%;min-height:150px;padding:12px;border:1.5px solid var(--line);border-radius:12px;font-size:.9rem"></textarea>
+          <div id="curr-preview" style="margin-top:8px"></div>
           <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap"><button class="btn btn-gold btn-sm" onclick="importCurriculum()">احفظ منهج مادتي</button><button class="btn btn-ghost btn-sm" onclick="genFromCurriculum()">✨ ولّد تحضير كل الدروس</button></div>
           <div style="font-size:.78rem;color:var(--ink-soft);margin-top:8px">💡 ضع عناوين الوحدات وستُعامل كعناوين أقسام، والدروس تحتها تُوزّع على الأسابيع تلقائيًا.</div>
         </div>
@@ -2210,7 +2210,7 @@ function basicTextCleanup(text){
   return text.trim().replace(/\s+/g,' ').replace(/([.!؟,،])\1+/g,'$1').replace(/ ،/g,'،').replace(/ \./g,'.');
 }
 function toast(m){const t=$('toast');t.innerHTML=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800)}
-function go(s){if(typeof recording!=='undefined'&&recording)stopMic();if(typeof qrStream!=='undefined'&&qrStream)stopQR();document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));$(s).classList.add('active');window.scrollTo(0,0);if(s==='dashboard')renderMetrics();syncBottomNav(s)}
+function go(s){if(typeof recording!=='undefined'&&recording)stopMic();document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));$(s).classList.add('active');window.scrollTo(0,0);if(s==='dashboard')renderMetrics();syncBottomNav(s)}
 function syncBottomNav(s){
   const map={dashboard:'dashboard',records:'records',achievement:'achievement'};
   const key=map[s]||null;
@@ -4452,116 +4452,7 @@ function openPrep(){renderPrepGradeSelect();renderCurrStatus();const rt=$('rubri
 /* "أخرى" option support */
 function optsWithOther(list,cur){let o=list.map(x=>`<option ${cur===x?'selected':''}>${esc(x)}</option>`).join('');if(cur&&!list.includes(cur))o+=`<option selected>${esc(cur)}</option>`;o+=`<option value="__other__">أخرى (اكتب)…</option>`;return o}
 function lessonSel(el,i,field){if(el.value==='__other__'){const inp=document.createElement('input');inp.placeholder='اكتب '+(field==='strat'?'الاستراتيجية':'أداة التقويم')+'...';inp.value='';inp.oninput=()=>{S.lessons[i][field]=inp.value};el.parentNode.replaceChild(inp,el);inp.focus();S.lessons[i][field]=''}else{S.lessons[i][field]=el.value}}
-/* QR scan + image/PDF capture for curriculum */
-let qrStream=null,qrLoop=null;
-/* BarcodeDetector غير مدعوم في سفاري/آيفون وفايرفوكس، لذا نعتمد jsQR كبديل
-   يعمل على كل المتصفحات، مع خيار قراءة الرمز من صورة إن تعذّرت الكاميرا. */
-function ensureJsQR(){return new Promise((res,rej)=>{if(window.jsQR)return res();const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.js';s.onload=()=>res();s.onerror=()=>{const s2=document.createElement('script');s2.src='https://unpkg.com/jsqr@1.4.0/dist/jsQR.js';s2.onload=()=>res();s2.onerror=()=>rej();document.head.appendChild(s2)};document.head.appendChild(s)})}
-function qrFileBtn(){return `<input type="file" id="qr-file" accept="image/*" style="display:none" onchange="qrFromImage(this)"><button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="document.getElementById('qr-file').click()">🖼️ اقرأ الرمز من صورة</button>`}
-function qrDecodeCanvas(c){const ctx=c.getContext('2d',{willReadFrequently:true});const d=ctx.getImageData(0,0,c.width,c.height);const r=window.jsQR?window.jsQR(d.data,d.width,d.height):null;return (r&&r.data)?r.data:''}
-function qrFromVideo(v){if(!window.jsQR||!v.videoWidth)return '';const c=$('qr-canvas');if(!c)return '';c.width=v.videoWidth;c.height=v.videoHeight;c.getContext('2d',{willReadFrequently:true}).drawImage(v,0,0,c.width,c.height);return qrDecodeCanvas(c)}
-async function qrFromImage(input){
-  const f=input.files&&input.files[0];if(!f)return;input.value='';
-  try{
-    await ensureJsQR();
-    const url=URL.createObjectURL(f);
-    const img=new Image();
-    await new Promise((res,rej)=>{img.onload=res;img.onerror=rej;img.src=url});
-    const c=document.createElement('canvas');
-    const k=Math.min(1,1600/Math.max(img.width,img.height));
-    c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);
-    c.getContext('2d',{willReadFrequently:true}).drawImage(img,0,0,c.width,c.height);
-    URL.revokeObjectURL(url);
-    const val=qrDecodeCanvas(c);
-    if(val){onQR(val);toast('✓ قُرئ الرمز من الصورة')}
-    else toast('لم أجد رمز QR واضحًا في الصورة — جرّب لقطة أقرب وأوضح');
-  }catch(e){toast('تعذّرت قراءة الصورة')}
-}
-async function startQR(){
-  const wrap=$('qr-wrap');if(!wrap)return;
-  wrap.style.display='block';
-  const native='BarcodeDetector' in window;
-  if(!native){
-    wrap.innerHTML='<div class="note"><span class="ni">⏳</span><div>يجهّز قارئ الرمز...</div></div>';
-    try{await ensureJsQR()}
-    catch(e){wrap.innerHTML='<div class="note"><span class="ni">⚠️</span><div>تعذّر تحميل قارئ الرمز — تحقّق من اتصالك بالإنترنت، أو الصق عنوان الدرس يدويًا.</div></div>';return}
-  }
-  try{
-    wrap.innerHTML=`<video id="qr-video" playsinline muted style="width:100%;border-radius:12px;background:#000"></video><canvas id="qr-canvas" style="display:none"></canvas><div id="qr-out" style="font-size:.85rem;color:var(--teal);margin-top:8px;text-align:center">وجّه الكاميرا لرمز QR في الكتاب...</div><button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="stopQR()">إيقاف الكاميرا</button>${qrFileBtn()}`;
-    qrStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
-    const v=$('qr-video');v.srcObject=qrStream;v.setAttribute('playsinline','');await v.play();
-    const det=native?new BarcodeDetector({formats:['qr_code']}):null;
-    qrLoop=setInterval(async()=>{
-      try{
-        if(det){const codes=await det.detect(v);if(codes.length)onQR(codes[0].rawValue);return}
-        const val=qrFromVideo(v);if(val)onQR(val);
-      }catch(e){}
-    },600);
-  }catch(e){
-    wrap.innerHTML=`<div class="note"><span class="ni">⚠️</span><div>تعذّر فتح الكاميرا — اسمح بإذن الكاميرا من إعدادات المتصفح، أو اقرأ الرمز من صورة.</div></div>${qrFileBtn()}`;
-  }
-}
-function stopQR(){if(qrLoop){clearInterval(qrLoop);qrLoop=null}if(qrStream){qrStream.getTracks().forEach(t=>t.stop());qrStream=null}const w=$('qr-wrap');if(w)w.style.display='none'}
-function onQR(val){
-  /* الرمز يبقى أمام الكاميرا عدة دورات، فنوقف المسح بعد أول قراءة ناجحة
-     حتى لا يتكرّر العنوان نفسه في القائمة */
-  if(qrLoop){clearInterval(qrLoop);qrLoop=null}
-  const title=qrTitle(val);
-  const out=$('qr-out');
-  if(!title){
-    /* أغلب رموز الكتب تحمل رابطًا برقم معرّف فقط بلا اسم درس،
-       فإدخاله في قائمة المنهج يعطي نصًا ملخبطًا — نطلب الاسم يدويًا بدل ذلك */
-    if(out)out.innerHTML=`⚠️ هذا الرمز يحمل رابطًا بلا اسم درس واضح:<br><small style="direction:ltr;display:inline-block;word-break:break-all;opacity:.75">${esc(String(val).slice(0,120))}</small><br>اكتب اسم الدرس يدويًا في الصندوق أعلاه.`;
-    toast('الرمز فيه رابط بدون اسم درس — اكتب الاسم يدويًا');
-    return;
-  }
-  if(out)out.innerHTML=`✓ التُقط: <b>${esc(title)}</b>`;
-  const ta=$('curr-text');if(ta){ta.value=(ta.value?ta.value.trim()+'\n':'')+title;$('curr-import').style.display='block'}
-  toast('✓ أُضيف من المسح — راجعه واحفظ المنهج');
-}
-/* استخراج اسم درس مقروء من محتوى الرمز.
-   يعيد نصًا فارغًا إن لم يوجد اسم مفهوم، حتى لا نحشو المنهج بروابط وأرقام. */
-/* كلمات مسار عامة ليست أسماء دروس */
-const QR_STOP=new Set(['lesson','lessons','unit','units','view','page','pages','index','home','course','courses','subject','subjects','video','videos','content','contents','item','items','detail','details','chapter','chapters','book','books','main','default','app','web','www','edu','com','net','org','gov','ar','en','sa','id','play','watch','open','share','link','links','file','files','doc','docs','info','list','show','search','media','student','teacher','portal']);
-function qrLatinOk(t){
-  /* اسم لاتيني مقبول: حروف فقط، لا أرقام (تستبعد المعرّفات مثل l-778 وaB3xZ)،
-     وليس كله كلمات مسار عامة */
-  if(t.length<4)return false;
-  if(!/^[a-zA-Z][a-zA-Z ]*$/.test(t))return false;
-  return !t.split(' ').filter(Boolean).every(w=>QR_STOP.has(w.toLowerCase()));
-}
-function qrTitle(val){
-  const raw=String(val==null?'':val).trim();
-  if(!raw)return '';
-  const dec=s=>{try{return decodeURIComponent(s)}catch(e){return s}};
-  const clean=s=>dec(s).replace(/[-_+]+/g,' ').replace(/\s+/g,' ').trim();
-  const hasAr=s=>/[؀-ۿ]/.test(s);
-  const titleOk=s=>{const t=clean(s);return hasAr(t)?(t.length>=2&&!/^\d+$/.test(t)):qrLatinOk(t)};
-  /* نص مباشر (ليس رابطًا): هو الاسم غالبًا */
-  if(!/^https?:\/\//i.test(raw))return raw.replace(/\s+/g,' ').trim();
-  let u;try{u=new URL(raw)}catch(e){return ''}
-  const hash=u.hash?u.hash.replace(/^#\/?/,''):'';
-  /* 1) معاملات صريحة تحمل الاسم — في الرابط أو بعد # */
-  const sets=[];
-  try{sets.push(u.searchParams)}catch(e){}
-  if(hash.includes('?')){try{sets.push(new URLSearchParams(hash.slice(hash.indexOf('?')+1)))}catch(e){}}
-  for(const p of sets){
-    for(const k of ['title','lesson','name','subject','topic','q','text']){
-      const v=p&&p.get?p.get(k):'';
-      if(v&&titleOk(v))return clean(v);
-    }
-  }
-  /* 2) مقاطع المسار/الهاش — العربي أولى، ثم اللاتيني المفهوم */
-  const segs=[...u.pathname.split('/'),...hash.split(/[/?&=]/)]
-    .map(s=>dec(s).trim())
-    .map(s=>s.replace(/\.(html?|php|aspx?|pdf|jsp)$/i,''))
-    .filter(Boolean);
-  const ar=segs.filter(s=>hasAr(s)&&!/^\d+$/.test(s));
-  if(ar.length)return clean(ar[ar.length-1]);
-  const lat=segs.filter(s=>qrLatinOk(clean(s)));
-  if(lat.length)return clean(lat[lat.length-1]);
-  return '';
-}
+/* استيراد المنهج من صورة أو PDF */
 function captureImg(input){
   const f=input.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{const box=$('curr-img-prev');box.innerHTML=`<img src="${e.target.result}" style="width:100%;border-radius:12px;border:1px solid var(--line)"><div class="note" style="margin-top:8px"><span class="ni">ℹ️</span><div>حُفظت صورة الفهرس كمرجع. اكتب العناوين في الصندوق أعلاه (استخراج النص تلقائيًا من الصورة يُفعّل في النسخة الكاملة).</div></div>`;box.style.display='block';$('curr-import').style.display='block'};r.readAsDataURL(f);input.value=''}
 async function importPdfCurr(input){
@@ -4572,11 +4463,11 @@ async function importPdfCurr(input){
     const buf=await f.arrayBuffer();const pdf=await window.pdfjsLib.getDocument({data:buf}).promise;let text='';
     for(let p=1;p<=Math.min(pdf.numPages,10);p++){const page=await pdf.getPage(p);const c=await page.getTextContent();text+=c.items.map(it=>it.str).join(' ')+'\n'}
     if(text.trim().length<10){toast('الملف صورة بدون نص — اكتب العناوين يدويًا');return}
-    const ta=$('curr-text');ta.value=text.trim();$('curr-import').style.display='block';toast('✓ استُخرج النص — راجعه ونظّف العناوين ثم احفظ');
+    const ta=$('curr-text');ta.value=text.trim();$('curr-import').style.display='block';updateCurrPreview();toast('✓ استُخرج النص — راجعه ونظّف العناوين ثم احفظ');
   }catch(e){toast('تعذّرت قراءة PDF — جرّب لصق العناوين')}
   input.value='';
 }
-function toggleCurrImport(){const b=$('curr-import');b.style.display=b.style.display==='none'?'block':'none'}
+function toggleCurrImport(){const b=$('curr-import');b.style.display=b.style.display==='none'?'block':'none';if(b.style.display==='block')updateCurrPreview()}
 function renderCurrStatus(){
   const lbl=$('cur-subj-lbl');if(lbl)lbl.textContent=S.subject;
   const cur=S.curricula[S.subject];const st=$('curr-status');
@@ -4585,22 +4476,69 @@ function renderCurrStatus(){
   if(cur&&cur.length)st.innerHTML=`✓ منهج <b>${esc(S.subject)}</b> محفوظ: ${cur.filter(x=>!x.unit).length} درس في ${cur.filter(x=>x.unit).length} وحدة.`;
   else st.innerHTML=`<span style="color:var(--ink-soft)">لا يوجد منهج محفوظ لـ${esc(S.subject)} بعد — الصق فهرس دروسك ليتولّد التحضير عليها.</span>`;
 }
+/* بعض كتب PDF تستخدم خطوطًا بترميز خاص، فيخرج النص محارف غير مقروءة.
+   نطبّع النص ونكشف التلف قبل الحفظ حتى لا تُطبع عناوين مشوّهة في ملف الإنجاز. */
+function normAr(str){
+  let s=String(str==null?'':str);
+  try{s=s.normalize('NFKC')}catch(e){}
+  return s.replace(/[‪-‮‎‏⁦-⁩]/g,'').replace(/\s+/g,' ').trim();
+}
+function currCorrupt(str){
+  const s=normAr(str);
+  if(!s)return false;
+  const letters=s.replace(/[\s\d\p{P}\p{S}]/gu,'');
+  if(!letters)return false;
+  /* محارف المنطقة الخاصة ومحرف الاستبدال دليل تلف قاطع */
+  if(/[-�]/.test(s))return true;
+  /* غير العربية واللاتينية: نسمح بـ٣٪ فقط */
+  const bad=[...letters].filter(c=>!/[؀-ۿݐ-ݿa-zA-Z]/.test(c)).length;
+  return bad/letters.length>0.03;
+}
 function parseCurriculum(text){
-  return text.split('\n').map(x=>x.trim()).filter(x=>x).map(line=>{
+  return text.split('\n').map(x=>normAr(x)).filter(x=>x).map(line=>{
     const unit=/^(الوحدة|وحدة|الفصل|الباب)\b/.test(line);
     return {unit,title:line};
   });
 }
+function updateCurrPreview(){
+  const box=$('curr-preview');const ta=$('curr-text');if(!box||!ta)return;
+  const items=parseCurriculum(ta.value);
+  if(!items.length){box.innerHTML='';return}
+  const lessons=items.filter(i=>!i.unit),units=items.filter(i=>i.unit);
+  const bad=items.filter(i=>currCorrupt(i.title));
+  let h=`<div style="font-size:.82rem;color:var(--ink-soft)">📊 <b>${lessons.length}</b> درسًا · <b>${units.length}</b> وحدة</div>`;
+  if(!units.length)h+=`<div style="font-size:.78rem;color:#8A6A1F;margin-top:4px">ℹ️ لا توجد وحدات — أضف سطرًا يبدأ بـ«الوحدة» لتقسيم الدروس.</div>`;
+  if(bad.length){
+    h+=`<div style="background:#FBEAE6;border:1px solid #E8C7BE;border-radius:10px;padding:10px 12px;margin-top:8px;font-size:.8rem;color:#8A4A3B">
+      ⚠️ <b>${bad.length}</b> سطرًا غير مقروء (خط الكتاب بترميز خاص) — الحفظ محجوب حتى تصحّحها أو تحذفها:
+      <ul style="margin:6px 14px 0 0;padding:0;line-height:1.8">${bad.slice(0,5).map(i=>`<li style="direction:ltr;word-break:break-all">${esc(i.title.slice(0,60))}</li>`).join('')}</ul>
+      <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="dropCorruptLines()">🗑️ احذف الأسطر غير المقروءة</button>
+    </div>`;
+  }
+  box.innerHTML=h;
+}
+function dropCorruptLines(){
+  const ta=$('curr-text');if(!ta)return;
+  const kept=ta.value.split('\n').filter(l=>!l.trim()||!currCorrupt(l));
+  const removed=ta.value.split('\n').length-kept.length;
+  ta.value=kept.join('\n').replace(/\n{3,}/g,'\n\n').trim();
+  updateCurrPreview();
+  toast(removed?`✓ حُذف ${removed} سطرًا غير مقروء`:'لا توجد أسطر غير مقروءة');
+}
 function importCurriculum(){
   const text=$('curr-text').value.trim();if(!text){toast('الصق فهرس الدروس أولًا');return}
   const items=parseCurriculum(text);
+  /* الحفظ محجوب ما دام سطر واحد غير مقروء، لئلا يظهر مشوّهًا في ملف الإنجاز */
+  const bad=items.filter(i=>currCorrupt(i.title));
+  if(bad.length){updateCurrPreview();toast(`⚠️ صحّح أو احذف ${bad.length} سطرًا غير مقروء قبل الحفظ`);return}
+  if(!items.filter(i=>!i.unit).length){toast('لا توجد دروس — أضف سطرًا لكل درس');return}
   S.curricula[S.subject]=items;
   // load lessons from curriculum (lessons only, keep unit as section marker)
   S.units=items;
   S.lessons=items.filter(i=>!i.unit).map(i=>newLesson(i.title));
   renderCurrStatus();renderLessons();toast(`✓ حُفظ منهج ${S.subject} (${S.lessons.length} درس)`);
 }
-function useSeedCurriculum(){const seed=SEED_CURRICULA[S.subject];if(!seed)return;$('curr-text').value=seed.join('\n');$('curr-import').style.display='block';toast('عُرض قالب جاهز — راجعه واحفظه')}
+function useSeedCurriculum(){const seed=SEED_CURRICULA[S.subject];if(!seed)return;$('curr-text').value=seed.join('\n');$('curr-import').style.display='block';updateCurrPreview();toast('عُرض قالب جاهز — راجعه واحفظه')}
 function clearCurriculum(){if(!S.curricula[S.subject]){toast('لا يوجد منهج محفوظ');return}delete S.curricula[S.subject];S.units=[];renderCurrStatus();toast('🗑️ مُسح منهج المادة')}
 function loadCurriculumLessons(){const cur=S.curricula[S.subject];if(!cur)return;S.units=cur;S.lessons=cur.filter(i=>!i.unit).map(i=>newLesson(i.title));renderLessons()}
 async function genFromCurriculum(){
