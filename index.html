@@ -2229,13 +2229,13 @@ function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'
 /* ===== AI core =====
    ملاحظة نشر: الاستدعاء يمر عبر نقطة نهاية خادمية (/api/chat و /api/vision)
    التي تحمل مفتاح Anthropic خادميًا. لا يوجد أي مفتاح في هذا الملف. */
-async function aiCall(prompt){
+async function aiCall(prompt,maxTokens){
   try{
     const res = await fetch("/api/chat",{
       method:"POST",
       headers:{"Content-Type":"application/json"},
       body:JSON.stringify({
-        max_tokens:1000,
+        max_tokens:maxTokens||1000,
         messages:[{role:"user",content:prompt}]
       })
     });
@@ -4583,6 +4583,68 @@ function indexToText(items){
   });
   return lines.join('\n');
 }
+/* ===== استخراج الفهرس بالذكاء الاصطناعي =====
+   صيغ الفهارس لا تنتهي (١-١، الدرس الأول، الحديث الأول، جداول…)، وملاحقتها
+   بقواعد يدوية معركة لا تُحسم. نرسل نص الصفحات المرشّحة للنموذج ليقرأها. */
+/* ردّ النموذج قد ينقطع عند سقف المخرجات فيصير JSON ناقصًا؛
+   ننقذ ما اكتمل من العناصر بدل إهدار الاستدعاء كله */
+function parseJSONLoose(txt){
+  const d=parseJSON(txt);
+  if(d)return d;
+  if(!txt)return null;
+  let s=String(txt).replace(/```json|```/g,'').trim();
+  const cut=s.lastIndexOf('}');
+  if(cut<=0)return null;
+  s=s.slice(0,cut+1);
+  for(const tail of [']}','}]}',']','}']){
+    try{return JSON.parse(s+tail)}catch(e){}
+  }
+  return null;
+}
+function currCandidateText(pages){
+  const idxRe=/(المحتويات|الفهرس|المحتوى)/;
+  const scored=pages.map((lines,i)=>{
+    const txt=(lines||[]).map(l=>normAr(l.rtl)).filter(Boolean);
+    const joined=txt.join('\n');
+    let score=txt.filter(l=>/[:：]/.test(l)||/[.…]{3,}/.test(l)||/^[٠-٩0-9]{1,2}\s*[-–—]/.test(l)).length;
+    if(idxRe.test(joined))score+=100;
+    return {i,joined,score};
+  });
+  const strong=scored.filter(p=>p.score>=3).sort((a,b)=>b.score-a.score).slice(0,14).sort((a,b)=>a.i-b.i);
+  const use=strong.length?strong:scored.slice(0,8);
+  let out='';
+  for(const p of use){
+    if(out.length>11000)break;
+    if(p.joined)out+='\n--- صفحة '+(p.i+1)+' ---\n'+p.joined;
+  }
+  return out.trim();
+}
+async function aiLessonIndex(pages){
+  const text=currCandidateText(pages);
+  if(text.length<40)return null;
+  const prompt=`نص مستخرج من كتاب مدرسي سعودي، وقد يكون ترتيب حروفه مشوّشًا أو فيه محارف تالفة.
+استخرج قائمة الوحدات والدروس كما وردت في الكتاب.
+أعد JSON فقط بلا أي شرح بهذا الشكل:
+{"items":[{"unit":true,"title":"اسم الوحدة"},{"unit":false,"title":"اسم الدرس"}]}
+قواعد ملزمة:
+- رتّب العناصر بترتيب ورودها.
+- لا تخترع دروسًا غير موجودة في النص.
+- احذف أرقام الصفحات وصفوف النقاط.
+- تجاهل المتن وتعليقات الأشكال وصفحات الحقوق والمقدمات الإدارية.
+- احذف أي عنوان غير مقروء بسبب تلف الخط بدل تخمينه.
+- اجعل كل عنوان مختصرًا لا يتجاوز ٨ كلمات؛ إن كان اقتباسًا طويلًا فاكتف بأوله.
+- إن لم تجد فهرسًا واضحًا فأعد {"items":[]}.
+
+النص:
+${text}`;
+  const raw=await aiCall(prompt,2500);
+  if(!raw)return null;
+  const data=parseJSONLoose(raw);
+  const arr=data&&Array.isArray(data.items)?data.items:(Array.isArray(data)?data:null);
+  if(!arr)return null;
+  return arr.map(x=>({unit:!!(x&&x.unit),title:normAr(x&&x.title||'')}))
+            .filter(x=>x.title.length>=3&&x.title.split(/\s+/).length<=20&&!currCorrupt(x.title));
+}
 function currPasteFallback(msg){
   const b=$('curr-import');if(b)b.style.display='block';
   updateCurrPreview();
@@ -4610,14 +4672,23 @@ async function importPdfCurr(input){
       currPasteFallback('هذا الملف صور بلا نص (كتاب ممسوح ضوئيًا)، فلا يمكن استخراج الفهرس منه. الصق توزيع المنهج يدويًا في الصندوق.');
       toast('الملف صور بلا نص');input.value='';return;
     }
-    const items=extractLessonIndex(pages);
+    /* القواعد اليدوية أولًا لأنها فورية ومجانية، والذكاء الاصطناعي حين تعجز */
+    let items=extractLessonIndex(pages);
+    let viaAI=false;
+    if(items.filter(i=>!i.unit).length<4){
+      toast('⏳ أحلّل الفهرس بالذكاء الاصطناعي...');
+      try{
+        const ai=await aiLessonIndex(pages);
+        if(ai&&ai.filter(i=>!i.unit).length>=3){items=ai;viaAI=true}
+      }catch(e){}
+    }
     if(items.length<4){
-      currPasteFallback(`قرأت ${N} صفحة ولم أجد فهرس دروس واضحًا (لا «١-١» ولا «الدرس الأول: …»). بعض الكتب خطوطها بترميز خاص فيخرج النص غير مقروء، والنسخ المعاد ضغطها تفقد صفحات الفهرس. الأفضل: الصق توزيع المنهج الذي توزّعه الإدارة.`);
+      currPasteFallback(`قرأت ${N} صفحة وحلّلتها بالذكاء الاصطناعي، ولم أجد فهرس دروس. غالبًا الكتاب صور ممسوحة، أو خطّه بترميز خاص يُخرج النص غير مقروء. الأفضل: الصق توزيع المنهج الذي توزّعه الإدارة.`);
       toast('تعذّر استخراج الفهرس — الصق التوزيع يدويًا');input.value='';return;
     }
     const ta=$('curr-text');ta.value=indexToText(items);
     $('curr-import').style.display='block';updateCurrPreview();
-    toast(`✓ استُخرج ${items.length} درسًا — راجعها ثم احفظ`);
+    toast(`✓ استُخرج ${items.filter(i=>!i.unit).length} درسًا${viaAI?' بالذكاء الاصطناعي':''} — راجعها ثم احفظ`);
   }catch(e){
     currPasteFallback('تعذّرت قراءة الملف — الصق توزيع المنهج يدويًا في الصندوق.');
     toast('تعذّرت قراءة PDF');
