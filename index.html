@@ -4601,15 +4601,63 @@ function parseJSONLoose(txt){
   }
   return null;
 }
-function currCandidateText(pages){
+function currScorePages(pages){
   const idxRe=/(المحتويات|الفهرس|المحتوى)/;
-  const scored=pages.map((lines,i)=>{
+  return pages.map((lines,i)=>{
     const txt=(lines||[]).map(l=>normAr(l.rtl)).filter(Boolean);
     const joined=txt.join('\n');
     let score=txt.filter(l=>/[:：]/.test(l)||/[.…]{3,}/.test(l)||/^[٠-٩0-9]{1,2}\s*[-–—]/.test(l)).length;
     if(idxRe.test(joined))score+=100;
     return {i,joined,score};
   });
+}
+/* صفحات نرجّح أنها الفهرس؛ وإن خلا الكتاب من نص (ممسوح ضوئيًا)
+   نعود إلى المواضع المعتادة للفهرس في أوائل الكتاب */
+function currCandidatePageNos(pages,max){
+  const strong=currScorePages(pages).filter(p=>p.score>=3).sort((a,b)=>b.score-a.score).slice(0,max||4).sort((a,b)=>a.i-b.i);
+  if(strong.length)return strong.map(p=>p.i+1);
+  const guess=[3,4,5,6,7,2].slice(0,max||4).filter(n=>n<=Math.max(pages.length,1)||!pages.length);
+  return guess;
+}
+/* رسم الصفحة صورةً: الكتب الممسوحة ضوئيًا بلا نص، والكتب ذات الخط التالف
+   يخرج نصها مشوّهًا بينما صورتها سليمة تمامًا */
+async function pdfPageImage(pdf,pageNo){
+  const page=await pdf.getPage(pageNo);
+  const base=page.getViewport({scale:1});
+  const scale=Math.min(2,1500/base.width);
+  const vp=page.getViewport({scale});
+  const c=document.createElement('canvas');
+  c.width=Math.ceil(vp.width);c.height=Math.ceil(vp.height);
+  await page.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;
+  return c.toDataURL('image/jpeg',0.75);
+}
+async function visionLessonIndex(pdf,pageNos){
+  const items=[];
+  const prompt=`هذه صورة صفحة من كتاب مدرسي سعودي.
+إن كانت صفحة فهرس/محتويات فاستخرج الوحدات والدروس كما وردت.
+أعد JSON فقط بلا شرح: {"items":[{"unit":true,"title":"اسم الوحدة"},{"unit":false,"title":"اسم الدرس"}]}
+- احذف أرقام الصفحات وصفوف النقاط.
+- عناوين مختصرة لا تتجاوز ٨ كلمات.
+- لا تخترع شيئًا غير مكتوب في الصورة.
+- إن لم تكن صفحة فهرس فأعد {"items":[]}.`;
+  for(const n of pageNos){
+    let url=null;
+    try{url=await pdfPageImage(pdf,n)}catch(e){continue}
+    let raw=null;
+    try{raw=await aiCallVision(prompt,url)}catch(e){}
+    const d=parseJSONLoose(raw);
+    const arr=d&&Array.isArray(d.items)?d.items:null;
+    if(arr)arr.forEach(x=>{
+      const t=normAr(x&&x.title||'');
+      if(t.length>=3&&t.split(/\s+/).length<=20&&!currCorrupt(t))items.push({unit:!!(x&&x.unit),title:t});
+    });
+    if(items.filter(i=>!i.unit).length>=6)break;
+  }
+  const seen=new Set();
+  return items.filter(e=>{const k=(e.unit?'u:':'l:')+e.title.replace(/\s+/g,'');if(seen.has(k))return false;seen.add(k);return true});
+}
+function currCandidateText(pages){
+  const scored=currScorePages(pages);
   const strong=scored.filter(p=>p.score>=3).sort((a,b)=>b.score-a.score).slice(0,14).sort((a,b)=>a.i-b.i);
   const use=strong.length?strong:scored.slice(0,8);
   let out='';
@@ -4668,27 +4716,29 @@ async function importPdfCurr(input){
       pages.push(pdfLines(c.items));
       if(p%40===0){toast(`⏳ قراءة الكتاب… ${p}/${N}`);await new Promise(r=>setTimeout(r,0))}
     }
-    if(!anyText){
-      currPasteFallback('هذا الملف صور بلا نص (كتاب ممسوح ضوئيًا)، فلا يمكن استخراج الفهرس منه. الصق توزيع المنهج يدويًا في الصندوق.');
-      toast('الملف صور بلا نص');input.value='';return;
+    const lessonsOf=a=>(a||[]).filter(i=>!i.unit).length;
+    let items=[],via='';
+    /* ١) قراءة صورة صفحة الفهرس — هي المرجع الأصدق: استخراج النص يفقد
+          حروفًا ويشوّهها في الكتب ذات الخطوط الخاصة، بينما الصورة سليمة */
+    toast('⏳ أقرأ صفحات الفهرس...');
+    try{const vi=await visionLessonIndex(pdf,currCandidatePageNos(pages,4));if(lessonsOf(vi)>=3){items=vi;via=' بقراءة الصور'}}catch(e){}
+    /* ٢) نص الكتاب بالذكاء الاصطناعي حين تتعذّر قراءة الصور */
+    if(lessonsOf(items)<3&&anyText){
+      toast('⏳ أحلّل نص الفهرس...');
+      try{const ai=await aiLessonIndex(pages);if(lessonsOf(ai)>=3){items=ai;via=' بالذكاء الاصطناعي'}}catch(e){}
     }
-    /* القواعد اليدوية أولًا لأنها فورية ومجانية، والذكاء الاصطناعي حين تعجز */
-    let items=extractLessonIndex(pages);
-    let viaAI=false;
-    if(items.filter(i=>!i.unit).length<4){
-      toast('⏳ أحلّل الفهرس بالذكاء الاصطناعي...');
-      try{
-        const ai=await aiLessonIndex(pages);
-        if(ai&&ai.filter(i=>!i.unit).length>=3){items=ai;viaAI=true}
-      }catch(e){}
+    /* ٣) القواعد اليدوية — تعمل بلا إنترنت */
+    if(lessonsOf(items)<3){
+      const r=extractLessonIndex(pages);
+      if(lessonsOf(r)>=3){items=r;via=''}
     }
-    if(items.length<4){
-      currPasteFallback(`قرأت ${N} صفحة وحلّلتها بالذكاء الاصطناعي، ولم أجد فهرس دروس. غالبًا الكتاب صور ممسوحة، أو خطّه بترميز خاص يُخرج النص غير مقروء. الأفضل: الصق توزيع المنهج الذي توزّعه الإدارة.`);
+    if(lessonsOf(items)<3){
+      currPasteFallback(`قرأت ${N} صفحة، وحلّلتها نصًّا وصورةً بالذكاء الاصطناعي، ولم أجد فهرس دروس. الأفضل: الصق توزيع المنهج الذي توزّعه الإدارة.`);
       toast('تعذّر استخراج الفهرس — الصق التوزيع يدويًا');input.value='';return;
     }
     const ta=$('curr-text');ta.value=indexToText(items);
     $('curr-import').style.display='block';updateCurrPreview();
-    toast(`✓ استُخرج ${items.filter(i=>!i.unit).length} درسًا${viaAI?' بالذكاء الاصطناعي':''} — راجعها ثم احفظ`);
+    toast(`✓ استُخرج ${lessonsOf(items)} درسًا${via} — راجعها ثم احفظ`);
   }catch(e){
     currPasteFallback('تعذّرت قراءة الملف — الصق توزيع المنهج يدويًا في الصندوق.');
     toast('تعذّرت قراءة PDF');
