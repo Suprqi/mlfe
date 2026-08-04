@@ -2600,8 +2600,7 @@ function doLogin(){
 }
 function forgotPassword(){
   customConfirm('ما فيه استرجاع لكلمة المرور محليًا (ما فيه سيرفر يرسل بريد استرجاع). الخيار الوحيد هو حذف كل البيانات المحفوظة على الجهاز والبدء من جديد. متابعة؟',()=>{
-    try{localStorage.removeItem(STORAGE_KEY)}catch(e){}
-    location.reload();
+    wipeAllData();
   });
 }
 function downloadBackup(){
@@ -2633,8 +2632,7 @@ function checkDeleteConfirmText(){
 function confirmDeleteAll(){
   if($('delete-confirm-input').value.trim()!=='حذف')return;
   customConfirm('⚠️ تأكيد أخير: سيُحذف كل شي نهائيًا من هذا الجهاز ولا يمكن استرجاعه. متابعة؟',()=>{
-    try{localStorage.removeItem(STORAGE_KEY)}catch(e){}
-    location.reload();
+    wipeAllData();
   });
 }
 function closeThemeModal(){$('theme-modal').classList.remove('on')}
@@ -6443,7 +6441,23 @@ function stageValue(){
 function moeHeader(){return `<div class="moe"><div class="r">المملكة العربية السعودية<br>وزارة التعليم<br>إدارة تعليم ${S.region}<br>المدرسة: ${S.school||'—'}</div><div class="c">${S.logo?`<div class="crest" style="background:none">${docLogo(false)}</div>`:'<div class="crest">🏫</div>'}</div><div class="l">المرحلة: ${stageValue()}<br>الصف: ${S.grade||'—'}<br>الفصل الدراسي: ${S.term||'—'}<br>العام الدراسي: ${yearLabel()}</div></div>`}
 const STORAGE_KEY='malaffi_state_v1';
 let _quotaWarned=false;
+/* الحفظ التلقائي مربوط بـ beforeunload/pagehide، فكان المسح ثم إعادة التحميل
+   يستدعي الحفظ أثناء الخروج فيعيد كتابة الحالة من الذاكرة ويرجع كل شيء.
+   نوقف الحفظ نهائيًا قبل المسح. */
+let _wiping=false,_autoSaveTimer=null;
+function wipeAllData(){
+  _wiping=true;
+  if(_autoSaveTimer){clearInterval(_autoSaveTimer);_autoSaveTimer=null}
+  window.removeEventListener('beforeunload',saveState);
+  window.removeEventListener('pagehide',saveState);
+  try{
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(STORAGE_KEY+'__before_demo');
+  }catch(e){}
+  location.reload();
+}
 function saveState(){
+  if(_wiping)return false;
   try{localStorage.setItem(STORAGE_KEY,JSON.stringify(S));_quotaWarned=false;return true}
   catch(e){
     if(!_quotaWarned){_quotaWarned=true;
@@ -6516,7 +6530,7 @@ if(_restored&&S.name){
   document.getElementById('ob-name').focus();
 }
 checkDueReminders();scheduleNotifs();
-setInterval(saveState,4000);
+_autoSaveTimer=setInterval(saveState,4000);
 window.addEventListener('beforeunload',saveState);
 window.addEventListener('pagehide',saveState);
 </script>
