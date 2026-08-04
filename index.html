@@ -148,7 +148,7 @@ input,select,textarea{font-family:inherit;font-size:1rem}
 .ai-box .ai-head b{font-family:'Reem Kufi';color:var(--purple);font-size:1.1rem}
 .ai-box .ai-head small{display:block;color:var(--ink-soft);font-size:.78rem}
 .ai-row{display:flex;gap:10px}
-.ai-row input{flex:1;padding:12px 14px;border:1.5px solid #D9C5E6;border-radius:12px;background:#fff}
+.ai-row input{flex:1;min-width:0;padding:12px 14px;border:1.5px solid #D9C5E6;border-radius:12px;background:#fff}
 .picker{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:6px}
 .chip{padding:10px 18px;border:1.5px solid var(--line);border-radius:13px;background:#fff;font-weight:500;font-size:.92rem;transition:.18s;color:var(--ink-soft);display:flex;align-items:center;gap:8px}
 .chip:hover{border-color:var(--teal);color:var(--teal)}
@@ -220,7 +220,9 @@ input,select,textarea{font-family:inherit;font-size:1rem}
 .lesson-card .lh .chev{transition:.2s;color:var(--teal)}
 .lesson-card.open .lh .chev{transform:rotate(180deg)}
 .add-line{display:flex;gap:10px;margin-top:14px}
-.add-line input{flex:1;padding:11px 14px;border:1.5px solid var(--line);border-radius:12px;background:#fff}
+/* min-width الافتراضي في فلكس هو auto، فيرفض الحقل النزول تحت عرضه الطبيعي
+   (~200px) فيتجاوز الصف عرض الشاشة ويُزيح الصفحة كلها في الجوال */
+.add-line input{flex:1;min-width:0;padding:11px 14px;border:1.5px solid var(--line);border-radius:12px;background:#fff}
 .tbl-edit{width:100%;border-collapse:collapse;margin-top:8px;font-size:.85rem}
 .tbl-edit th{background:var(--teal);color:#fff;padding:8px;font-weight:600}
 .tbl-edit td{border:1px solid var(--line);padding:4px}
