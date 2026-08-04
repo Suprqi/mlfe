@@ -4501,18 +4501,26 @@ function entryOf(raw){
 /* الكتب الإنسانية تكتب «الوحدة الأولى: العنوان» و«الدرس الأول: العنوان».
    بعض الكتب يتلف فيها ترميز الكلمة الترتيبية (ا䐣لول) بينما يبقى العنوان سليمًا،
    لذا نرتكز على النقطتين لا على الكلمة الترتيبية. */
-const CURR_ORD=/^(الوحدة|الدرس|درس)\s*([^:：]{0,25})[:：]\s*(.{3,})$/;
+/* كلمات المدخلات تختلف باختلاف المادة: الوحدة/الدرس في العلوم والاجتماعيات،
+   والحديث/النص/الموضوع في كتب الشريعة واللغة */
+const CURR_KW='الوحدة|الفصل|الباب|الدرس|درس|الحديث|النص|الموضوع|المهارة';
+const CURR_ORD=new RegExp('^('+CURR_KW+')\\s*([^:：]{0,25})[:：]\\s*(.{3,})$');
+const CURR_UNIT_KW=/^(الوحدة|الفصل|الباب)$/;
 function ordEntries(line){
   const out=[];
   /* التطويل يُزال أولًا وإلا لم ينطبق الفصل على «الـدرس» */
-  normAr(line).split(/(?=(?:الوحدة|الدرس)\s)/).forEach(part=>{
+  normAr(line).split(new RegExp('(?=(?:'+CURR_KW+')\\s)')).forEach(part=>{
     const m=normAr(part).match(CURR_ORD);
     if(!m)return;
+    const kw=m[1];
     /* تُزال النقاط أولًا ثم رقم الصفحة، وإلا حَجَبت النقاطُ الرقمَ عن الحذف */
     let title=currStripPage(String(m[3]).replace(/[.…·]{2,}.*$/,'')).trim();
     if(!title||title.length<3||currCorrupt(title)||CURR_BODY.test(title))return;
-    if(title.split(/\s+/).length>12)return;
-    out.push({unit:m[1]==='الوحدة',title});
+    /* نصوص الأحاديث اقتباسات طويلة، ووحدها بلا ترقيمها تلتبس على المعلم */
+    const isHadith=(kw==='الحديث'||kw==='النص');
+    if(title.split(/\s+/).length>(isHadith?20:12))return;
+    if(isHadith)title=(kw+' '+(m[2]||'').trim()).trim()+': '+title;
+    out.push({unit:CURR_UNIT_KW.test(kw),title});
   });
   return out;
 }
