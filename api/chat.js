@@ -29,7 +29,8 @@ module.exports = async (req, res) => {
       },
       body: JSON.stringify({
         model: 'claude-sonnet-5',
-        max_tokens: max_tokens || 1000,
+        // سقف ١٠٠٠ كان يقطع مخرجات الاختبارات؛ ونحدّ الأعلى لأن النقطة عامة
+        max_tokens: Math.min(Number(max_tokens) || 4000, 8000),
         messages
       })
     });

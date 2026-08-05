@@ -2240,7 +2240,10 @@ async function aiCall(prompt,maxTokens){
       method:"POST",
       headers:{"Content-Type":"application/json"},
       body:JSON.stringify({
-        max_tokens:maxTokens||1000,
+        /* الردود تتضمن كتل تفكير تستهلك من السقف، وسقف ١٠٠٠ كان يقطع
+           مخرجات الاختبارات والنماذج فيفشل تحليل JSON ويسقط إلى القوالب
+           الجاهزة بصمت. الفوترة على ما يُنتَج فعلًا لا على السقف. */
+        max_tokens:maxTokens||4000,
         messages:[{role:"user",content:prompt}]
       })
     });
@@ -2278,7 +2281,8 @@ async function aiCallVision(prompt,dataUrl){
         prompt: prompt,
         mediaType: m[1],
         imageData: m[2],
-        max_tokens:1200
+        /* قراءة فهرس كتاب أو شهادة قد تتجاوز ١٢٠٠ توكن فتُقطع بصمت */
+        max_tokens:4000
       })
     });
 
