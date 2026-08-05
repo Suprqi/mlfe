@@ -3076,14 +3076,14 @@ function addPrepEvidence(){
   if(!l||!(l.ai||l.obj)){toast('ولّد تحضيرًا أولًا');return}
   const idx=guessStd('تحضير خطة التعلم');
   S.standards[idx].ev.push({title:'تحضير درس: '+(l.title||'—')+' ('+prepGradeVal()+')',type:'تحضير معتمد',date:new Date().toISOString().slice(0,10),note:'تحضير متكامل (أهداف، استراتيجيات، تقويم، إثراء وعلاج) لمادة '+S.subject+' — '+prepGradeVal()+'.',result:'وثّق التزام المعلم بإعداد وتنفيذ خطة التعلم وفق النموذج المعتمد.'});
-  renderStds&&renderStds();renderMetrics();logAct('📁','حوّلت تحضيرًا لشاهد');
+  renderStds&&renderStds();renderMetrics();
   toast('✓ أُضيف التحضير شاهدًا تحت: '+S.standards[idx].t);
 }
 function addCertsEvidence(){
   if(!S.certNames.length){toast('ولّد شهادات أولًا');return}
   const idx=guessStd('تحفيز نتائج المتعلمين');
   S.standards[idx].ev.push({title:'تكريم وتحفيز الطلاب — '+S.certNames.length+' شهادة',type:'شهادات تحفيز',date:new Date().toISOString().slice(0,10),note:'منح '+S.certNames.length+' شهادة شكر وتفوق لطلاب '+S.subject+' تحفيزًا لهم على التميز والمواظبة.',result:'رفع الدافعية وتعزيز التنافس الإيجابي بين الطلاب.'});
-  renderStds&&renderStds();renderMetrics();logAct('📁','حوّلت الشهادات لشاهد');
+  renderStds&&renderStds();renderMetrics();
   toast('✓ أُضيفت الشهادات شاهدًا تحت: '+S.standards[idx].t);
 }
 function addActivitiesEvidence(){
@@ -3092,13 +3092,13 @@ function addActivitiesEvidence(){
   const summary=Object.entries(byType).map(([t,n])=>t+' ('+n+')').join('، ');
   const idx=guessStd('نشاط أنشطة فعاليات');
   S.standards[idx].ev.push({title:'تنفيذ الأنشطة المدرسية — '+S.activities.length+' نشاط',type:'سجل أنشطة',date:new Date().toISOString().slice(0,10),note:'أنشطة منفّذة موزعة: '+summary+' — بإجمالي مشاركين '+S.activities.reduce((a,r)=>a+(parseInt(r.participants)||0),0)+'.',result:'تفعيل الأنشطة الطلابية وتعزيز مشاركة الطلاب في الحياة المدرسية.'});
-  renderStds&&renderStds();renderMetrics();logAct('📁','حوّلت الأنشطة لشاهد');
+  renderStds&&renderStds();renderMetrics();
   toast('✓ أُضيفت الأنشطة شاهدًا تحت: '+S.standards[idx].t);
 }
 function addRadioEvidence(){
   const idx=guessStd('إذاعة نشاط فعاليات');
   S.standards[idx].ev.push({title:'إعداد وتنفيذ برنامج الإذاعة المدرسية',type:'برنامج إذاعي',date:new Date().toISOString().slice(0,10),note:'إعداد برنامج إذاعة مدرسية متكامل (قرآن، حديث، حكمة، هل تعلم، دعاء) وتنفيذه بإشراف مباشر.',result:'إثراء الطابور الصباحي وتنمية مهارات الطلاب في الإلقاء والتقديم.'});
-  renderStds&&renderStds();renderMetrics();logAct('📁','حوّلت الإذاعة لشاهد');
+  renderStds&&renderStds();renderMetrics();
   toast('✓ أُضيفت الإذاعة شاهدًا تحت: '+S.standards[idx].t);
 }
 function openExtraForWeak(){
@@ -3138,7 +3138,7 @@ function addCircular(){
   S.circulars.unshift({num:$('circ-num').value.trim(),date:$('circ-date').value.trim(),from:$('circ-from').value.trim(),cat:cat,subject:subject||'تعميم مصوّر',text:$('circ-text').value.trim(),img:_circImg,ts:Date.now()});
   ['circ-num','circ-date','circ-from','circ-subject','circ-text'].forEach(id=>$(id).value='');
   _circImg='';$('circ-img-status').textContent='';$('circ-cat-custom').value='';$('circ-cat-custom').style.display='none';$('circ-cat').value='عام';
-  logAct('📨','أرشفت تعميمًا جديدًا');
+  
   renderCirculars();saveState();
   toast('✓ حُفظ التعميم بالأرشيف');
 }
