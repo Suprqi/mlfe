@@ -175,6 +175,9 @@ input,select,textarea{font-family:inherit;font-size:1rem}
 .dp-field{width:100%;padding:13px 16px;border:1.5px solid var(--line);border-radius:12px;background:#fff;text-align:right;color:var(--ink);font-size:.95rem;cursor:pointer;font-family:inherit}
 .dp-field:hover{border-color:var(--teal)}
 .dp-overlay{display:none;position:fixed;inset:0;background:rgba(10,30,28,.55);z-index:200;align-items:center;justify-content:center;padding:20px}
+/* نافذة التأكيد تُفتح فوق نافذة أخرى أحيانًا، وهي أسبق في الـDOM فكانت
+   تُرسم خلفها بنفس z-index فلا تُرى ولا تُضغط — نرفعها فوق الجميع */
+#custom-confirm-modal{z-index:320}
 .dp-overlay.on{display:flex}
 .dp-card{background:#fff;border-radius:20px;padding:22px;width:100%;max-width:380px;box-shadow:0 30px 70px -20px rgba(0,0,0,.4)}
 .dp-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
@@ -2631,6 +2634,8 @@ function checkDeleteConfirmText(){
 }
 function confirmDeleteAll(){
   if($('delete-confirm-input').value.trim()!=='حذف')return;
+  /* نغلق نافذة الحذف أولًا حتى لا تحجب نافذة التأكيد */
+  closeDeleteDataModal();
   customConfirm('⚠️ تأكيد أخير: سيُحذف كل شي نهائيًا من هذا الجهاز ولا يمكن استرجاعه. متابعة؟',()=>{
     wipeAllData();
   });
@@ -6445,15 +6450,24 @@ let _quotaWarned=false;
    يستدعي الحفظ أثناء الخروج فيعيد كتابة الحالة من الذاكرة ويرجع كل شيء.
    نوقف الحفظ نهائيًا قبل المسح. */
 let _wiping=false,_autoSaveTimer=null;
-function wipeAllData(){
+async function wipeAllData(){
   _wiping=true;
   if(_autoSaveTimer){clearInterval(_autoSaveTimer);_autoSaveTimer=null}
   window.removeEventListener('beforeunload',saveState);
   window.removeEventListener('pagehide',saveState);
+  /* نمسح تخزين الموقع كاملًا لا مفاتيحنا فقط، حتى لا يبقى أثر من نسخة أقدم */
+  try{localStorage.clear()}
+  catch(e){try{localStorage.removeItem(STORAGE_KEY);localStorage.removeItem(STORAGE_KEY+'__before_demo')}catch(_e){}}
+  try{sessionStorage.clear()}catch(e){}
+  /* دفاعيًا لأي تخزين يُضاف لاحقًا؛ ننتظرها قبل إعادة التحميل بسقف زمني */
+  const jobs=[];
   try{
-    localStorage.removeItem(STORAGE_KEY);
-    localStorage.removeItem(STORAGE_KEY+'__before_demo');
+    if(window.indexedDB&&indexedDB.databases)jobs.push(indexedDB.databases().then(dbs=>Promise.all((dbs||[]).map(d=>d&&d.name?new Promise(res=>{const r=indexedDB.deleteDatabase(d.name);r.onsuccess=r.onerror=r.onblocked=()=>res()}):null))).catch(()=>{}));
   }catch(e){}
+  try{
+    if(window.caches&&caches.keys)jobs.push(caches.keys().then(ks=>Promise.all((ks||[]).map(k=>caches.delete(k).catch(()=>{})))).catch(()=>{}));
+  }catch(e){}
+  try{await Promise.race([Promise.all(jobs),new Promise(r=>setTimeout(r,1500))])}catch(e){}
   location.reload();
 }
 function saveState(){
