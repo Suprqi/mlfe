@@ -236,6 +236,14 @@ input,select,textarea{font-family:inherit;font-size:1rem}
 .doc-toolbar .dt{font-weight:600;color:var(--ink-soft);font-size:.9rem}
 .doc-toolbar .acts{display:flex;gap:9px}
 .doc{padding:40px 44px;direction:rtl;background:#fff}
+/* ترويسة الشعارين المتكرّرة: thead يعيده المتصفح في كل ورقة مطبوعة،
+   بخلاف position:fixed الذي يسقط عن الورقة الأخيرة */
+.print-brand-tbl{width:100%;border-collapse:collapse}
+.print-brand-tbl>thead>tr>th{padding:0 0 8px;border-bottom:1.5px solid var(--line)}
+.print-brand-tbl>tbody>tr>td{padding:10px 0 0}
+/* شعارا صفحات ملف الإنجاز — كل صفحة ورقة مستقلة */
+.pf-brand{position:absolute;top:2.6cqw;right:3.4cqw;left:3.4cqw;z-index:4;display:flex;align-items:center;justify-content:space-between;pointer-events:none}
+.pf-brand img{max-height:6cqw;max-width:16cqw;object-fit:contain}
 .doc .page-break{border-top:2px dashed var(--line);margin:34px 0;position:relative}
 .doc .page-break::after{content:"صفحة جديدة";position:absolute;top:-10px;right:50%;transform:translateX(50%);background:var(--bg);padding:0 12px;font-size:.7rem;color:var(--ink-soft)}
 .doc .cover{text-align:center;padding:30px 0 40px}
@@ -338,13 +346,17 @@ input,select,textarea{font-family:inherit;font-size:1rem}
 .brain-input input::placeholder{color:rgba(255,255,255,.45)}
 .brain-input input:focus{outline:none;border-color:var(--gold);background:rgba(255,255,255,.12)}
 @keyframes spin{to{transform:rotate(360deg)}}
-@media print{.topbar,.subbar,.doc-toolbar,.no-print,.toast,.builder-head,.builder-sub,#pf-theme-bar{display:none!important}body{background:#fff}.main{padding:0;max-width:100%}.doc-wrap{border:none;box-shadow:none}.doc .page-break{page-break-after:always;border:none}.doc .page-break::after{display:none}.cert{page-break-after:always}}
+@media print{.topbar,.subbar,.doc-toolbar,.no-print,.toast,.builder-head,.builder-sub,#pf-theme-bar{display:none!important}
+/* الشعاران يظهران في الترويسة المتكرّرة أعلى كل ورقة، فلا نكرّرهما داخل ترويسة المستند */
+.moe .crest{display:none!important}body{background:#fff}.main{padding:0;max-width:100%}.doc-wrap{border:none;box-shadow:none}.doc .page-break{page-break-after:always;border:none}.doc .page-break::after{display:none}.cert{page-break-after:always}}
 .cert{width:100%;box-sizing:border-box;padding:14px 0 28px}
 .cert:last-child{page-break-after:auto}
 .cert-frame{position:relative;width:100%;overflow:hidden;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,.08)}
 .cert-bg-img{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;z-index:0}
 .cert-inner{position:absolute;inset:0;z-index:1;padding:12% 8% 4%;text-align:center;display:flex;flex-direction:column;align-items:center;line-height:1.3;overflow:hidden;box-sizing:border-box}
 .cert-bism{font-size:.62rem;color:var(--ink-soft);letter-spacing:.2px;margin-top:1%;flex-shrink:0}
+.cert-brand{display:flex;align-items:center;justify-content:space-between;width:100%;flex-shrink:0}
+.cert-brand img{max-width:15%;max-height:40px;object-fit:contain}
 .cert-title-row{display:flex;align-items:center;gap:6px;margin:1.5% 0 0;width:100%;justify-content:center;flex-shrink:0}
 .cert-title-row .ln{flex:0 0 20px;height:1px;background:var(--cert-ink);opacity:.5}
 .cert-orn{color:var(--cert-ink);font-size:.5rem;transform:rotate(45deg);display:inline-block;opacity:.75}
@@ -599,11 +611,32 @@ input,select,textarea{font-family:inherit;font-size:1rem}
     </div>
     <div class="grid2">
       <div class="field"><label>الفصل الدراسي</label>
-        <select id="ob-term"><option>الفصل الدراسي الأول</option><option>الفصل الدراسي الثاني</option><option>الفصل الدراسي الثالث</option></select>
+        <select id="ob-term"><option>الفصل الدراسي الأول</option><option>الفصل الدراسي الثاني</option></select>
       </div>
       <div class="field"><label>التقويم المعتمد</label>
         <div class="seg" id="ob-cal"><button class="on" data-c="hijri" onclick="pickCal(this)">هجري</button><button data-c="greg" onclick="pickCal(this)">ميلادي</button></div>
       </div>
+    </div>
+    <div class="field" style="margin-top:4px">
+      <label>الشعارات <small style="font-weight:400;color:var(--ink-soft)">(تظهر في كل ورقة تطبعها — الاختبارات والشهادات وملف الإنجاز)</small></label>
+      <div style="display:flex;gap:14px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div id="ob-moe-prev" style="width:54px;height:54px;border-radius:12px;border:1.5px dashed var(--line);display:grid;place-items:center;overflow:hidden;flex-shrink:0;font-size:22px">🏛️</div>
+          <div>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('ob-moe-file').click()">شعار الوزارة</button>
+            <div style="font-size:.72rem;color:var(--ink-soft);margin-top:3px">أو إدارة التعليم</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div id="ob-logo-prev" style="width:54px;height:54px;border-radius:12px;border:1.5px dashed var(--line);display:grid;place-items:center;overflow:hidden;flex-shrink:0;font-size:22px">🏫</div>
+          <div>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('ob-logo-file').click()">شعار مدرستك</button>
+            <div style="font-size:.72rem;color:var(--ink-soft);margin-top:3px">اختياري — تقدر تضيفه لاحقًا</div>
+          </div>
+        </div>
+      </div>
+      <input type="file" id="ob-moe-file" accept="image/*" style="display:none" onchange="uploadMoeLogo(this)">
+      <input type="file" id="ob-logo-file" accept="image/*" style="display:none" onchange="uploadLogo(this)">
     </div>
     <button class="btn btn-primary btn-block btn-lg" onclick="finishOnboarding()" style="margin-top:10px">يلا نبدأ ✨</button>
   </div>
@@ -844,7 +877,7 @@ input,select,textarea{font-family:inherit;font-size:1rem}
         </div>
         <div class="grid2">
           <div class="field"><label>الفصل الدراسي</label>
-            <select id="pf-term"><option>الفصل الدراسي الأول</option><option>الفصل الدراسي الثاني</option><option>الفصل الدراسي الثالث</option></select>
+            <select id="pf-term"><option>الفصل الدراسي الأول</option><option>الفصل الدراسي الثاني</option></select>
           </div>
           <div class="field"><label>التقويم المعتمد</label>
             <div class="seg" id="pf-cal"><button class="on" data-c="hijri" onclick="pfPickCal(this)">هجري</button><button data-c="greg" onclick="pfPickCal(this)">ميلادي</button></div>
@@ -2124,15 +2157,66 @@ const S={gender:'m',role:'teacher',customRoles:{},calendar:'hijri',theme:'green'
   thresholds:{low:50,high:90},
   formsGenerated:0,
   profile:{bio:'',vision:'',goals:'',intro:'',closing:''},
-  curricula:{},units:[],logo:'',rubric:''};
-function uploadLogo(input){const f=input.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{S.logo=e.target.result;paintLogoPrev()};r.readAsDataURL(f);input.value=''}
-function clearLogo(){S.logo='';paintLogoPrev()}
-function paintLogoPrev(){const p=$('logo-prev');if(p)p.innerHTML=S.logo?`<img src="${S.logo}" style="width:100%;height:100%;object-fit:contain">`:'🏫';const c=$('logo-clear');if(c)c.style.display=S.logo?'inline-flex':'none'}
+  curricula:{},units:[],logo:'',moeLogo:'',rubric:''};
+/* الشعارات تُطبع في كل ورقة، ونصغّرها لأنها تُحفظ مع الحالة في تخزين المتصفح */
+async function uploadLogo(input){const f=input.files[0];if(!f)return;const raw=await readAsDataURL(f);S.logo=await shrinkImage(raw,320,0.9);saveState();paintLogoPrev();input.value=''}
+function clearLogo(){S.logo='';saveState();paintLogoPrev()}
+function paintLogoPrev(){
+  const img=S.logo?`<img src="${S.logo}" style="width:100%;height:100%;object-fit:contain">`:'🏫';
+  ['logo-prev','ob-logo-prev'].forEach(id=>{const p=$(id);if(p)p.innerHTML=img});
+  const c=$('logo-clear');if(c)c.style.display=S.logo?'inline-flex':'none';
+}
+async function uploadMoeLogo(input){const f=input.files[0];if(!f)return;const raw=await readAsDataURL(f);S.moeLogo=await shrinkImage(raw,320,0.9);saveState();paintMoeLogoPrev();input.value=''}
+function clearMoeLogo(){S.moeLogo='';saveState();paintMoeLogoPrev()}
+function paintMoeLogoPrev(){
+  const img=S.moeLogo?`<img src="${S.moeLogo}" style="width:100%;height:100%;object-fit:contain">`:'🏛️';
+  ['moe-logo-prev','ob-moe-prev'].forEach(id=>{const p=$(id);if(p)p.innerHTML=img});
+  const c=$('moe-logo-clear');if(c)c.style.display=S.moeLogo?'inline-flex':'none';
+}
 function uploadPhoto(input){const f=input.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{S.photo=e.target.result;paintPhotoPrev()};r.readAsDataURL(f);input.value=''}
 function clearPhoto(){S.photo='';paintPhotoPrev()}
 function paintPhotoPrev(){const p=$('photo-prev');if(p)p.innerHTML=S.photo?`<img src="${S.photo}" style="width:100%;height:100%;object-fit:cover">`:'🙂';const c=$('photo-clear');if(c)c.style.display=S.photo?'inline-flex':'none'}
 function paintStagePreview(){const el=$('stage-preview');if(!el)return;const g=$('pf-grade')?$('pf-grade').value:S.grade;let stage='—';if(/ابتدائي/.test(g))stage='المرحلة الابتدائية';else if(/متوسط/.test(g))stage='المرحلة المتوسطة';else if(/ثانوي/.test(g))stage='المرحلة الثانوية';el.textContent=stage}
 function docLogo(big){return S.logo?`<img src="${S.logo}" style="${big?'max-width:90px;max-height:90px':'max-width:50px;max-height:50px'};object-fit:contain">`:''}
+/* شعارا الشهادة أعلى الإطار */
+function certBrand(){
+  if(!S.moeLogo&&!S.logo)return '';
+  return `<div class="cert-brand">${S.moeLogo?`<img src="${S.moeLogo}">`:'<span></span>'}${S.logo?`<img src="${S.logo}">`:'<span></span>'}</div>`;
+}
+function docMoeLogo(big){return S.moeLogo?`<img src="${S.moeLogo}" style="${big?'max-width:90px;max-height:90px':'max-width:50px;max-height:50px'};object-fit:contain">`:''}
+/* المستندات المتدفّقة تُلفّ وقت الطباعة في جدول ترويسته thead، فيعيده
+   المتصفح على كل ورقة. نلفّها عند beforeprint ونفكّها بعده حتى لا تتغيّر الشاشة. */
+function brandWrapForPrint(){
+  if(!S.moeLogo&&!S.logo)return;
+  document.querySelectorAll('.doc:not(.pf-doc)').forEach(function(d){
+    if(d.dataset.brandWrapped||!d.innerHTML.trim())return;
+    var tbl=document.createElement('table');
+    tbl.className='print-brand-tbl';
+    tbl.innerHTML='<thead><tr><th>'+brandBar(42)+'</th></tr></thead><tbody><tr><td></td></tr></tbody>';
+    var td=tbl.querySelector('tbody td');
+    while(d.firstChild)td.appendChild(d.firstChild);
+    d.appendChild(tbl);
+    d.dataset.brandWrapped='1';
+  });
+}
+function brandUnwrapAfterPrint(){
+  document.querySelectorAll('.doc[data-brand-wrapped]').forEach(function(d){
+    var td=d.querySelector('.print-brand-tbl>tbody>tr>td');
+    var tbl=d.querySelector('.print-brand-tbl');
+    if(td)while(td.firstChild)d.appendChild(td.firstChild);
+    if(tbl)tbl.remove();
+    delete d.dataset.brandWrapped;
+  });
+}
+window.addEventListener('beforeprint',brandWrapForPrint);
+window.addEventListener('afterprint',brandUnwrapAfterPrint);
+/* شريط الشعارين المستخدم في كل مستند وفي ترويسة الطباعة المتكرّرة */
+function brandBar(size){
+  const s=size||46;
+  if(!S.moeLogo&&!S.logo)return '';
+  const box=u=>`<div style="width:${s}px;height:${s}px;display:grid;place-items:center;overflow:hidden;flex:0 0 auto">${u?`<img src="${u}" style="max-width:100%;max-height:100%;object-fit:contain">`:''}</div>`;
+  return `<div class="brand-bar" style="display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%">${box(S.moeLogo)}${box(S.logo)}</div>`;
+}
 const evTypes={'صورة نشاط':'📷','عمل طالب':'✏️','شهادة':'🎓','ملف PDF':'📄','رابط':'🔗','فيديو':'🎬','نص/تقرير':'📝','جائزة':'🏆','عرض تقديمي':'🖼️'};
 const prepData={};let curPrepTab='daily';let curForm='';
 
@@ -4095,7 +4179,11 @@ function pfPage(inner,opt){
   const foot=opt.foot
     ?`<div class="pf-foot"><div class="pf-foot-line"></div><div class="pf-foot-in"><span class="pf-foot-brand">ملف إنجاز</span><span>${pfN}</span></div><div class="pf-foot-bar"></div></div>`
     :`<div class="pf-num">${pfN}</div>`;
-  return `<div class="pf-page">${opt.wave?pfArt():''}${inner}${foot}</div>`;
+  /* كل صفحة هنا ورقة مستقلة، فالشعاران يوضعان فيها مباشرة */
+  const brand=(S.moeLogo||S.logo)
+    ?`<div class="pf-brand">${S.moeLogo?`<img src="${S.moeLogo}">`:'<span></span>'}${S.logo?`<img src="${S.logo}">`:'<span></span>'}</div>`
+    :'';
+  return `<div class="pf-page">${opt.wave?pfArt():''}${brand}${inner}${foot}</div>`;
 }
 function generateAchievement(){
   const totalEv=S.standards.reduce((a,s)=>a+s.ev.length,0);
@@ -4217,7 +4305,8 @@ function generateAchievement(){
   if(hasClosing)html+=pfPage(`<div class="pf-text"><h3>التأمل الذاتي الختامي</h3><div class="lead">${esc(T(P.closing))}</div></div>`,{wave:false});
 
   /* (8) ملحق تفصيلي */
-  html+=`<div class="pf-apx pf-apx-flow">
+  /* الملحق ورقة مستقلة أيضًا وليس pf-page، فيحتاج الشعارين صراحةً */
+  html+=`<div class="pf-apx pf-apx-flow">${(S.moeLogo||S.logo)?`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2cqw">${S.moeLogo?`<img src="${S.moeLogo}" style="max-height:6cqw;max-width:16cqw;object-fit:contain">`:'<span></span>'}${S.logo?`<img src="${S.logo}" style="max-height:6cqw;max-width:16cqw;object-fit:contain">`:'<span></span>'}</div>`:''}
     <h3>ملحق: جدول الشواهد التفصيلي</h3>
     <table><tr><th style="width:7%">م</th><th>الشاهد</th><th style="width:22%">الوصف / السياق</th><th style="width:19%">الأثر</th><th style="width:19%">تأمل ذاتي</th></tr>
     ${secs.map((sec,i)=>`<tr><td colspan="5" style="background:var(--pf-tint2);font-weight:700;color:var(--pf-dark)">${i+1}. ${esc(sec.s.t)}${pfWeight(sec.s)!=null?' — الوزن '+pfWeight(sec.s)+'٪':''} — ${sec.s.ev.length} شاهد</td></tr>`+
@@ -5184,6 +5273,7 @@ function renderCustomCertPreview(){
   box.innerHTML=`<div class="cert" style="padding:0"><div class="cert-frame" style="padding-bottom:${p.ratio}%">
     <img class="cert-bg-img" src="${p.img}" alt="">
     <div class="cert-inner" style="--cert-ink:${p.ink}">
+      ${certBrand()}
       <div class="cert-bism">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</div>
       <div class="cert-title-row"><span class="ln"></span><span class="cert-orn">◆</span><span class="cert-title">شهادة شكر وتقدير</span><span class="cert-orn">◆</span><span class="ln"></span></div>
       <div class="cert-lead">يسرّ إدارة المدرسة أن تتقدّم بخالص الشكر والتقدير إلى الطالب</div>
@@ -5242,6 +5332,7 @@ function certHTML(name){
   return `<div class="cert"><div class="cert-frame" style="padding-bottom:${tpl.ratio}%">
     <img class="cert-bg-img" src="${CERT_BG[tpl.k]||tpl.img}" alt="">
     <div class="cert-inner" style="--cert-ink:${tpl.ink}">
+      ${certBrand()}
       <div class="cert-bism">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</div>
       <div class="cert-title-row"><span class="ln"></span><span class="cert-orn">◆</span><span class="cert-title">${title}</span><span class="cert-orn">◆</span><span class="ln"></span></div>
       <div class="cert-lead">يسرّ إدارة ${school} أن تتقدّم بخالص الشكر والتقدير إلى ${studentWord}</div>
@@ -6451,7 +6542,8 @@ function stageValue(){
   if(/ثانوي/.test(g))return 'الثانوية';
   return '—';
 }
-function moeHeader(){return `<div class="moe"><div class="r">المملكة العربية السعودية<br>وزارة التعليم<br>إدارة تعليم ${S.region}<br>المدرسة: ${S.school||'—'}</div><div class="c">${S.logo?`<div class="crest" style="background:none">${docLogo(false)}</div>`:'<div class="crest">🏫</div>'}</div><div class="l">المرحلة: ${stageValue()}<br>الصف: ${S.grade||'—'}<br>الفصل الدراسي: ${S.term||'—'}<br>العام الدراسي: ${yearLabel()}</div></div>`}
+/* الشعاران على الطرفين: الوزارة مع نص الوزارة يمينًا، والمدرسة يسارًا */
+function moeHeader(){return `<div class="moe"><div class="r" style="display:flex;align-items:center;gap:10px">${S.moeLogo?`<div class="crest" style="background:none;flex:0 0 auto">${docMoeLogo(false)}</div>`:''}<div>المملكة العربية السعودية<br>وزارة التعليم<br>إدارة تعليم ${S.region}<br>المدرسة: ${S.school||'—'}</div></div><div class="l" style="display:flex;align-items:center;gap:10px">${S.logo?`<div class="crest" style="background:none;flex:0 0 auto">${docLogo(false)}</div>`:''}<div>المرحلة: ${stageValue()}<br>الصف: ${S.grade||'—'}<br>الفصل الدراسي: ${S.term||'—'}<br>العام الدراسي: ${yearLabel()}</div></div></div>`}
 const STORAGE_KEY='malaffi_state_v1';
 let _quotaWarned=false;
 /* الحفظ التلقائي مربوط بـ beforeunload/pagehide، فكان المسح ثم إعادة التحميل
