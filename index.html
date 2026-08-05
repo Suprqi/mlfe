@@ -684,6 +684,7 @@ input,select,textarea{font-family:inherit;font-size:1rem}
       <div class="dp-head"><b>المزيد</b><button class="btn btn-ghost btn-sm" onclick="closeMoreMenu()">إغلاق</button></div>
       <div id="more-extra-tools"></div>
       <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+        <button class="btn btn-ghost btn-lg" style="justify-content:flex-start" onclick="closeMoreMenu();openCloudModal()">☁️ حسابي والمزامنة</button>
         <button class="btn btn-ghost btn-lg" style="justify-content:flex-start" onclick="closeMoreMenu();logoutApp()">🚪 تسجيل خروج</button>
         <button class="btn btn-ghost btn-lg" style="justify-content:flex-start;color:var(--danger)" onclick="closeMoreMenu();openDeleteDataModal()">🗑️ حذف جميع البيانات</button>
       </div>
@@ -2029,6 +2030,12 @@ input,select,textarea{font-family:inherit;font-size:1rem}
     </div>
   </div>
 </div>
+<div class="dp-overlay" id="cloud-modal">
+  <div class="dp-card" style="max-width:420px">
+    <div class="dp-head"><b>☁️ حسابي والمزامنة</b><button class="btn btn-ghost btn-sm" onclick="closeCloudModal()">إغلاق</button></div>
+    <div id="cloud-body"></div>
+  </div>
+</div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -2633,11 +2640,13 @@ function disableLock(){
   });
 }
 let _customConfirmCb=null;
-function customConfirm(msg,cb){_customConfirmCb=cb;$('custom-confirm-msg').textContent=msg;$('custom-confirm-modal').classList.add('on')}
+let _customCancelCb=null;
+function customConfirm(msg,cb,onCancel){_customConfirmCb=cb;_customCancelCb=onCancel||null;$('custom-confirm-msg').textContent=msg;$('custom-confirm-modal').classList.add('on')}
 function closeCustomConfirm(result){
   $('custom-confirm-modal').classList.remove('on');
-  const cb=_customConfirmCb;_customConfirmCb=null;
+  const cb=_customConfirmCb,no=_customCancelCb;_customConfirmCb=null;_customCancelCb=null;
   if(result&&cb)cb();
+  else if(!result&&no)no();
 }
 function renderLockReminder(){
   const box=$('lock-reminder-box');if(!box)return;
@@ -6572,6 +6581,8 @@ async function wipeAllData(){
 }
 function saveState(){
   if(_wiping)return false;
+  /* الحفظ المحلي أولًا ثم رفع مؤجّل للسحابة إن كان مسجّلًا */
+  if(typeof schedulePush==='function')schedulePush();
   try{localStorage.setItem(STORAGE_KEY,JSON.stringify(S));_quotaWarned=false;return true}
   catch(e){
     if(!_quotaWarned){_quotaWarned=true;
@@ -6644,6 +6655,157 @@ if(_restored&&S.name){
   document.getElementById('ob-name').focus();
 }
 checkDueReminders();scheduleNotifs();
+/* ===== الحساب السحابي: تسجيل دخول ومزامنة ونسخة احتياطية =====
+   المفتاح أدناه عام بطبيعته ومصمَّم للمتصفح؛ الحماية من سياسات RLS
+   في قاعدة البيانات لا من إخفائه. */
+const SUPA_URL='https://athqvuwpqellyqoyhdwx.supabase.co';
+const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF0aHF2dXdwcWVsbHlxb3loZHd4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU5NTUwNDEsImV4cCI6MjEwMTUzMTA0MX0.0OalkU0rCoX1RHGJpbWC_k4tdatNF_e9QCvREmIs5eM';
+let _sb=null,_sbUser=null,_pushTimer=null,_syncing=false;
+function ensureSb(){return new Promise((res,rej)=>{
+  if(_sb)return res(_sb);
+  const make=()=>{_sb=window.supabase.createClient(SUPA_URL,SUPA_KEY,{auth:{persistSession:true,autoRefreshToken:true}});res(_sb)};
+  if(window.supabase&&window.supabase.createClient)return make();
+  const s=document.createElement('script');
+  s.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js';
+  s.onload=make;s.onerror=()=>rej(new Error('تعذّر تحميل مكتبة الحساب — تحقّق من الإنترنت'));
+  document.head.appendChild(s);
+});}
+/* هل في الجهاز بيانات فعلية تستحق الترحيل؟ */
+function localHasData(){
+  return !!(S.name||S.school||(S.students&&S.students.length)||(S.lessons&&S.lessons.length)
+    ||S.standards.reduce((a,s)=>a+s.ev.length,0));
+}
+async function cloudPull(){
+  const sb=await ensureSb();
+  const {data,error}=await sb.from('app_state').select('state,version,updated_at').maybeSingle();
+  if(error)throw error;
+  return data;
+}
+async function cloudPush(){
+  if(!_sbUser)return false;
+  const sb=await ensureSb();
+  const {error}=await sb.from('app_state')
+    .upsert({user_id:_sbUser.id,state:S,device:(navigator.userAgent||'').slice(0,80)},{onConflict:'user_id'});
+  if(error){console.error(error);return false}
+  return true;
+}
+/* الحفظ المحلي يبقى فوريًا، والرفع مؤجّل قليلًا حتى لا نرفع مع كل ضغطة */
+function schedulePush(){
+  if(!_sbUser)return;
+  if(_pushTimer)clearTimeout(_pushTimer);
+  _pushTimer=setTimeout(()=>{cloudPush().then(ok=>{if(ok)renderCloudUI()})},4000);
+}
+async function cloudSyncNow(){
+  if(!_sbUser){toast('سجّل دخولك أولًا');return}
+  _syncing=true;renderCloudUI();
+  const ok=await cloudPush();
+  _syncing=false;renderCloudUI();
+  toast(ok?'✓ رُفعت نسختك للسحابة':'تعذّرت المزامنة — حاول لاحقًا');
+}
+/* عند أول دخول: نوفّق بين بيانات الجهاز وبيانات السحابة بلا أن نفقد أيًّا منهما */
+async function cloudReconcile(){
+  let remote=null;
+  try{remote=await cloudPull()}catch(e){toast('تعذّر جلب بياناتك السحابية');return}
+  const remoteHas=remote&&remote.state&&Object.keys(remote.state).length>3;
+  if(!remoteHas){
+    if(localHasData()){await cloudPush();toast('✓ رُفعت بيانات جهازك للسحابة')}
+    else await cloudPush();
+    return;
+  }
+  if(!localHasData()){applyRemote(remote);toast('✓ نُزّلت بياناتك من السحابة');return}
+  const when=remote.updated_at?fmtDate(remote.updated_at):'—';
+  customConfirm(`عندك بيانات على هذا الجهاز وبيانات في السحابة (آخر تحديث ${when}).\nاضغط «تأكيد» لاعتماد نسخة السحابة، أو «إلغاء» لإبقاء نسخة الجهاز ورفعها.`,
+    ()=>{applyRemote(remote);toast('✓ اعتُمدت نسخة السحابة')},
+    ()=>{cloudPush().then(()=>toast('✓ اعتُمدت نسخة الجهاز ورُفعت'))});
+}
+function applyRemote(remote){
+  try{
+    Object.keys(remote.state).forEach(k=>{S[k]=remote.state[k]});
+    saveState();
+    if(typeof migrateStandards==='function')migrateStandards();
+    applyTheme(S.theme);paintCalBtn();paintProfile();renderMetrics();
+    if(typeof renderStds==='function')renderStds();
+    renderSubjectSwitcher();go('dashboard');
+  }catch(e){toast('تعذّر تطبيق البيانات السحابية')}
+}
+async function cloudSignUp(){
+  const em=($('cl-email').value||'').trim(),pw=$('cl-pass').value||'';
+  if(!em||pw.length<6){toast('اكتب بريدًا وكلمة مرور لا تقل عن ٦ أحرف');return}
+  try{
+    const sb=await ensureSb();
+    const {data,error}=await sb.auth.signUp({email:em,password:pw});
+    if(error)throw error;
+    if(data.session){_sbUser=data.user;await cloudReconcile();renderCloudUI();toast('✓ أُنشئ حسابك')}
+    else{$('cloud-body').innerHTML=`<div class="note"><span class="ni">📧</span><div>أرسلنا رابط تفعيل إلى <b>${esc(em)}</b>. افتح بريدك واضغط الرابط ثم عُد وسجّل الدخول.</div></div>`;}
+  }catch(e){toast(cloudErr(e))}
+}
+async function cloudSignIn(){
+  const em=($('cl-email').value||'').trim(),pw=$('cl-pass').value||'';
+  if(!em||!pw){toast('اكتب البريد وكلمة المرور');return}
+  try{
+    const sb=await ensureSb();
+    const {data,error}=await sb.auth.signInWithPassword({email:em,password:pw});
+    if(error)throw error;
+    _sbUser=data.user;renderCloudUI();
+    await cloudReconcile();renderCloudUI();
+  }catch(e){toast(cloudErr(e))}
+}
+async function cloudSignOut(){
+  try{const sb=await ensureSb();await sb.auth.signOut()}catch(e){}
+  _sbUser=null;renderCloudUI();toast('خرجت من الحساب — بياناتك تبقى على هذا الجهاز');
+}
+async function cloudResetPass(){
+  const em=($('cl-email').value||'').trim();
+  if(!em){toast('اكتب بريدك أولًا');return}
+  try{
+    const sb=await ensureSb();
+    const {error}=await sb.auth.resetPasswordForEmail(em,{redirectTo:location.origin});
+    if(error)throw error;
+    toast('✓ أرسلنا رابط استعادة كلمة المرور لبريدك');
+  }catch(e){toast(cloudErr(e))}
+}
+function cloudErr(e){
+  const m=(e&&e.message||'').toLowerCase();
+  if(m.includes('invalid login'))return 'البريد أو كلمة المرور غير صحيحة';
+  if(m.includes('already registered'))return 'هذا البريد مسجّل — سجّل الدخول';
+  if(m.includes('not confirmed'))return 'فعّل حسابك من رابط البريد أولًا';
+  if(m.includes('rate limit')||m.includes('too many'))return 'محاولات كثيرة — انتظر قليلًا';
+  return (e&&e.message)||'تعذّرت العملية';
+}
+function renderCloudUI(){
+  const b=$('cloud-body');if(!b)return;
+  if(_sbUser){
+    b.innerHTML=`
+      <div class="note"><span class="ni">✅</span><div>مسجّل الدخول باسم <b>${esc(_sbUser.email||'')}</b><br>
+      <small>بياناتك تُرفع تلقائيًا بعد كل تعديل، وتنزل على أي جهاز تسجّل دخولك فيه.</small></div></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+        <button class="btn btn-gold btn-sm" onclick="cloudSyncNow()">${_syncing?'<span class="spinner"></span> يرفع...':'⬆️ زامن الآن'}</button>
+        <button class="btn btn-ghost btn-sm" onclick="cloudSignOut()">تسجيل خروج</button>
+      </div>`;
+  }else{
+    b.innerHTML=`
+      <div class="note"><span class="ni">☁️</span><div>سجّل حسابًا لتُحفظ بياناتك في السحابة وتتزامن بين جوالك وحاسبك — ولا تضيع لو تغيّر جهازك.</div></div>
+      <div class="field" style="margin-top:12px"><label>البريد الإلكتروني</label><input id="cl-email" type="email" placeholder="you@example.com" autocomplete="email"></div>
+      <div class="field"><label>كلمة المرور</label><input id="cl-pass" type="password" placeholder="٦ أحرف فأكثر" autocomplete="current-password"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
+        <button class="btn btn-gold btn-sm" onclick="cloudSignIn()">دخول</button>
+        <button class="btn btn-primary btn-sm" onclick="cloudSignUp()">حساب جديد</button>
+        <button class="btn btn-ghost btn-sm" onclick="cloudResetPass()">نسيت كلمة المرور</button>
+      </div>`;
+  }
+}
+function openCloudModal(){renderCloudUI();$('cloud-modal').classList.add('on')}
+function closeCloudModal(){$('cloud-modal').classList.remove('on')}
+/* استعادة الجلسة عند فتح التطبيق */
+(async function restoreCloudSession(){
+  try{
+    const sb=await ensureSb();
+    const {data}=await sb.auth.getSession();
+    if(data&&data.session){_sbUser=data.session.user;renderCloudUI();
+      try{const r=await cloudPull();if(r&&r.state&&Object.keys(r.state).length>3&&!localHasData())applyRemote(r)}catch(e){}
+    }
+  }catch(e){}
+})();
 _autoSaveTimer=setInterval(saveState,4000);
 window.addEventListener('beforeunload',saveState);
 window.addEventListener('pagehide',saveState);
