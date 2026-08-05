@@ -6319,7 +6319,11 @@ function buildTable(D,tableEl){
 function imgFromDataUrl(D,src){try{const type=/png/i.test(src)?'png':'jpg';const bin=atob(src.split(',')[1]);const u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return new D.ImageRun({data:u,type,transformation:{width:110,height:82}})}catch(e){return null}}
 function walk(D,node,out){
   [...node.children].forEach(el=>{
-    const cl=el.className||'';const tag=el.tagName;
+    /* className في عناصر SVG كائن SVGAnimatedString لا نص، فكان .includes
+       يرمي استثناءً ويُفشل تصدير Word لأي مستند فيه رسم (زخرفة ملف الإنجاز والمخططات) */
+    const cl=(el.getAttribute&&el.getAttribute('class'))||'';const tag=el.tagName;
+    /* الرسوم لا تُنقل إلى Word، فنتخطاها بدل التعثّر بها */
+    if(tag==='svg'||tag==='SVG'||(el.namespaceURI&&el.namespaceURI.indexOf('svg')>=0))return;
     if(tag==='TABLE'){const t=buildTable(D,el);if(t){out.push(t);out.push(P(D,'',{spacing:{after:60}}))}return}
     if(cl.includes('page-break')){out.push(new D.Paragraph({children:[new D.PageBreak()]}));return}
     if(cl.includes('big-title')){out.push(P(D,el.textContent.trim(),{bold:true,size:44,color:'0A423C',align:D.AlignmentType.CENTER,spacing:{before:120,after:60}}));return}
