@@ -2055,8 +2055,30 @@ const PF_STD_W={'أداء الواجبات الوظيفية':10,'التفاعل 
 const PF_STD_ALIAS={'توظيف تقنيات ووسائل التعلم':'توظيف تقنيات ووسائل التعلم المناسبة','تهيئة بيئة تعليمية آمنة ومحفزة':'تهيئة البيئة التعليمية','تنوع أساليب وأدوات التقويم':'تنويع أساليب التقويم'};
 function stdWeight(s){if(!s)return null;if(s.w!=null)return s.w;const t=PF_STD_ALIAS[s.t]||s.t;return PF_STD_W[t]!=null?PF_STD_W[t]:null}
 function migrateStandards(){
-  if(!S||!Array.isArray(S.standards))return;
+  if(!S)return;
+  sanitizeStandards();
+  if(!Array.isArray(S.standards))return;
   S.standards.forEach(s=>{if(PF_STD_ALIAS[s.t])s.t=PF_STD_ALIAS[s.t];if(s.w==null&&PF_STD_W[s.t]!=null)s.w=PF_STD_W[s.t];applyOfficialEx(s)});
+}
+/* حفظ منقطع (مثلًا عند امتلاء التخزين) قد يترك معيارًا بلا مصفوفة شواهد أو
+   مدخلة null، وكان ذلك يمنع فتح شاشة ملف الأداء ويكسر لوحة التحكم.
+   ننظّف البنية عند كل إقلاع بدل أن ينهار العرض عليها. */
+function sanitizeStandards(){
+  if(!Array.isArray(S.standards)){S.standards=[];return}
+  let fixed=0;
+  S.standards=S.standards.filter(s=>s&&typeof s==='object');
+  S.standards.forEach(s=>{
+    if(!Array.isArray(s.ev)){s.ev=[];fixed++;return}
+    const before=s.ev.length;
+    s.ev=s.ev.filter(e=>e&&typeof e==='object');
+    s.ev.forEach(e=>{
+      if(typeof e.title!=='string')e.title=String(e.title==null?'':e.title);
+      if(typeof e.note!=='string')e.note=String(e.note==null?'':e.note);
+      if(typeof e.type!=='string')e.type=String(e.type==null?'':e.type);
+    });
+    if(s.ev.length!==before)fixed++;
+  });
+  if(fixed)try{saveState()}catch(e){}
 }
 const ROLES={
   teacher:{label:{m:'معلم',f:'معلمة'},std:[
@@ -3081,9 +3103,11 @@ function markBadgeSeen(key){
   if(!S.seenBadges[key]){S.seenBadges[key]=true;saveState()}
 }
 function renderMetrics(){
+  /* لوحة التحكم أول ما يُعرض، فلا نسمح لبنية تالفة بإسقاطها */
+  sanitizeStandards();
   renderLockReminder();
   const r=computeReadiness();
-  const evTotal=S.standards.reduce((a,s)=>a+s.ev.length,0);
+  const evTotal=S.standards.reduce((a,s)=>a+(s.ev?s.ev.length:0),0);
   const prepped=S.lessons.filter(l=>l.ai||l.obj).length;
   const m=$('metrics');
   if(m){m.innerHTML=`
@@ -3131,10 +3155,15 @@ function filterCards(btn){
     c.style.display=(cat==='all'||c.dataset.cat===cat)?'':'none';
   });
 }
-function openAchievement(){if($('pf-bio')){$('pf-bio').value=S.profile.bio;$('pf-vision').value=S.profile.vision;$('pf-goals').value=S.profile.goals;if($('pf-intro'))$('pf-intro').value=S.profile.intro||'';if($('pf-closing'))$('pf-closing').value=S.profile.closing||''}renderStds();
-  /* نُظهر المانع فورًا عند فتح الشاشة بدل أن يكتشفه المعلم بعد الضغط */
-  const miss=[];S.standards.forEach(s=>s.ev.forEach(e=>{if(!e.note||!e.note.trim())miss.push(e.title)}));
-  showAchBlockers(miss.length?miss:null);
+function openAchievement(){if($('pf-bio')){$('pf-bio').value=S.profile.bio;$('pf-vision').value=S.profile.vision;$('pf-goals').value=S.profile.goals;if($('pf-intro'))$('pf-intro').value=S.profile.intro||'';if($('pf-closing'))$('pf-closing').value=S.profile.closing||''}
+  /* التنقّل لا يجوز أن يتعطّل بسبب خطأ في العرض، وإلا بدت الشاشة معطّلة تمامًا */
+  try{
+    sanitizeStandards();
+    renderStds();
+    const miss=[];
+    S.standards.forEach(s=>(s.ev||[]).forEach(e=>{if(e&&(!e.note||!String(e.note).trim()))miss.push(e.title)}));
+    showAchBlockers(miss.length?miss:null);
+  }catch(e){console.error('openAchievement render failed',e)}
   go('achievement')}
 function openMeetingsLog(){renderMeetingsTable();go('meetings')}
 const ACTIVITY_TYPES=['رياضي','ثقافي','علمي','اجتماعي','ديني','صحي','فني'];
