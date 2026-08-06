@@ -6901,9 +6901,28 @@ function openSubscribe(){
   $('cloud-body').innerHTML=body;
   $('cloud-modal').classList.add('on');
 }
-function startCheckout(){
-  /* تُربط ببوابة الدفع بعد اختيارها؛ لا ندّعي جاهزيتها قبل ذلك */
-  toast('الدفع لم يُفعّل بعد — قريبًا');
+async function startCheckout(){
+  if(!_sbUser){toast('سجّل حسابًا أولًا');openCloudModal();return}
+  toast('⏳ يجهّز صفحة الدفع...');
+  try{
+    const res=await fetch('/api/subscribe',{method:'POST',headers:await aiHeaders()});
+    const d=await res.json();
+    if(!res.ok||!d.url){toast(d.message||'تعذّر فتح صفحة الدفع');return}
+    location.href=d.url;   /* الدفع يتم على صفحة مويسر لا عندنا */
+  }catch(e){toast('تعذّر الاتصال ببوابة الدفع')}
+}
+/* عند العودة من مويسر: الاشتراك يُفعّل بإشعار الخادم، وقد يتأخر لحظات */
+async function checkPaidReturn(){
+  if(!/[?&]paid=1/.test(location.search))return;
+  history.replaceState({},'',location.pathname);
+  if(!_sbUser)return;
+  toast('⏳ نتحقق من دفعتك...');
+  for(let i=0;i<6;i++){
+    await new Promise(r=>setTimeout(r,2500));
+    await loadSubscription();
+    if(_sub&&_sub.status==='active'){renderCloudUI();toast('✓ تم تفعيل اشتراكك — شكرًا لك');return}
+  }
+  toast('استلمنا دفعتك ويجري تفعيلها — حدّث الصفحة بعد قليل');
 }
 function renderCloudUI(){
   const b=$('cloud-body');if(!b)return;
@@ -6937,7 +6956,7 @@ function closeCloudModal(){$('cloud-modal').classList.remove('on')}
     const sb=await ensureSb();
     const {data}=await sb.auth.getSession();
     if(data&&data.session){_sbUser=data.session.user;renderCloudUI();
-      loadSubscription().then(renderCloudUI);
+      loadSubscription().then(function(){renderCloudUI();checkPaidReturn()});
       try{const r=await cloudPull();if(r&&r.state&&Object.keys(r.state).length>3&&!localHasData())applyRemote(r)}catch(e){}
     }
   }catch(e){}
