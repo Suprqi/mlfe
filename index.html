@@ -592,22 +592,9 @@ input,select,textarea{font-family:inherit;font-size:1rem}
       <div class="field"><label>إدارة التعليم</label><input id="ob-region" placeholder="مثال: الطائف"></div>
     </div>
     <div class="field"><label>اسم قائد/ة المدرسة <small style="font-weight:400;color:var(--ink-soft)">(اختياري — يُعبّى تلقائيًا في الشهادات)</small></label><input id="ob-principal" placeholder="مثال: أ. سعد القحطاني"></div>
-    <div class="grid2">
-      <div class="field"><label>المادة</label>
-        <select id="ob-subject" onchange="obSubjToggle(this,'ob-subject-other')"><option>الرياضيات</option><option>اللغة العربية</option><option>الكفايات اللغوية</option><option>العلوم</option><option>اللغة الإنجليزية</option><option>الدراسات الاجتماعية</option><option>التربية الإسلامية</option><option>القرآن الكريم والدراسات الإسلامية</option><option>القرآن الكريم وتلاوته</option><option>التجويد</option><option>التوحيد</option><option>الفقه</option><option>الحديث</option><option>التفسير</option><option>المهارات الرقمية</option><option>التقنية الرقمية</option><option>الكيمياء</option><option>الفيزياء</option><option>الأحياء</option><option>التربية الفنية</option><option>التربية البدنية والدفاع عن النفس</option><option>التربية الصحية والبدنية</option><option>المهارات الحياتية والأسرية</option><option>التفكير الناقد</option><option>التربية المهنية</option><option value="__other__">أخرى (اكتب مادتك)</option></select>
-        <input id="ob-subject-other" placeholder="اكتب اسم مادتك" style="display:none;margin-top:8px">
-      </div>
-      <div class="field"><label>الصف الدراسي</label>
-        <select id="ob-grade" onchange="paintStagePreview()"><option>الأول الابتدائي</option><option>الثاني الابتدائي</option><option>الثالث الابتدائي</option><option>الرابع الابتدائي</option><option>الخامس الابتدائي</option><option>السادس الابتدائي</option><option>الأول المتوسط</option><option>الثاني المتوسط</option><option>الثالث المتوسط</option><option>الأول الثانوي</option><option>الثاني الثانوي</option><option>الثالث الثانوي</option></select>
-      </div>
-    </div>
     <div class="field">
-      <label style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="ob-has-2nd" onchange="document.getElementById('ob-subject2-wrap').style.display=this.checked?'block':'none'" style="width:auto"> أُدرّس مادة ثانية</label>
-      <div id="ob-subject2-wrap" style="display:none;margin-top:10px">
-        <select id="ob-subject2" onchange="obSubjToggle(this,'ob-subject2-other')"><option>الرياضيات</option><option>اللغة العربية</option><option>الكفايات اللغوية</option><option>العلوم</option><option>اللغة الإنجليزية</option><option>الدراسات الاجتماعية</option><option>التربية الإسلامية</option><option>القرآن الكريم والدراسات الإسلامية</option><option>القرآن الكريم وتلاوته</option><option>التجويد</option><option>التوحيد</option><option>الفقه</option><option>الحديث</option><option>التفسير</option><option>المهارات الرقمية</option><option>التقنية الرقمية</option><option>الكيمياء</option><option>الفيزياء</option><option>الأحياء</option><option>التربية الفنية</option><option>التربية البدنية والدفاع عن النفس</option><option>التربية الصحية والبدنية</option><option>المهارات الحياتية والأسرية</option><option>التفكير الناقد</option><option>التربية المهنية</option><option value="__other__">أخرى (اكتب مادتك)</option></select>
-        <input id="ob-subject2-other" placeholder="اكتب اسم المادة الثانية" style="display:none;margin-top:8px">
-        <small style="display:block;color:var(--ink-soft);font-size:.78rem;margin-top:6px">تقدر تبدّل بين المادتين لاحقًا من الشريط العلوي — كل مادة تحتفظ بمنهجها وتحاضيرها لحالها.</small>
-      </div>
+      <label>المواد التي تدرّسها <small style="font-weight:400;color:var(--ink-soft)">(حتى ٥ مواد، ولكل مادة صفّها)</small></label>
+      <div id="ob-subjects"></div>
     </div>
     <div class="grid2">
       <div class="field"><label>الفصل الدراسي</label>
@@ -2164,7 +2151,7 @@ const S={gender:'m',role:'teacher',customRoles:{},calendar:'hijri',theme:'green'
   thresholds:{low:50,high:90},
   formsGenerated:0,
   profile:{bio:'',vision:'',goals:'',intro:'',closing:''},
-  curricula:{},units:[],logo:'',moeLogo:'',rubric:''};
+  curricula:{},units:[],logo:'',moeLogo:'',rubric:'',gradeBySubject:{}};
 /* الشعارات تُطبع في كل ورقة، ونصغّرها لأنها تُحفظ مع الحالة في تخزين المتصفح */
 async function uploadLogo(input){const f=input.files[0];if(!f)return;const raw=await readAsDataURL(f);S.logo=await shrinkImage(raw,320,0.9);saveState();paintLogoPrev();input.value=''}
 function clearLogo(){S.logo='';saveState();paintLogoPrev()}
@@ -2754,6 +2741,48 @@ function confirmDeleteAll(){
 }
 function closeThemeModal(){$('theme-modal').classList.remove('on')}
 function pickThemeQuick(btn){document.querySelectorAll('#theme-modal .theme-sw').forEach(b=>b.classList.remove('sel'));btn.classList.add('sel');applyTheme(btn.dataset.th)}
+/* ===== مواد التسجيل: حتى خمس مواد، لكل واحدة صفّها الدراسي =====
+   الصف كان قيمة واحدة عامة، فأصبح لكل مادة صفّها في gradeBySubject
+   على نمط بقية بيانات المواد، ويبقى S.grade صفَّ المادة المفتوحة. */
+const OB_SUBJECTS=['الرياضيات','اللغة العربية','الكفايات اللغوية','العلوم','اللغة الإنجليزية','الدراسات الاجتماعية','التربية الإسلامية','القرآن الكريم والدراسات الإسلامية','القرآن الكريم وتلاوته','التجويد','التوحيد','الفقه','الحديث','التفسير','المهارات الرقمية','التقنية الرقمية','الكيمياء','الفيزياء','الأحياء','التربية الفنية','التربية البدنية والدفاع عن النفس','التربية الصحية والبدنية','المهارات الحياتية والأسرية','التفكير الناقد','التربية المهنية'];
+const OB_GRADES=['الأول الابتدائي','الثاني الابتدائي','الثالث الابتدائي','الرابع الابتدائي','الخامس الابتدائي','السادس الابتدائي','الأول المتوسط','الثاني المتوسط','الثالث المتوسط','الأول الثانوي','الثاني الثانوي','الثالث الثانوي'];
+const OB_MAX_SUBJECTS=5;
+let obRows=[{subject:'',grade:'',other:''}];
+function obRowsRender(){
+  const box=$('ob-subjects');if(!box)return;
+  box.innerHTML=obRows.map(function(r,i){
+    const subOpts=OB_SUBJECTS.map(function(s){return `<option ${r.subject===s?'selected':''}>${esc(s)}</option>`}).join('')
+      +`<option value="__other__" ${r.subject==='__other__'?'selected':''}>أخرى (اكتب مادتك)</option>`;
+    const grOpts=OB_GRADES.map(function(g){return `<option ${r.grade===g?'selected':''}>${esc(g)}</option>`}).join('');
+    return `<div style="border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px;background:#fff">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <b style="font-size:.82rem;color:var(--teal-deep)">المادة ${i+1}${i===0?' <small style="font-weight:400;color:var(--ink-soft)">(الأساسية)</small>':''}</b>
+        ${i>0?`<button type="button" class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="obRowDel(${i})">حذف</button>`:''}
+      </div>
+      <div class="grid2">
+        <div class="field" style="margin:0"><label>المادة</label>
+          <select onchange="obRowSet(${i},'subject',this.value)">${subOpts}</select>
+          <input placeholder="اكتب اسم مادتك" value="${esc(r.other||'')}" oninput="obRowSet(${i},'other',this.value)" style="display:${r.subject==='__other__'?'block':'none'};margin-top:8px">
+        </div>
+        <div class="field" style="margin:0"><label>الصف الدراسي</label>
+          <select onchange="obRowSet(${i},'grade',this.value)">${grOpts}</select>
+        </div>
+      </div>
+    </div>`;
+  }).join('')
+  +(obRows.length<OB_MAX_SUBJECTS
+    ?`<button type="button" class="btn btn-ghost btn-sm" onclick="obRowAdd()">+ إضافة مادة أخرى</button>
+      <div style="font-size:.75rem;color:var(--ink-soft);margin-top:6px">كل مادة تحتفظ بمنهجها وطلابها وتحاضيرها لحالها — وتبدّل بينها من الشريط العلوي.</div>`
+    :`<div style="font-size:.75rem;color:var(--ink-soft)">وصلت الحد الأقصى (${OB_MAX_SUBJECTS} مواد).</div>`);
+}
+function obRowSet(i,k,v){if(!obRows[i])return;obRows[i][k]=v;if(k==='subject')obRowsRender()}
+function obRowAdd(){if(obRows.length>=OB_MAX_SUBJECTS)return;obRows.push({subject:'',grade:'',other:''});obRowsRender()}
+function obRowDel(i){obRows.splice(i,1);if(!obRows.length)obRows=[{subject:'',grade:'',other:''}];obRowsRender()}
+/* اسم المادة النهائي لكل صف، مع دعم «أخرى» */
+function obRowName(r){
+  if(r.subject==='__other__')return (r.other||'').trim()||'مادة أخرى';
+  return r.subject||OB_SUBJECTS[0];
+}
 function obSubjToggle(sel,otherId){$(otherId).style.display=sel.value==='__other__'?'block':'none'}
 function readSubjSelect(selId,otherId){const sel=$(selId);if(!sel)return'';return sel.value==='__other__'?($(otherId).value.trim()||'مادة أخرى'):sel.value}
 function finishOnboarding(){
@@ -2762,9 +2791,18 @@ function finishOnboarding(){
   applyRole(S.role);
   S.name=$('ob-name').value.trim()||roleName();S.school=$('ob-school').value.trim()||'—';S.region=$('ob-region').value.trim()||'—';
   S.principal=$('ob-principal')?$('ob-principal').value.trim():S.principal;
-  S.subject=readSubjSelect('ob-subject','ob-subject-other');S.grade=$('ob-grade').value;S.term=$('ob-term').value;
-  S.subjects=[S.subject];
-  if($('ob-has-2nd')&&$('ob-has-2nd').checked){const s2=readSubjSelect('ob-subject2','ob-subject2-other');if(s2&&s2!==S.subject)S.subjects.push(s2)}
+  S.term=$('ob-term').value;
+  /* حتى خمس مواد، ولكل واحدة صفّها؛ نتجاهل المكرّر ونبقي على الترتيب */
+  S.subjects=[];S.gradeBySubject=S.gradeBySubject||{};
+  obRows.forEach(function(r){
+    const nm=obRowName(r);
+    if(!nm||S.subjects.indexOf(nm)>=0)return;
+    S.subjects.push(nm);
+    S.gradeBySubject[nm]=r.grade||OB_GRADES[0];
+  });
+  if(!S.subjects.length){S.subjects=[OB_SUBJECTS[0]];S.gradeBySubject[OB_SUBJECTS[0]]=OB_GRADES[0]}
+  S.subject=S.subjects[0];
+  S.grade=S.gradeBySubject[S.subject];
   S.lastUpdated=new Date().toISOString();
   if(!S.registeredAt)S.registeredAt=S.lastUpdated;
   hasOnboarded=true;
@@ -2880,6 +2918,8 @@ function _doSaveProfile(newRole,roleChanged){
 function switchSubject(newSubj){
   if(!newSubj||newSubj===S.subject)return;
   // احفظ بيانات المادة الحالية قبل المغادرة
+  S.gradeBySubject=S.gradeBySubject||{};
+  S.gradeBySubject[S.subject]=S.grade;   /* لكل مادة صفّها */
   S.lessonsBySubject[S.subject]=S.lessons;
   S.rubricBySubject[S.subject]=S.rubric||'';
   S.criteriaBySubject[S.subject]=S.criteria;
@@ -2892,6 +2932,7 @@ function switchSubject(newSubj){
   S.subject=newSubj;
 
   // حمّل بيانات المادة الجديدة أو ابدأ بقيم افتراضية آمنة إن كانت أول مرة
+  S.grade=(S.gradeBySubject&&S.gradeBySubject[newSubj])||S.grade;
   S.lessons=S.lessonsBySubject[newSubj]||[];
   S.rubric=S.rubricBySubject[newSubj]||'';
   S.criteria=S.criteriaBySubject[newSubj]||[{key:'c1',label:'المشاركة',max:10},{key:'c2',label:'الواجبات',max:10},{key:'c3',label:'الاختبار',max:40}];
@@ -2920,7 +2961,11 @@ function switchSubject(newSubj){
 function renderSubjectSwitcher(){
   const sel=$('subj-switch');if(!sel)return;
   if(!S.subjects||S.subjects.length<2){sel.style.display='none';return}
-  sel.innerHTML=S.subjects.map(s=>`<option value="${esc(s)}" ${s===S.subject?'selected':''}>${esc(s)}</option>`).join('');
+  /* نعرض صفّ كل مادة لأن المعلم قد يدرّس المادة نفسها لصفوف مختلفة */
+  sel.innerHTML=S.subjects.map(s=>{
+    const g=(S.gradeBySubject&&S.gradeBySubject[s])||'';
+    return `<option value="${esc(s)}" ${s===S.subject?'selected':''}>${esc(s)}${g?' — '+esc(g):''}</option>`;
+  }).join('');
   sel.style.display='inline-block';
 }
 function paintProfile(){
@@ -6650,6 +6695,12 @@ try{
 renderRoleOptions();
 const _restored=loadState();
 migrateStandards();
+/* المستخدمون السابقون كان لهم صف واحد لكل المواد — ننسبه لكل مادة عندهم */
+(function migrateGrades(){
+  if(!S.gradeBySubject)S.gradeBySubject={};
+  (S.subjects||[]).forEach(function(s){if(!S.gradeBySubject[s])S.gradeBySubject[s]=S.grade||''});
+  if(S.subject&&!S.gradeBySubject[S.subject])S.gradeBySubject[S.subject]=S.grade||'';
+})();
 if(_restored&&S.name){
   hasOnboarded=true;
   applyTheme(S.theme);
@@ -6667,6 +6718,7 @@ if(_restored&&S.name){
     go('dashboard');
   }    
 }else{
+  obRowsRender();
   document.getElementById('ob-name').focus();
 }
 checkDueReminders();scheduleNotifs();
