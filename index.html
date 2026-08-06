@@ -2168,7 +2168,7 @@ function paintMoeLogoPrev(){
   ['moe-logo-prev','ob-moe-prev'].forEach(id=>{const p=$(id);if(p)p.innerHTML=img});
   const c=$('moe-logo-clear');if(c)c.style.display=S.moeLogo?'inline-flex':'none';
 }
-function uploadPhoto(input){const f=input.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{S.photo=e.target.result;paintPhotoPrev()};r.readAsDataURL(f);input.value=''}
+async function uploadPhoto(input){const f=input.files[0];if(!f)return;S.photo=await shrinkImage(await readAsDataURL(f),600,0.85);saveState();paintPhotoPrev();input.value=''}
 function clearPhoto(){S.photo='';paintPhotoPrev()}
 function paintPhotoPrev(){const p=$('photo-prev');if(p)p.innerHTML=S.photo?`<img src="${S.photo}" style="width:100%;height:100%;object-fit:cover">`:'🙂';const c=$('photo-clear');if(c)c.style.display=S.photo?'inline-flex':'none'}
 function paintStagePreview(){const el=$('stage-preview');if(!el)return;const g=$('pf-grade')?$('pf-grade').value:S.grade;let stage='—';if(/ابتدائي/.test(g))stage='المرحلة الابتدائية';else if(/متوسط/.test(g))stage='المرحلة المتوسطة';else if(/ثانوي/.test(g))stage='المرحلة الثانوية';el.textContent=stage}
@@ -2253,8 +2253,15 @@ function startVoiceInput(inputId,btn){
   const rec=new SR();
   rec.lang='ar-SA';rec.interimResults=false;rec.maxAlternatives=1;
   btn.textContent='🔴';btn.disabled=true;
+  /* حارس ضد إعادة إطلاق الحدث لنفس المقطع، وإلا تكرّر النص في الحقل */
+  let added=false;
   rec.onresult=e=>{
-    const text=e.results[0][0].transcript;
+    if(added)return;
+    let text='';
+    for(let i=0;i<e.results.length;i++)if(e.results[i].isFinal)text+=e.results[i][0].transcript+' ';
+    text=text.trim()||e.results[0][0].transcript;
+    if(!text)return;
+    added=true;
     input.value=(input.value?input.value+' ':'')+text;
     input.dispatchEvent(new Event('input',{bubbles:true}));
   };
@@ -4435,12 +4442,14 @@ function renderScheduleGrid(){
 }
 function addRow(arrName){S[arrName].push({name:'',source:'',date:'',impact:'',file:'',fileName:''});renderRowsTable(arrName)}
 function delRow(arrName,i){S[arrName].splice(i,1);renderRowsTable(arrName)}
-function attachRowFile(arrName,i,input){
+async function attachRowFile(arrName,i,input){
   const f=input.files[0];if(!f)return;
   if(f.size>4*1024*1024){toast('الملف كبير — الأفضل أقل من 4MB');return}
-  const r=new FileReader();
-  r.onload=e=>{S[arrName][i].file=e.target.result;S[arrName][i].fileName=f.name;renderRowsTable(arrName)};
-  r.readAsDataURL(f);
+  /* الصور تُصغَّر قبل الحفظ؛ الـPDF يُحفظ كما هو */
+  const raw=await readAsDataURL(f);
+  S[arrName][i].file=/^image\//i.test(f.type)?await shrinkImage(raw,1200,0.8):raw;
+  S[arrName][i].fileName=f.name;
+  saveState();renderRowsTable(arrName);input.value='';
 }
 function removeRowFile(arrName,i){S[arrName][i].file='';S[arrName][i].fileName='';renderRowsTable(arrName)}
 function renderRowsTable(arrName){
@@ -4461,7 +4470,7 @@ function renderRowsTable(arrName){
 }
 function addStudentWork(){S.studentWork.push({beforeImg:null,afterImg:null,caption:'',feedback:''});renderStudentWork()}
 function delStudentWork(i){S.studentWork.splice(i,1);renderStudentWork()}
-function attachStudentWorkImg(i,input,which){const f=input.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{S.studentWork[i][which]=e.target.result;renderStudentWork()};r.readAsDataURL(f)}
+async function attachStudentWorkImg(i,input,which){const f=input.files[0];if(!f)return;S.studentWork[i][which]=await shrinkImage(await readAsDataURL(f),1200,0.8);saveState();renderStudentWork();input.value=''}
 function renderStudentWork(){
   const wrap=$('studentwork-wrap');if(!wrap)return;
   wrap.innerHTML=(S.studentWork||[]).map((w,i)=>{
@@ -5601,7 +5610,7 @@ function addOption(i){S.examQuestions[i].options.push('');renderExamQuestions()}
 function setTF(i,val){S.examQuestions[i].correct=val;renderExamQuestions()}
 function addPair(i){S.examQuestions[i].pairs.push({a:'',b:''});S.examQuestions[i].points=S.examQuestions[i].pairs.length;renderExamQuestions()}
 function delPair(i,pi){S.examQuestions[i].pairs.splice(pi,1);S.examQuestions[i].points=S.examQuestions[i].pairs.length;renderExamQuestions()}
-function attachQImage(i,input){const f=input.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{S.examQuestions[i].img=e.target.result;renderExamQuestions()};r.readAsDataURL(f)}
+async function attachQImage(i,input){const f=input.files[0];if(!f)return;S.examQuestions[i].img=await shrinkImage(await readAsDataURL(f),1200,0.8);saveState();renderExamQuestions();input.value=''}
 function removeQImage(i){S.examQuestions[i].img=null;renderExamQuestions()}
 function delExamQuestion(i){S.examQuestions.splice(i,1);renderExamQuestions();renderMetrics()}
 function updateExamTotals(){const t=S.examQuestions.reduce((a,q)=>a+(Number(q.points)||0),0);$('exam-total-pts')&&($('exam-total-pts').textContent=t)}
@@ -6288,7 +6297,17 @@ function toggleMic(){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   recognizer=new SR();recognizer.lang='ar-SA';recognizer.continuous=true;recognizer.interimResults=true;
   voiceBase=$('voice-text').value?$('voice-text').value.trim()+' ':'';
-  recognizer.onresult=e=>{let fin='',interim='';for(let i=e.resultIndex;i<e.results.length;i++){const tr=e.results[i][0].transcript;if(e.results[i].isFinal)fin+=tr+' ';else interim+=tr}$('voice-text').value=voiceBase+fin+interim;if(fin)voiceBase+=fin};
+  /* كان يجمع من e.resultIndex ويراكم على voiceBase، والمتصفح يعيد إطلاق
+     الحدث لنفس المقطع أحيانًا فيتكرر الكلام. نعيد بناء النص من كل النتائج
+     في كل مرة، وvoiceBase يبقى نص ما قبل التسجيل فقط — فلا تكرار ممكن. */
+  recognizer.onresult=e=>{
+    let fin='',interim='';
+    for(let i=0;i<e.results.length;i++){
+      const tr=e.results[i][0].transcript;
+      if(e.results[i].isFinal)fin+=tr+' ';else interim+=tr;
+    }
+    $('voice-text').value=voiceBase+fin+interim;
+  };
   recognizer.onerror=ev=>{stopMic();toast(ev.error==='not-allowed'?'فضلًا اسمح بالوصول للميكروفون':'تعذّر التسجيل — حاول مرة ثانية')};
   recognizer.onend=()=>{if(recording)stopMic()};
   try{recognizer.start();recording=true;$('mic-btn').classList.add('rec');$('mic-ic').textContent='⏹️';$('mic-status').textContent='يستمع... تكلّم الآن (اضغط للإيقاف)'}catch(e){toast('تعذّر بدء التسجيل')}
