@@ -11,16 +11,17 @@ module.exports = async (req, res) => {
     return;
   }
 
-  const secret = process.env.MOYASAR_SECRET_KEY;
-  if (!secret) {
-    res.status(500).json({ message: 'بوابة الدفع غير مهيأة على الخادم' });
-    return;
-  }
-
-  // لا نبيع لمجهول: نحتاج الحساب لنعرف لمن نفعّل الاشتراك
+  // المصادقة أولًا: لا نكشف لغير المسجّل شيئًا عن إعدادات الخادم،
+  // ولا نبيع لمجهول لأننا نحتاج الحساب لنعرف لمن نفعّل الاشتراك
   const gate = await requireUser(req);
   if (!gate.ok) {
     res.status(401).json({ message: gate.message });
+    return;
+  }
+
+  const secret = process.env.MOYASAR_SECRET_KEY;
+  if (!secret) {
+    res.status(500).json({ message: 'بوابة الدفع غير مهيأة على الخادم' });
     return;
   }
 
