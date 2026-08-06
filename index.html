@@ -672,6 +672,7 @@ input,select,textarea{font-family:inherit;font-size:1rem}
       <div id="more-extra-tools"></div>
       <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
         <button class="btn btn-ghost btn-lg" style="justify-content:flex-start" onclick="closeMoreMenu();openCloudModal()">☁️ حسابي والمزامنة</button>
+        <button class="btn btn-ghost btn-lg" style="justify-content:flex-start" onclick="closeMoreMenu();openSubscribe()">⭐ الاشتراك</button>
         <button class="btn btn-ghost btn-lg" style="justify-content:flex-start" onclick="closeMoreMenu();logoutApp()">🚪 تسجيل خروج</button>
         <button class="btn btn-ghost btn-lg" style="justify-content:flex-start;color:var(--danger)" onclick="closeMoreMenu();openDeleteDataModal()">🗑️ حذف جميع البيانات</button>
       </div>
@@ -6819,12 +6820,13 @@ async function cloudSignIn(){
     const {data,error}=await sb.auth.signInWithPassword({email:em,password:pw});
     if(error)throw error;
     _sbUser=data.user;renderCloudUI();
+    await loadSubscription();
     await cloudReconcile();renderCloudUI();
   }catch(e){toast(cloudErr(e))}
 }
 async function cloudSignOut(){
   try{const sb=await ensureSb();await sb.auth.signOut()}catch(e){}
-  _sbUser=null;renderCloudUI();toast('خرجت من الحساب — بياناتك تبقى على هذا الجهاز');
+  _sbUser=null;_sub=null;renderCloudUI();toast('خرجت من الحساب — بياناتك تبقى على هذا الجهاز');
 }
 async function cloudResetPass(){
   const em=($('cl-email').value||'').trim();
@@ -6844,14 +6846,75 @@ function cloudErr(e){
   if(m.includes('rate limit')||m.includes('too many'))return 'محاولات كثيرة — انتظر قليلًا';
   return (e&&e.message)||'تعذّرت العملية';
 }
+/* ===== الاشتراك =====
+   حالة الاشتراك تُقرأ من الخادم ولا تُكتب من المتصفح، وإلا فتحها أي مستخدم
+   بتعديل التخزين. الفترة التجريبية تُحسب من تاريخ إنشاء الحساب. */
+const SUB_PRICE_SAR=100, SUB_TRIAL_DAYS=14;
+let _sub=null;
+async function loadSubscription(){
+  if(!_sbUser){_sub=null;return null}
+  try{
+    const sb=await ensureSb();
+    const {data}=await sb.from('subscriptions').select('status,plan,expires_at').maybeSingle();
+    _sub=data||{status:'free'};
+  }catch(e){_sub={status:'free'}}
+  return _sub;
+}
+function trialDaysLeft(){
+  const created=(_sbUser&&_sbUser.created_at)||S.registeredAt;
+  if(!created)return 0;
+  const used=Math.floor((Date.now()-new Date(created).getTime())/86400000);
+  return Math.max(0,SUB_TRIAL_DAYS-used);
+}
+/* الحالة الفعلية: مشترك، أو في التجربة، أو منتهية */
+function subState(){
+  if(_sub&&_sub.status==='active'){
+    const ok=!_sub.expires_at||new Date(_sub.expires_at)>new Date();
+    if(ok)return {kind:'active',until:_sub.expires_at};
+  }
+  const left=trialDaysLeft();
+  if(left>0)return {kind:'trial',left:left};
+  return {kind:'expired'};
+}
+function subBadge(){
+  if(!_sbUser)return '';
+  const st=subState();
+  if(st.kind==='active')return `<div class="note" style="border-color:#BFE3D0"><span class="ni">⭐</span><div>اشتراكك <b>فعّال</b>${st.until?` حتى ${fmtDate(st.until)}`:''}.</div></div>`;
+  if(st.kind==='trial')return `<div class="note"><span class="ni">🎁</span><div>الفترة التجريبية — باقٍ <b>${st.left}</b> يومًا.</div></div>`;
+  return `<div class="note" style="border-color:#E8C7BE"><span class="ni">⏳</span><div>انتهت فترتك التجريبية. اشترك لمواصلة مزايا الذكاء الاصطناعي.</div></div>`;
+}
+function openSubscribe(){
+  const st=_sbUser?subState():null;
+  const body=`
+    <div style="text-align:center;padding:6px 0 10px">
+      <div style="font-size:2rem;font-weight:800;color:var(--teal-deep)">${SUB_PRICE_SAR} ﷼<span style="font-size:.9rem;font-weight:500;color:var(--ink-soft)"> / سنة</span></div>
+      <div style="font-size:.82rem;color:var(--ink-soft);margin-top:4px">اشتراك سنوي — كل المزايا بلا حدود</div>
+    </div>
+    ${_sbUser?subBadge():'<div class="note"><span class="ni">☁️</span><div>سجّل حسابًا أولًا لتفعيل الاشتراك.</div></div>'}
+    <ul style="list-style:none;padding:0;margin:12px 0;font-size:.86rem;line-height:2.1">
+      <li>✅ تحضير الدروس وتوليد الاختبارات بالذكاء الاصطناعي</li>
+      <li>✅ تصنيف الشواهد وقراءة الكتب بالصور</li>
+      <li>✅ ملف الإنجاز بثلاثة تصاميم مع شعاري الوزارة والمدرسة</li>
+      <li>✅ مزامنة ونسخة احتياطية بين أجهزتك</li>
+    </ul>
+    <button class="btn btn-gold btn-block btn-lg" onclick="startCheckout()">اشترك الآن</button>`;
+  $('cloud-body').innerHTML=body;
+  $('cloud-modal').classList.add('on');
+}
+function startCheckout(){
+  /* تُربط ببوابة الدفع بعد اختيارها؛ لا ندّعي جاهزيتها قبل ذلك */
+  toast('الدفع لم يُفعّل بعد — قريبًا');
+}
 function renderCloudUI(){
   const b=$('cloud-body');if(!b)return;
   if(_sbUser){
     b.innerHTML=`
       <div class="note"><span class="ni">✅</span><div>مسجّل الدخول باسم <b>${esc(_sbUser.email||'')}</b><br>
       <small>بياناتك تُرفع تلقائيًا بعد كل تعديل، وتنزل على أي جهاز تسجّل دخولك فيه.</small></div></div>
+      ${subBadge()}
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
         <button class="btn btn-gold btn-sm" onclick="cloudSyncNow()">${_syncing?'<span class="spinner"></span> يرفع...':'⬆️ زامن الآن'}</button>
+        <button class="btn btn-primary btn-sm" onclick="openSubscribe()">⭐ الاشتراك</button>
         <button class="btn btn-ghost btn-sm" onclick="cloudSignOut()">تسجيل خروج</button>
       </div>`;
   }else{
@@ -6874,6 +6937,7 @@ function closeCloudModal(){$('cloud-modal').classList.remove('on')}
     const sb=await ensureSb();
     const {data}=await sb.auth.getSession();
     if(data&&data.session){_sbUser=data.session.user;renderCloudUI();
+      loadSubscription().then(renderCloudUI);
       try{const r=await cloudPull();if(r&&r.state&&Object.keys(r.state).length>3&&!localHasData())applyRemote(r)}catch(e){}
     }
   }catch(e){}
