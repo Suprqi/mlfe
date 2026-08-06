@@ -2325,11 +2325,26 @@ function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'
 /* ===== AI core =====
    ملاحظة نشر: الاستدعاء يمر عبر نقطة نهاية خادمية (/api/chat و /api/vision)
    التي تحمل مفتاح Anthropic خادميًا. لا يوجد أي مفتاح في هذا الملف. */
+/* رمز الجلسة يُرسل مع كل نداء ذكاء اصطناعي ليتحقق منه الخادم */
+async function sbToken(){
+  try{
+    if(typeof ensureSb!=='function')return '';
+    const sb=await ensureSb();
+    const {data}=await sb.auth.getSession();
+    return (data&&data.session&&data.session.access_token)||'';
+  }catch(e){return ''}
+}
+async function aiHeaders(){
+  const h={"Content-Type":"application/json"};
+  const t=await sbToken();
+  if(t)h["Authorization"]="Bearer "+t;
+  return h;
+}
 async function aiCall(prompt,maxTokens){
   try{
     const res = await fetch("/api/chat",{
       method:"POST",
-      headers:{"Content-Type":"application/json"},
+      headers:await aiHeaders(),
       body:JSON.stringify({
         /* الردود تتضمن كتل تفكير تستهلك من السقف، وسقف ١٠٠٠ كان يقطع
            مخرجات الاختبارات والنماذج فيفشل تحليل JSON ويسقط إلى القوالب
@@ -2367,7 +2382,7 @@ async function aiCallVision(prompt,dataUrl){
 
     const res = await fetch("/api/vision",{
       method:"POST",
-      headers:{"Content-Type":"application/json"},
+      headers:await aiHeaders(),
       body:JSON.stringify({
         prompt: prompt,
         mediaType: m[1],

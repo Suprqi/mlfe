@@ -1,5 +1,6 @@
 // نقطة نهاية وسيطة: تستقبل الطلب من المتصفح وتضيف مفتاح Anthropic خادميًا.
 // المفتاح يُقرأ من متغير بيئة ANTHROPIC_API_KEY ولا يظهر أبدًا في المتصفح.
+const { requireUser } = require('./_auth');
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
@@ -10,6 +11,13 @@ module.exports = async (req, res) => {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     res.status(500).json({ message: 'مفتاح خدمة الذكاء الاصطناعي غير مهيأ على الخادم' });
+    return;
+  }
+
+  // بدون هذا الفحص كانت النقطة مفتوحة للعالم: أي شخص يعرف الرابط يستهلك الرصيد
+  const gate = await requireUser(req);
+  if (!gate.ok) {
+    res.status(401).json({ message: gate.message });
     return;
   }
 

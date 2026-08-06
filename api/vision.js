@@ -1,5 +1,6 @@
 // نقطة نهاية وسيطة لتحليل الصور (تصنيف الشواهد، قراءة الشهادات).
 // نفس مبدأ /api/chat: المفتاح خادمي فقط.
+const { requireUser } = require('./_auth');
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
@@ -10,6 +11,13 @@ module.exports = async (req, res) => {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     res.status(500).json({ message: 'مفتاح خدمة الذكاء الاصطناعي غير مهيأ على الخادم' });
+    return;
+  }
+
+  // نفس حماية /api/chat — النقطة كانت مفتوحة لأي زائر
+  const gate = await requireUser(req);
+  if (!gate.ok) {
+    res.status(401).json({ message: gate.message });
     return;
   }
 
