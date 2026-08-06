@@ -6959,7 +6959,7 @@ function cloudErr(e){
 /* ===== الاشتراك =====
    حالة الاشتراك تُقرأ من الخادم ولا تُكتب من المتصفح، وإلا فتحها أي مستخدم
    بتعديل التخزين. الفترة التجريبية تُحسب من تاريخ إنشاء الحساب. */
-const SUB_PRICE_SAR=100, SUB_TRIAL_DAYS=14;
+const SUB_PRICE_SAR=100, SUB_TRIAL_DAYS=10;
 let _sub=null;
 async function loadSubscription(){
   if(!_sbUser){_sub=null;return null}

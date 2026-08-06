@@ -38,7 +38,8 @@ async function requireUser(req) {
 }
 
 // اشتراك فعّال أو فترة تجريبية سارية. تُقرأ من قاعدة البيانات لا من المتصفح.
-const TRIAL_DAYS = 14;
+// لا بد أن تطابق SUB_TRIAL_DAYS في الواجهة، وإلا رأى المعلم مدة والخادم يطبّق غيرها
+const TRIAL_DAYS = 10;
 async function hasAccess(token, user) {
   try {
     const r = await fetch(SUPA_URL + '/rest/v1/subscriptions?select=status,expires_at', {
