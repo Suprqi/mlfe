@@ -958,6 +958,7 @@ input,select,textarea{font-family:inherit;font-size:1rem}
         <div class="std-list" id="std-list"></div>
         <div class="add-line"><input id="new-std" placeholder="إضافة مجال / معيار جديد..."><button class="btn btn-ghost" onclick="addStd()">+ مجال</button></div>
       </div>
+      <div id="ach-blockers"></div>
       <div style="display:flex;gap:12px;flex-wrap:wrap"><button class="btn btn-gold btn-lg" onclick="generateAchievement()">✨ إنشاء ملف الأداء الوظيفي</button><button class="btn btn-ghost btn-lg" onclick="auditAch()">🔍 افحص جاهزية الملف</button><button class="btn btn-ghost btn-lg" onclick="go('dashboard')">حفظ ورجوع</button></div>
       </div>
 
@@ -3130,7 +3131,11 @@ function filterCards(btn){
     c.style.display=(cat==='all'||c.dataset.cat===cat)?'':'none';
   });
 }
-function openAchievement(){if($('pf-bio')){$('pf-bio').value=S.profile.bio;$('pf-vision').value=S.profile.vision;$('pf-goals').value=S.profile.goals;if($('pf-intro'))$('pf-intro').value=S.profile.intro||'';if($('pf-closing'))$('pf-closing').value=S.profile.closing||''}renderStds();go('achievement')}
+function openAchievement(){if($('pf-bio')){$('pf-bio').value=S.profile.bio;$('pf-vision').value=S.profile.vision;$('pf-goals').value=S.profile.goals;if($('pf-intro'))$('pf-intro').value=S.profile.intro||'';if($('pf-closing'))$('pf-closing').value=S.profile.closing||''}renderStds();
+  /* نُظهر المانع فورًا عند فتح الشاشة بدل أن يكتشفه المعلم بعد الضغط */
+  const miss=[];S.standards.forEach(s=>s.ev.forEach(e=>{if(!e.note||!e.note.trim())miss.push(e.title)}));
+  showAchBlockers(miss.length?miss:null);
+  go('achievement')}
 function openMeetingsLog(){renderMeetingsTable();go('meetings')}
 const ACTIVITY_TYPES=['رياضي','ثقافي','علمي','اجتماعي','ديني','صحي','فني'];
 function actSetType(i,sel){
@@ -3973,7 +3978,7 @@ async function handleEvFiles(fileList){
   if(!imgs.length)return;
   const dataUrls=await Promise.all(imgs.map(async f=>({name:f.name,url:await shrinkImage(await readAsDataURL(f))})));
   toast(`🤖 يصنّف ${dataUrls.length} صورة حسب محتواها الفعلي...`);
-  const BATCH=4;let done=0,skippedDup=0;
+  const BATCH=4;let done=0,skippedDup=0,noDesc=0;
   for(let i=0;i<dataUrls.length;i+=BATCH){
     const batch=dataUrls.slice(i,i+BATCH);
     await Promise.all(batch.map(async d=>{
@@ -3985,12 +3990,22 @@ async function handleEvFiles(fileList){
         idx=guessStd(d.name);title=d.name.replace(/\.[^.]+$/,'');type=guessType(d.name);note='';
       }
       if(evDup(idx,title,d.url)){skippedDup++;return}
+      if(!note||!note.trim())noDesc++;
       S.standards[idx].ev.push({title,type,date:new Date().toISOString().slice(0,10),note,img:d.url});
       done++;
     }));
     renderStds();
   }
-  toast(`✓ صُنّفت ${done} صورة تلقائيًا حسب محتواها${skippedDup?' — تجاهلنا '+skippedDup+' مكررة':''}`);
+  saveState();
+  /* الوصف شرط لإنشاء الملف، فلا نقول «صُنّفت» ونسكت عمّا لم يُوصف */
+  if(noDesc){
+    toast(`أُضيفت ${done} صورة — ${noDesc} منها بلا وصف، اكتب وصفها من «تفاصيل» قبل إنشاء الملف`);
+    const miss=[];S.standards.forEach(s=>s.ev.forEach(e=>{if(!e.note||!e.note.trim())miss.push(e.title)}));
+    showAchBlockers(miss.length?miss:null);
+  }else{
+    toast(`✓ صُنّفت ${done} صورة تلقائيًا حسب محتواها${skippedDup?' — تجاهلنا '+skippedDup+' مكررة':''}`);
+    showAchBlockers(null);
+  }
 }
 function dzOver(e){e.preventDefault();e.currentTarget.classList.add('drag')}
 function dzLeave(e){e.currentTarget.classList.remove('drag')}
@@ -4263,10 +4278,28 @@ function pfPage(inner,opt){
     :'';
   return `<div class="pf-page">${opt.wave?pfArt():''}${brand}${inner}${foot}</div>`;
 }
+/* سبب رفض الإنشاء كان رسالة عابرة لا تسمّي الشاهد الناقص، فيبدو الزر معطّلًا.
+   نعرضه لوحةً ثابتة تُسمّي الشواهد وتبقى حتى تُعالَج. */
+function showAchBlockers(items){
+  const box=$('ach-blockers');if(!box)return;
+  if(!items){box.innerHTML='';return}
+  if(items[0]==='no-ev'){
+    box.innerHTML=`<div style="background:#FBEAE6;border:1px solid #E8C7BE;border-radius:12px;padding:12px 14px;margin:12px 0;font-size:.86rem;color:#8A4A3B;line-height:1.9">
+      ⚠️ <b>لا يمكن إنشاء الملف الآن:</b> لا يوجد أي شاهد بعد. أضف شاهدًا واحدًا على الأقل من الأعلى.</div>`;
+    return;
+  }
+  const list=items.slice(0,8).map(t=>`<li>${esc(t||'(بلا عنوان)')}</li>`).join('');
+  box.innerHTML=`<div style="background:#FBEAE6;border:1px solid #E8C7BE;border-radius:12px;padding:12px 14px;margin:12px 0;font-size:.86rem;color:#8A4A3B;line-height:1.9">
+    ⚠️ <b>الملف لم يُنشأ — ${items.length} شاهد بدون وصف.</b>
+    <div style="margin-top:4px">الوصف إلزامي ليكون الشاهد موثّقًا. اضغط <b>«تفاصيل»</b> عند كل شاهد أدناه واكتب وصفه:</div>
+    <ul style="margin:6px 16px 0 0;padding:0">${list}${items.length>8?`<li>و${items.length-8} غيرها…</li>`:''}</ul>
+  </div>`;
+}
 function generateAchievement(){
   const totalEv=S.standards.reduce((a,s)=>a+s.ev.length,0);
-  if(totalEv===0){toast('أضف شاهدًا واحدًا على الأقل');return}
+  if(totalEv===0){showAchBlockers(['no-ev']);toast('أضف شاهدًا واحدًا على الأقل');return}
   const undesc=[];S.standards.forEach(s=>s.ev.forEach(e=>{if(!e.note||!e.note.trim())undesc.push(e.title)}));
+  showAchBlockers(undesc.length?undesc:null);
   if(undesc.length){toast('⚠️ '+undesc.length+' شاهد بدون وصف — اضغط «تفاصيل» وأضف الوصف لكل شاهد ليكون موثّقًا');renderStds();const box=$('ach-meter');if(box)box.scrollIntoView({behavior:'smooth'});return}
   const active=S.standards.filter(s=>s.ev.length>0);
   const P=S.profile||{};
