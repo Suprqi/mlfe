@@ -703,13 +703,16 @@ input,select,textarea{font-family:inherit;font-size:1rem}
         <button class="btn btn-ghost btn-lg" style="justify-content:flex-start" onclick="closeMoreMenu();openCloudModal()">☁️ حسابي والمزامنة</button>
         <button class="btn btn-ghost btn-lg" style="justify-content:flex-start" onclick="closeMoreMenu();openSubscribe()">⭐ الاشتراك</button>
         <button class="btn btn-ghost btn-lg" style="justify-content:flex-start" onclick="closeMoreMenu();logoutApp()">🚪 تسجيل خروج</button>
+        <button class="btn btn-ghost btn-lg" style="justify-content:flex-start" onclick="downloadBackup()">⬇️ نزّل نسخة احتياطية</button>
+        <button class="btn btn-ghost btn-lg" style="justify-content:flex-start" onclick="document.getElementById('restore-file').click()">⬆️ استرجع من نسخة</button>
+        <input type="file" id="restore-file" accept=".json,application/json" style="display:none" onchange="restoreBackup(this)">
         <button class="btn btn-ghost btn-lg" style="justify-content:flex-start;color:var(--danger)" onclick="closeMoreMenu();openDeleteDataModal()">🗑️ حذف جميع البيانات</button>
       </div>
     </div>
   </div>
   <div class="dp-overlay" id="custom-confirm-modal">
     <div class="dp-card" style="max-width:360px;text-align:center">
-      <p id="custom-confirm-msg" style="margin-bottom:18px;line-height:1.8;color:var(--ink)"></p>
+      <p id="custom-confirm-msg" style="margin-bottom:18px;line-height:1.8;color:var(--ink);white-space:pre-line"></p>
       <div style="display:flex;gap:10px;justify-content:center">
         <button class="btn btn-ghost btn-sm" onclick="closeCustomConfirm(false)">إلغاء</button>
         <button class="btn btn-sm" style="background:var(--danger);color:#fff" onclick="closeCustomConfirm(true)">تأكيد</button>
@@ -2801,6 +2804,46 @@ function downloadBackup(){
     setTimeout(()=>URL.revokeObjectURL(url),2000);
     toast('✓ نزّلت النسخة الاحتياطية — احفظها بمكان آمن أو ارفعها قوقل درايف');
   }catch(e){toast('تعذّر إنشاء النسخة الاحتياطية')}
+}
+/* كان في تنزيلٌ بلا استرجاع: المعلّم ينزّل ملفًا لا يستطيع إعادته أبدًا.
+   نتحقّق أن الملف نسخةُ مَلَفّي فعلًا قبل أن نستبدل به كل شيء، ونعرض عليه
+   ما بداخله ليقرّر. ولا نستورد قفل الجهاز حتى لا يُقفل خارج بياناته بقفلٍ
+   من جهاز آخر قد يكون نسيه. */
+function restoreBackup(input){
+  const f=input.files&&input.files[0];
+  input.value='';
+  if(!f)return;
+  const rd=new FileReader();
+  rd.onerror=()=>toast('تعذّر قراءة الملف');
+  rd.onload=()=>{
+    let d;
+    try{d=JSON.parse(rd.result)}catch(e){toast('هذا ليس ملف نسخة صالحًا');return}
+    if(!d||typeof d!=='object'||Array.isArray(d)||!Array.isArray(d.standards)){
+      toast('هذا ليس ملف نسخة من مَلَفّي');return;
+    }
+    const ev=(d.standards||[]).reduce((a,s)=>a+((s&&s.ev&&s.ev.length)||0),0);
+    const msg='استرجاع نسخة'+(d.name?' باسم «'+d.name+'»':'')
+      +'\n\nالمدرسة: '+(d.school||'—')
+      +'\nالطلاب: '+((d.students||[]).length)+' • الشواهد: '+ev
+      +'\n\n⚠️ سيُستبدل كل ما على هذا الجهاز الآن. متابعة؟';
+    customConfirm(msg,()=>{
+      try{
+        /* قفل هذا الجهاز يبقى كما هو */
+        const lock={authEmail:S.authEmail,authPass:S.authPass,authSalt:S.authSalt};
+        Object.keys(S).forEach(k=>{delete S[k]});
+        Object.keys(d).forEach(k=>{S[k]=d[k]});
+        Object.assign(S,lock);
+        saveState();
+        if(typeof migrateStandards==='function')migrateStandards();
+        if(typeof sanitizeStandards==='function')sanitizeStandards();
+        applyTheme(S.theme);paintCalBtn();paintProfile();renderMetrics();
+        if(typeof renderStds==='function')renderStds();
+        renderSubjectSwitcher();closeMoreMenu();go('dashboard');
+        toast('✓ استُرجعت نسختك');
+      }catch(e){console.error(e);toast('تعذّر تطبيق النسخة')}
+    });
+  };
+  rd.readAsText(f);
 }
 function openDeleteDataModal(){
   $('delete-confirm-input').value='';
