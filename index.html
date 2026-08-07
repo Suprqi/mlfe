@@ -6933,14 +6933,24 @@ checkDueReminders();scheduleNotifs();
 const SUPA_URL='https://athqvuwpqellyqoyhdwx.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF0aHF2dXdwcWVsbHlxb3loZHd4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU5NTUwNDEsImV4cCI6MjEwMTUzMTA0MX0.0OalkU0rCoX1RHGJpbWC_k4tdatNF_e9QCvREmIs5eM';
 let _sb=null,_sbUser=null,_pushTimer=null,_syncing=false;
+/* مصدر واحد يعني أن مانع إعلانات أو شبكة تحجب jsdelivr تُعطّل الحساب والمزامنة
+   والاشتراك معًا، وبعضها يفشل بصمت. نجرّب بديلًا قبل أن نُعلن الفشل. */
+const SB_CDNS=['https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js',
+               'https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js'];
 function ensureSb(){return new Promise((res,rej)=>{
   if(_sb)return res(_sb);
   const make=()=>{_sb=window.supabase.createClient(SUPA_URL,SUPA_KEY,{auth:{persistSession:true,autoRefreshToken:true}});res(_sb)};
   if(window.supabase&&window.supabase.createClient)return make();
-  const s=document.createElement('script');
-  s.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js';
-  s.onload=make;s.onerror=()=>rej(new Error('تعذّر تحميل مكتبة الحساب — تحقّق من الإنترنت'));
-  document.head.appendChild(s);
+  let i=0;
+  const tryNext=()=>{
+    if(i>=SB_CDNS.length)return rej(new Error('تعذّر تحميل مكتبة الحساب — قد يحجبها مانع الإعلانات أو الشبكة'));
+    const s=document.createElement('script');
+    s.src=SB_CDNS[i++];
+    s.onload=()=>{(window.supabase&&window.supabase.createClient)?make():tryNext()};
+    s.onerror=tryNext;
+    document.head.appendChild(s);
+  };
+  tryNext();
 });}
 /* هل في الجهاز بيانات فعلية تستحق الترحيل؟ */
 function localHasData(){
