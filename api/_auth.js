@@ -8,7 +8,9 @@ async function requireUser(req) {
   const header = req.headers.authorization || req.headers.Authorization || '';
   const token = header.startsWith('Bearer ') ? header.slice(7).trim() : '';
   if (!token) {
-    return { ok: false, message: 'سجّل دخولك لاستخدام مزايا الذكاء الاصطناعي' };
+    // الرسالة تُستعمل في كل النقاط المحمية لا في الذكاء الاصطناعي وحده،
+    // فتخصيصها به كان يُربك من يحذف حسابه أو يشترك
+    return { ok: false, message: 'سجّل دخولك أولًا للمتابعة' };
   }
   try {
     const r = await fetch(SUPA_URL + '/auth/v1/user', {
