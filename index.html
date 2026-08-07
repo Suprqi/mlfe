@@ -2413,6 +2413,9 @@ async function aiCall(prompt,maxTokens){
       let msg = "تعذر الاتصال بخدمة الذكاء الاصطناعي، حاول مرة أخرى.";
       try{ const err = await res.json(); if(err && err.message) msg = err.message; }catch(_e){}
       toast(msg);
+      /* ٤٠١ يعني أنه غير مسجّل دخول لا أن الخدمة معطّلة. تنبيهٌ عابر
+         يمرّ دون أن يفهم المعلّم ما المطلوب، فنفتح له شاشة الحساب. */
+      if(res.status===401&&typeof openCloudModal==="function")openCloudModal();
       console.error("aiCall failed:", res.status);
       return null;
     }
@@ -2451,6 +2454,9 @@ async function aiCallVision(prompt,dataUrl){
       let msg = "تعذر تحليل الصورة، حاول مرة أخرى.";
       try{ const err = await res.json(); if(err && err.message) msg = err.message; }catch(_e){}
       toast(msg);
+      /* ٤٠١ يعني أنه غير مسجّل دخول لا أن الخدمة معطّلة. تنبيهٌ عابر
+         يمرّ دون أن يفهم المعلّم ما المطلوب، فنفتح له شاشة الحساب. */
+      if(res.status===401&&typeof openCloudModal==="function")openCloudModal();
       console.error("aiCallVision failed:", res.status);
       return null;
     }
