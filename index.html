@@ -6897,6 +6897,13 @@ try{
     localStorage.removeItem(_bk);
   }
 }catch(e){}
+/* لا بد أن تُعرَّف هذه قبل كتلة التهيئة أدناه، لا بعدها: التهيئة تستدعي
+   renderStds ← renderAchMeter ← saveState ← schedulePush الذي يقرأ _sbUser.
+   وحين كانت تُعرَّف لاحقًا كان ذلك خطأ منطقة موت زمنية يقتل تنفيذ بقية
+   السكربت عند كل معلّم لديه بيانات محفوظة — فتتعطّل شاشات الحساب والاشتراك
+   والخروج بلا أي رسالة. المستخدم الجديد لا يمرّ بالفرع فلا يظهر عنده. */
+let _sb=null,_sbUser=null,_pushTimer=null,_syncing=false;
+let _sub=null;
 renderRoleOptions();
 const _restored=loadState();
 migrateStandards();
@@ -6932,7 +6939,6 @@ checkDueReminders();scheduleNotifs();
    في قاعدة البيانات لا من إخفائه. */
 const SUPA_URL='https://athqvuwpqellyqoyhdwx.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF0aHF2dXdwcWVsbHlxb3loZHd4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU5NTUwNDEsImV4cCI6MjEwMTUzMTA0MX0.0OalkU0rCoX1RHGJpbWC_k4tdatNF_e9QCvREmIs5eM';
-let _sb=null,_sbUser=null,_pushTimer=null,_syncing=false;
 /* مصدر واحد يعني أن مانع إعلانات أو شبكة تحجب jsdelivr تُعطّل الحساب والمزامنة
    والاشتراك معًا، وبعضها يفشل بصمت. نجرّب بديلًا قبل أن نُعلن الفشل. */
 const SB_CDNS=['https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js',
@@ -7059,7 +7065,6 @@ function cloudErr(e){
    حالة الاشتراك تُقرأ من الخادم ولا تُكتب من المتصفح، وإلا فتحها أي مستخدم
    بتعديل التخزين. الفترة التجريبية تُحسب من تاريخ إنشاء الحساب. */
 const SUB_PRICE_SAR=100, SUB_TRIAL_DAYS=10;
-let _sub=null;
 async function loadSubscription(){
   if(!_sbUser){_sub=null;return null}
   try{
