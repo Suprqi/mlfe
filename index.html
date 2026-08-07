@@ -2182,7 +2182,7 @@ function applyRole(key){S.role=key;S.standards=roleStandards(key)}
 let hasOnboarded=false;
 const S={gender:'m',role:'teacher',customRoles:{},calendar:'hijri',theme:'green',pfTheme:'green',pfLayout:'wave',name:'',school:'',region:'',subject:'',subjects:[],principal:'',phone:'',email:'',grade:'',term:'',
   photo:'',employeeId:'',specialization:'',classesTaught:'',yearsExp:'',homeroom:false,homeroomClass:'',
-  authEmail:'',authPass:'',registeredAt:'',lockReminderDismissed:false,biometricEnabled:false,biometricCredId:'',
+  authEmail:'',authPass:'',authSalt:'',registeredAt:'',lockReminderDismissed:false,biometricEnabled:false,biometricCredId:'',
   customCertTemplates:[],seenBadges:{},budget:{items:[],invoices:[]},annualPlan:[],teacherEvals:[],prepGrade:'',circulars:[],
   qualification:'',university:'',gradYear:'',supervisoryVisits:'',lastUpdated:'',
   standards:[
@@ -2600,7 +2600,26 @@ function renderCreateSheetItems(){
   box.innerHTML=items.map(([ic,label,fn])=>`<button class="qa-card" onclick="closeCreateSheet();${fn}()"><span class="qa-ic">${ic}</span><b>${label}</b></button>`).join('');
 }
 function closeMoreMenu(){$('more-menu-modal').classList.remove('on')}
+/* كان قفل الجهاز يُخزَّن بتجزئة ٣٢ بت يسهل عكسها بجدول صغير. الآن SHA-256
+   عبر Web Crypto مع مِلح عشوائي لكل جهاز، والقيم القديمة تُقبل مرة واحدة
+   ثم تُرقّى عند أول دخول ناجح حتى لا يُقفل أحد خارج بياناته. */
 function simpleHash(str){let h=0;for(let i=0;i<str.length;i++){h=(h*31+str.charCodeAt(i))>>>0}return h.toString(36)}
+function toHex(buf){return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('')}
+async function hashPass(str){
+  if(!S.authSalt)S.authSalt=toHex(crypto.getRandomValues(new Uint8Array(16)));
+  /* crypto.subtle يحتاج سياقًا آمنًا؛ على http لا نُسقط القفل بل نُبقي القديم */
+  if(!(window.crypto&&crypto.subtle&&crypto.subtle.digest))return simpleHash(str);
+  const d=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(S.authSalt+':'+str));
+  return toHex(d);
+}
+async function verifyPass(str){
+  if(!S.authPass)return false;
+  if(S.authPass.length<40){          /* قفل من النسخة القديمة */
+    if(simpleHash(str)!==S.authPass)return false;
+    S.authPass=await hashPass(str);saveState();return true;
+  }
+  return (await hashPass(str))===S.authPass;
+}
 
 /* ===== بصمة/وجه (WebAuthn) — يعمل فقط لما يكون التطبيق على رابط https حقيقي ===== */
 function bufToB64url(buf){let s='';new Uint8Array(buf).forEach(b=>s+=String.fromCharCode(b));return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
@@ -2691,12 +2710,12 @@ function renderLockPanel(){
   }
 }
 function toggleChangePass(){const w=$('pf-change-pass-wrap');w.style.display=w.style.display==='none'?'block':'none'}
-function changeLockPassword(){
+async function changeLockPassword(){
   const old=$('pf-cp-old').value;const n1=$('pf-cp-new').value;const n2=$('pf-cp-new2').value;
-  if(simpleHash(old)!==S.authPass){toast('كلمة المرور الحالية غير صحيحة');return}
+  if(!await verifyPass(old)){toast('كلمة المرور الحالية غير صحيحة');return}
   if(!n1||n1.length<4){toast('كلمة المرور الجديدة 4 أحرف على الأقل');return}
   if(n1!==n2){toast('كلمتا المرور الجديدتان غير متطابقتين');return}
-  S.authPass=simpleHash(n1);saveState();
+  S.authPass=await hashPass(n1);saveState();
   $('pf-cp-old').value='';$('pf-cp-new').value='';$('pf-cp-new2').value='';
   $('pf-change-pass-wrap').style.display='none';
   toast('✓ تم تغيير كلمة المرور');
@@ -2745,23 +2764,23 @@ function showAuthScreen(mode){
   if(mode==='login'){$('auth-li-email').value='';$('auth-li-pass').value='';$('auth-li-error').style.display='none';checkBiometricLoginUI()}
   else{$('auth-su-email').value='';$('auth-su-pass').value='';$('auth-su-pass2').value=''}
 }
-function doSignup(){
+async function doSignup(){
   const email=$('auth-su-email').value.trim();
   const pass=$('auth-su-pass').value;
   const pass2=$('auth-su-pass2').value;
   if(!email||!email.includes('@')){toast('اكتب بريدًا صحيحًا');return}
   if(!pass||pass.length<4){toast('كلمة المرور 4 أحرف على الأقل');return}
   if(pass!==pass2){toast('كلمتا المرور غير متطابقتين');return}
-  S.authEmail=email;S.authPass=simpleHash(pass);
+  S.authEmail=email;S.authPass=await hashPass(pass);
   saveState();
   $('auth-wrap').style.display='none';$('app').style.display='flex';
   go('dashboard');toast('✓ تم تفعيل القفل المحلي');
 }
 function skipAuthSetup(){$('auth-wrap').style.display='none';$('app').style.display='flex';go('dashboard')}
-function doLogin(){
+async function doLogin(){
   const email=$('auth-li-email').value.trim();
   const pass=$('auth-li-pass').value;
-  if(email===S.authEmail&&simpleHash(pass)===S.authPass){
+  if(email===S.authEmail&&await verifyPass(pass)){
     $('auth-wrap').style.display='none';$('app').style.display='flex';go('dashboard');
   }else{$('auth-li-error').style.display='block'}
 }
@@ -5732,6 +5751,17 @@ ${examSourceBlock('')}المطلوب بالضبط: ${counts.mcq} سؤال اخت
 }
 function setNumStyle(b){document.querySelectorAll('#exam .seg button').forEach(x=>x.classList.remove('on'));b.classList.add('on');S.examMeta.numStyle=b.dataset.n}
 function addOption(i){S.examQuestions[i].options.push('');renderExamQuestions()}
+/* المعلم كان يبدأ بأربعة خيارات ولا يستطيع إنقاصها، فيخرج الخيار الفارغ
+   دائرةً فارغة في ورقة الاختبار. نُبقي خيارين حدًّا أدنى ونصحّح الإجابة
+   الصحيحة إن حُذف ما قبلها أو هي نفسها. */
+function delOption(i,oi){
+  const q=S.examQuestions[i];
+  if(!q||!q.options||q.options.length<=2)return;
+  q.options.splice(oi,1);
+  if(q.correctIdx===oi)q.correctIdx=0;
+  else if(q.correctIdx>oi)q.correctIdx--;
+  renderExamQuestions();
+}
 function setTF(i,val){S.examQuestions[i].correct=val;renderExamQuestions()}
 function addPair(i){S.examQuestions[i].pairs.push({a:'',b:''});S.examQuestions[i].points=S.examQuestions[i].pairs.length;renderExamQuestions()}
 function delPair(i,pi){S.examQuestions[i].pairs.splice(pi,1);S.examQuestions[i].points=S.examQuestions[i].pairs.length;renderExamQuestions()}
@@ -5763,7 +5793,7 @@ function renderExamQuestions(){
     let body='';
     if(q.type==='mcq'){
       body=`<div class="field"><label>نص السؤال</label><textarea ${examField(i,'text')}>${esc(q.text)}</textarea></div>
-        <div class="field"><label>الخيارات (اختر الإجابة الصحيحة)</label>${q.options.map((op,oi)=>`<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span class="opt-letter" title="حرف هذا الخيار في ورقة الاختبار">${AR_LETTERS[oi]}</span><input type="radio" name="mcq-${i}" ${q.correctIdx===oi?'checked':''} onchange="S.examQuestions[${i}].correctIdx=${oi}"><input value="${esc(op)}" oninput="S.examQuestions[${i}].options[${oi}]=this.value" style="flex:1;padding:8px;border:1.5px solid var(--line);border-radius:8px"></div>`).join('')}
+        <div class="field"><label>الخيارات (اختر الإجابة الصحيحة)</label>${q.options.map((op,oi)=>`<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span class="opt-letter" title="حرف هذا الخيار في ورقة الاختبار">${AR_LETTERS[oi]}</span><input type="radio" name="mcq-${i}" ${q.correctIdx===oi?'checked':''} onchange="S.examQuestions[${i}].correctIdx=${oi}"><input value="${esc(op)}" placeholder="اكتب الخيار ${AR_LETTERS[oi]}..." oninput="S.examQuestions[${i}].options[${oi}]=this.value" style="flex:1;padding:8px;border:1.5px solid var(--line);border-radius:8px">${q.options.length>2?`<button class="btn btn-ghost btn-sm" style="color:var(--danger);padding:6px 9px" title="احذف هذا الخيار" onclick="delOption(${i},${oi})">✕</button>`:''}</div>`).join('')}
         <button class="btn btn-ghost btn-sm" onclick="addOption(${i})">+ خيار</button></div>`;
     }else if(q.type==='tf'){
       body=`<div class="field"><label>نص العبارة</label><textarea ${examField(i,'text')}>${esc(q.text)}</textarea></div>
@@ -5808,7 +5838,7 @@ function buildExamDocs(){
     <div class="doc-meta">${S.subject} — ${S.grade} — ${S.term} — المدة: ${S.examMeta.duration||45} دقيقة — الدرجة الكلية: ${totalPts}</div>
     <table><tr><th style="width:25%">اسم الطالب/ة</th><td></td><th style="width:20%">الشعبة</th><td></td></tr></table>`;
   if(mcqs.length){
-    sheet+=`<div class="sec-h">أولًا: اختيار من متعدد</div><table>`+mcqs.map(q=>`<tr><td>${numLabel(n++)}) ${esc(q.text)} <small>(${q.points} د)</small>${q.img?`<br><img src="${q.img}" class="q-img">`:''}<div class="mcq-opts">${q.options.map((op,oi)=>`<span class="mcq-opt"><span class="bub">${AR_LETTERS[oi]}</span>${esc(op)}</span>`).join('')}</div></td></tr>`).join('')+`</table>`;
+    sheet+=`<div class="sec-h">أولًا: اختيار من متعدد</div><table>`+mcqs.map(q=>`<tr><td>${numLabel(n++)}) ${esc(q.text)} <small>(${q.points} د)</small>${q.img?`<br><img src="${q.img}" class="q-img">`:''}<div class="mcq-opts">${q.options.map((op,oi)=>({op,oi})).filter(x=>String(x.op).trim()).map(x=>`<span class="mcq-opt"><span class="bub">${AR_LETTERS[x.oi]}</span>${esc(x.op)}</span>`).join('')}</div></td></tr>`).join('')+`</table>`;
   }
   if(tfs.length){
     sheet+=`<div class="sec-h">ثانيًا: صح أو خطأ</div><table>`+tfs.map(q=>`<tr><td>${numLabel(n++)}) ${esc(q.text)} <small>(${q.points} د)</small>${q.img?`<br><img src="${q.img}" class="q-img">`:''} &nbsp;&nbsp; ( &nbsp; )</td></tr>`).join('')+`</table>`;
@@ -6969,11 +6999,20 @@ async function cloudPull(){
   if(error)throw error;
   return data;
 }
+/* لا يغادر الجهازَ شيئان: قفل التطبيق — سرّ محلي لا حاجة للخادم به —
+   ورقمُ الهوية، فهو من أشدّ البيانات الشخصية حساسية وإبقاؤه محليًا
+   يخفّض التزاماتنا كثيرًا. البقية تُرفع كما هي. */
+function cloudSafeState(){
+  const c=Object.assign({},S);
+  delete c.authPass;delete c.authSalt;
+  if(c.cv){c.cv=Object.assign({},c.cv);delete c.cv.civilId}
+  return c;
+}
 async function cloudPush(){
   if(!_sbUser)return false;
   const sb=await ensureSb();
   const {error}=await sb.from('app_state')
-    .upsert({user_id:_sbUser.id,state:S,device:(navigator.userAgent||'').slice(0,80)},{onConflict:'user_id'});
+    .upsert({user_id:_sbUser.id,state:cloudSafeState(),device:(navigator.userAgent||'').slice(0,80)},{onConflict:'user_id'});
   if(error){console.error(error);return false}
   return true;
 }
@@ -7008,7 +7047,10 @@ async function cloudReconcile(){
 }
 function applyRemote(remote){
   try{
+    /* السحابة لا تحمل رقم الهوية، فلو نسخنا cv كما هو محونا المحلي */
+    const keepCivil=(S.cv&&S.cv.civilId)||'';
     Object.keys(remote.state).forEach(k=>{S[k]=remote.state[k]});
+    if(keepCivil){if(!S.cv)S.cv={};if(!S.cv.civilId)S.cv.civilId=keepCivil}
     saveState();
     if(typeof migrateStandards==='function')migrateStandards();
     applyTheme(S.theme);paintCalBtn();paintProfile();renderMetrics();
