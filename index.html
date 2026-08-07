@@ -238,6 +238,14 @@ input,select,textarea{font-family:inherit;font-size:1rem}
 .doc{padding:40px 44px;direction:rtl;background:#fff}
 /* خيارات الاختيار: دائرة تحمل حرفها ليظلّلها الطالب، ويعرف المعلم أيّها أيّ */
 .mcq-opts{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:8px}
+/* html2canvas يلتقط الشاشة ولا يطبّق @media print، فتكبير الـPDF لا بد أن يكون
+   صنفًا حقيقيًا يُضاف وقت الالتقاط. والعرض هو الأهم: المستند على الشاشة أعرض
+   من A4 فكان يُصغَّر إلى ٧١٪ ليتّسع، وبتثبيته على ٧٩٤px يخرج بمقاس ١:١ كالطباعة */
+.doc.pdf-boost{width:794px!important;max-width:794px!important;font-size:17px;line-height:1.95}
+.doc.pdf-boost td,.doc.pdf-boost th{padding:11px 13px}
+.doc.pdf-boost .sec-h{font-size:1.08rem}
+#exam-doc.pdf-boost{font-size:19px;line-height:2.05}
+#exam-doc.pdf-boost .bub{border-width:1.8px}
 .mcq-opt{display:inline-flex;align-items:center;gap:7px;font-size:.95em}
 .bub{width:1.55em;height:1.55em;min-width:1.55em;border:1.6px solid var(--teal-deep);border-radius:50%;
   display:inline-grid;place-items:center;font-size:.82em;font-weight:700;color:var(--teal-deep);line-height:1}
@@ -245,8 +253,9 @@ input,select,textarea{font-family:inherit;font-size:1rem}
   display:grid;place-items:center;font-size:.8rem;font-weight:700;color:var(--teal-deep)}
 @media print{
   /* الورقة كانت تخرج صغيرة على الجوال وتترك بياضًا، فنكبّر نصّها لتمتلئ */
-  #exam-doc{font-size:13.5pt;line-height:1.95}
-  #exam-doc td,#exam-doc th{padding:9px 11px}
+  #exam-doc{font-size:15.5pt;line-height:2.05}
+  #exam-doc td,#exam-doc th{padding:11px 13px}
+  .doc{font-size:13pt;line-height:1.9}
   #exam-doc .bub{border-width:1.4px}
 }
 /* ترويسة الشعارين المتكرّرة: thead يعيده المتصفح في كل ورقة مطبوعة،
@@ -6689,7 +6698,11 @@ async function docToPdfBlob(containerId,sizeName){
       :[container]);
   if(!pageEls.length)throw new Error('empty');
   const fmt={A4:'a4',A5:'a5',LETTER:'letter'}[sizeName]||'a4';
+  /* نكبّر أثناء الالتقاط فقط ثم نعيد الشاشة كما كانت */
+  const boosted=container.classList.contains('doc')&&!container.classList.contains('pf-doc');
+  if(boosted)container.classList.add('pdf-boost');
   const pdf=new jsPDF({orientation:'p',unit:'pt',format:fmt});
+  try{
   for(let i=0;i<pageEls.length;i++){
     const canvas=await window.html2canvas(pageEls[i],{scale:2,useCORS:true,backgroundColor:'#ffffff'});
     const imgData=canvas.toDataURL('image/jpeg',0.92);
@@ -6698,11 +6711,46 @@ async function docToPdfBlob(containerId,sizeName){
     if(pageEls[i].classList.contains('pf-page')){
       /* نسبة الصفحة على الشاشة هي نسبة A4 نفسها، فالتمديد لملء الورقة بلا تشويه */
       pdf.addImage(imgData,'JPEG',0,0,pw,ph);
+    }else if(pageEls[i]===container&&canvas.height/canvas.width>ph/pw){
+      /* مستند متدفّق أطول من الورقة. كان يُضغَط كاملًا في صفحة واحدة، فيخرج
+         الاختبار بنحو ٦٤٪ من حجمه، وكلما كبّرنا الخط طال المستند فازداد الضغط.
+         فنمدّه بعرض الورقة كاملًا ونوزّعه على صفحات، ونقطع عند حدود الصفوف
+         لئلا ينتصف سطر بين صفحتين. */
+      const sc=canvas.width/pw;                       // بكسل الكانفس لكل نقطة
+      const pageH=Math.max(1,Math.floor(ph*sc));
+      const box=container.getBoundingClientRect();
+      const pxPerCss=box.width?canvas.width/box.width:1;
+      const marks=[...container.querySelectorAll('tr,.sec-h')]
+        .map(e=>Math.round((e.getBoundingClientRect().top-box.top)*pxPerCss))
+        .filter(v=>v>0).sort((a,b)=>a-b);
+      let y=0,first=true;
+      while(y<canvas.height-1){
+        let end=Math.min(y+pageH,canvas.height);
+        if(end<canvas.height){
+          /* أبعد حدّ صفٍّ يسع في الصفحة، ولا نقبل صفحة أقل من ربعها حتى
+             لا تتناثر الأسئلة على صفحات شبه فارغة */
+          const fits=marks.filter(m=>m>y+pageH*0.25&&m<=end);
+          if(fits.length)end=fits[fits.length-1];
+        }
+        const hpx=Math.max(1,end-y);
+        const slice=document.createElement('canvas');
+        slice.width=canvas.width;slice.height=hpx;
+        const g=slice.getContext('2d');
+        g.fillStyle='#ffffff';g.fillRect(0,0,slice.width,slice.height);
+        g.drawImage(canvas,0,y,canvas.width,hpx,0,0,canvas.width,hpx);
+        if(!first)pdf.addPage(fmt,'p');
+        pdf.addImage(slice.toDataURL('image/jpeg',0.92),'JPEG',0,0,pw,hpx/sc);
+        first=false;y=end;
+      }
     }else{
       const ratio=Math.min(pw/canvas.width,ph/canvas.height);
       const w=canvas.width*ratio,h=canvas.height*ratio;
       pdf.addImage(imgData,'JPEG',(pw-w)/2,(ph-h)/2,w,h);
     }
+  }
+  }finally{
+    /* لو تعثّر الالتقاط بقي المستند مكبّرًا على الشاشة، فالإرجاع في finally */
+    if(boosted)container.classList.remove('pdf-boost');
   }
   return pdf.output('blob');
 }
