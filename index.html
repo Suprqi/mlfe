@@ -246,6 +246,13 @@ input,select,textarea{font-family:inherit;font-size:1rem}
 .doc.pdf-boost .sec-h{font-size:1.08rem}
 #exam-doc.pdf-boost{font-size:19px;line-height:2.05}
 #exam-doc.pdf-boost .bub{border-width:1.8px}
+/* Reem Kufi خطّ كوفي زخرفي يقطع اتصال الحروف العربية، فتخرج العناوين في الأوراق
+   كأن فيها أخطاء إملائية («اـختيار من متعحد»). المستندات المطبوعة كلها تستعمل
+   خط المتن. ولا يكفي إصلاحها في @media print لأن تنزيل PDF يصوّر الشاشة. */
+.doc,.doc h1,.doc h2,.doc h3,.doc h4,.doc .display,.doc .sec-h,.doc .doc-title,
+.pf-doc,.pf-doc h1,.pf-doc h2,.pf-doc h3,.pf-doc h4,.pf-doc .display,
+.cert,.cert h1,.cert h2,.cert h3,.cert h4,.cert .display{
+  font-family:'IBM Plex Sans Arabic',sans-serif;letter-spacing:normal}
 .mcq-opt{display:inline-flex;align-items:center;gap:7px;font-size:.95em}
 .bub{width:1.55em;height:1.55em;min-width:1.55em;border:1.6px solid var(--teal-deep);border-radius:50%;
   display:inline-grid;place-items:center;font-size:.82em;font-weight:700;color:var(--teal-deep);line-height:1}
@@ -271,7 +278,7 @@ input,select,textarea{font-family:inherit;font-size:1rem}
 .doc .cover{text-align:center;padding:30px 0 40px}
 .doc .cover .crest-lg{width:90px;height:90px;border-radius:50%;background:var(--teal-light);display:grid;place-items:center;font-size:44px;margin:0 auto 14px}
 .doc .cover .kingdom{color:var(--ink-soft);font-size:.95rem;line-height:1.8}
-.doc .cover .big-title{font-family:'Reem Kufi';font-size:2.3rem;color:var(--teal-deep);margin:26px 0 8px}
+.doc .cover .big-title{font-family:'IBM Plex Sans Arabic',sans-serif;font-size:2.3rem;color:var(--teal-deep);margin:26px 0 8px}
 .doc .cover .sub-title{color:var(--gold);font-size:1.1rem;font-weight:600;margin-bottom:30px}
 .doc .cover .cover-box{display:inline-block;text-align:right;border:2px solid var(--teal-light);border-radius:14px;padding:20px 30px;min-width:320px}
 .doc .cover .cover-box .field-row{margin-bottom:8px}
@@ -295,7 +302,7 @@ input,select,textarea{font-family:inherit;font-size:1rem}
 .doc .ev-gallery .ev-ph{aspect-ratio:4/3;background:var(--gold-soft);border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:1.5rem;border:1px solid var(--line);color:var(--gold);padding:8px;overflow:hidden;text-align:center}
 .doc .ev-gallery .ev-ph img{width:100%;height:100%;object-fit:cover;border-radius:7px}
 .doc .ev-gallery .ev-ph small{font-size:.66rem;color:var(--ink-soft);margin-top:4px}
-.doc .sec-h{background:var(--teal-light);color:var(--teal-deep);font-weight:600;padding:8px 14px;border-radius:8px;margin:20px 0 12px;font-family:'Reem Kufi'}
+.doc .sec-h{background:var(--teal-light);color:var(--teal-deep);font-weight:600;padding:8px 14px;border-radius:8px;margin:20px 0 12px}
 .doc .toc{list-style:none}
 .doc .toc li{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dotted var(--line);font-size:.9rem}
 .doc .toc li b{color:var(--teal-deep)}
@@ -382,10 +389,10 @@ input,select,textarea{font-family:inherit;font-size:1rem}
 .cert-title-row{display:flex;align-items:center;gap:6px;margin:1.5% 0 0;width:100%;justify-content:center;flex-shrink:0}
 .cert-title-row .ln{flex:0 0 20px;height:1px;background:var(--cert-ink);opacity:.5}
 .cert-orn{color:var(--cert-ink);font-size:.5rem;transform:rotate(45deg);display:inline-block;opacity:.75}
-.cert-title{font-family:'Reem Kufi',sans-serif;font-weight:700;font-size:1.25rem;color:var(--cert-ink);letter-spacing:.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:80%}
+.cert-title{font-family:'IBM Plex Sans Arabic',sans-serif;font-weight:700;font-size:1.25rem;color:var(--cert-ink);letter-spacing:.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:80%}
 .cert-lead{font-size:.56rem;color:var(--ink-soft);max-width:82%;margin-top:1.2%;line-height:1.5;flex-shrink:0}
 .cert-name-wrap{margin:1.5% 0 0;max-width:88%;flex-shrink:0}
-.cert-name{font-family:'Reem Kufi',sans-serif;font-weight:700;font-size:1.05rem;color:var(--ink);padding:0 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;max-width:100%}
+.cert-name{font-family:'IBM Plex Sans Arabic',sans-serif;font-weight:700;font-size:1.05rem;color:var(--ink);padding:0 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;max-width:100%}
 .cert-name-rule{width:min(200px,55%);height:1.2px;background:var(--cert-ink);opacity:.7;margin:4px auto 0;position:relative}
 .cert-name-rule::before,.cert-name-rule::after{content:'';position:absolute;top:-2px;width:4px;height:4px;border-radius:50%;background:var(--cert-ink)}
 .cert-name-rule::before{right:-2px}
@@ -480,7 +487,7 @@ input,select,textarea{font-family:inherit;font-size:1rem}
 /* --- الغلاف --- */
 .pf-cover-in{position:relative;z-index:2;height:100%;display:flex;flex-direction:column;justify-content:center;padding:0 8% 0 34%;text-align:right}
 .pf-cover-badge{background:var(--pf-tint);border-radius:1.8cqw;padding:2.6cqw 4.6cqw;margin-bottom:9%;align-self:flex-end}
-.pf-cover-badge b{display:block;font-family:'Reem Kufi';font-size:6cqw;line-height:1.25}
+.pf-cover-badge b{display:block;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:6cqw;line-height:1.25}
 .pf-cover-badge .l1{color:#1B1B1B;font-weight:500}
 .pf-cover-badge .l2{color:var(--pf-main);font-weight:700}
 .pf-cover-f{margin-bottom:2.2cqw;font-size:2cqw;line-height:1.6}
@@ -489,11 +496,11 @@ input,select,textarea{font-family:inherit;font-size:1rem}
 
 /* --- صفحة فاصلة --- */
 .pf-div-in{position:relative;z-index:2;height:100%;display:flex;align-items:center;padding:0 8% 0 30%}
-.pf-div-t{font-family:'Reem Kufi';font-size:5.2cqw;line-height:1.7;color:#1B1B1B;text-align:right;width:100%;font-weight:500}
+.pf-div-t{font-family:'IBM Plex Sans Arabic',sans-serif;font-size:5.2cqw;line-height:1.7;color:#1B1B1B;text-align:right;width:100%;font-weight:500}
 
 /* --- شريط رأس صفحة الشاهد --- */
 .pf-band{position:relative;z-index:2;display:flex;align-items:stretch;background:var(--pf-dark);color:#fff;min-height:11%;border-top:.7cqw solid var(--pf-main)}
-.pf-band-r{flex:0 0 30%;display:flex;align-items:center;padding:1.8cqw 4.2cqw 1.8cqw 1.2cqw;font-family:'Reem Kufi';font-size:2.7cqw;line-height:1.45}
+.pf-band-r{flex:0 0 30%;display:flex;align-items:center;padding:1.8cqw 4.2cqw 1.8cqw 1.2cqw;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:2.7cqw;line-height:1.45}
 .pf-band-sep{flex:0 0 3.2cqw;background:var(--pf-main);transform:skewX(-13deg)}
 .pf-band-l{flex:1;display:flex;align-items:center;padding:1.8cqw 3.2cqw 1.8cqw 4.2cqw;font-size:2cqw;line-height:1.6;color:#F2F7F5}
 
@@ -509,7 +516,7 @@ input,select,textarea{font-family:inherit;font-size:1rem}
 .pf-body.g4 .pf-nofile h4,.pf-body.g6 .pf-nofile h4{font-size:1.7cqw;margin-bottom:.8cqw}
 .pf-body.g4 .pf-nofile p,.pf-body.g6 .pf-nofile p{font-size:1.35cqw;line-height:1.6}
 .pf-nofile{width:86%;border:.22cqw dashed var(--pf-dash);border-radius:1.6cqw;padding:3.2cqw 3.6cqw;text-align:right;background:var(--pf-paper)}
-.pf-nofile h4{font-family:'Reem Kufi';color:var(--pf-dark);font-size:2.3cqw;margin-bottom:1.4cqw;line-height:1.5}
+.pf-nofile h4{font-family:'IBM Plex Sans Arabic',sans-serif;color:var(--pf-dark);font-size:2.3cqw;margin-bottom:1.4cqw;line-height:1.5}
 .pf-nofile p{font-size:1.85cqw;color:#3E4C49;line-height:1.75;margin-bottom:.5cqw}
 .pf-nofile p b{color:var(--pf-main)}
 
@@ -517,12 +524,12 @@ input,select,textarea{font-family:inherit;font-size:1rem}
 .pf-foot{position:absolute;bottom:0;right:0;left:0;z-index:2}
 .pf-foot-line{height:.65cqw;background:var(--pf-main)}
 .pf-foot-in{display:flex;justify-content:space-between;align-items:center;padding:1.2cqw 3.4cqw;background:#fff;font-size:1.6cqw;color:#5A5A5A}
-.pf-foot-brand{color:var(--pf-dark);font-weight:700;font-family:'Reem Kufi'}
+.pf-foot-brand{color:var(--pf-dark);font-weight:700;font-family:'IBM Plex Sans Arabic',sans-serif}
 .pf-foot-bar{height:1.8cqw;background:var(--pf-main)}
 
 /* --- صفحة عناصر التقييم --- */
 .pf-crit-wrap{position:relative;z-index:2;height:100%;padding:5% 6% 6%;display:flex;flex-direction:column}
-.pf-crit-title{text-align:center;font-family:'Reem Kufi';font-size:2.6cqw;color:var(--pf-dark);margin-bottom:2cqw;padding-bottom:1cqw;border-bottom:.26cqw solid var(--pf-main)}
+.pf-crit-title{text-align:center;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:2.6cqw;color:var(--pf-dark);margin-bottom:2cqw;padding-bottom:1cqw;border-bottom:.26cqw solid var(--pf-main)}
 .pf-crit-grid{column-count:2;column-gap:2.6cqw;flex:1;min-height:0}
 .pf-crit{break-inside:avoid;page-break-inside:avoid;margin-bottom:1.5cqw}
 .pf-crit-h{display:flex;align-items:center;gap:1cqw;background:var(--pf-tint2);border-right:.5cqw solid var(--pf-main);border-radius:.5cqw;padding:.6cqw 1.1cqw;font-weight:700;color:var(--pf-dark);font-size:1.45cqw;line-height:1.45}
@@ -536,9 +543,9 @@ input,select,textarea{font-family:inherit;font-size:1rem}
 
 /* --- صفحات نصية (مقدمة / تعريف / خاتمة) --- */
 .pf-text{position:relative;z-index:2;height:100%;padding:7% 8% 9%;display:flex;flex-direction:column}
-.pf-text h3{font-family:'Reem Kufi';font-size:3.1cqw;color:var(--pf-dark);margin-bottom:2cqw;padding-bottom:1.1cqw;border-bottom:.3cqw solid var(--pf-main)}
+.pf-text h3{font-family:'IBM Plex Sans Arabic',sans-serif;font-size:3.1cqw;color:var(--pf-dark);margin-bottom:2cqw;padding-bottom:1.1cqw;border-bottom:.3cqw solid var(--pf-main)}
 .pf-text .lead{font-size:2.05cqw;line-height:2;color:#2E3A38;white-space:pre-wrap}
-.pf-sub{font-family:'Reem Kufi';font-size:2.3cqw;color:var(--pf-main);margin:2.6cqw 0 .8cqw}
+.pf-sub{font-family:'IBM Plex Sans Arabic',sans-serif;font-size:2.3cqw;color:var(--pf-main);margin:2.6cqw 0 .8cqw}
 .pf-text ul{list-style:none;padding:0;margin:0}
 .pf-text ul li{position:relative;padding-right:2cqw;font-size:2cqw;line-height:1.95;color:#2E3A38}
 .pf-text ul li::before{content:"—";position:absolute;right:0;color:var(--pf-main)}
@@ -574,7 +581,7 @@ input,select,textarea{font-family:inherit;font-size:1rem}
 }
 /* --- الملحق --- */
 .pf-apx{position:relative;z-index:2;height:100%;padding:6% 7%;overflow:hidden}
-.pf-apx h3{font-family:'Reem Kufi';color:var(--pf-dark);font-size:2.4cqw;margin-bottom:1.6cqw;padding-bottom:.9cqw;border-bottom:.26cqw solid var(--pf-main)}
+.pf-apx h3{font-family:'IBM Plex Sans Arabic',sans-serif;color:var(--pf-dark);font-size:2.4cqw;margin-bottom:1.6cqw;padding-bottom:.9cqw;border-bottom:.26cqw solid var(--pf-main)}
 .pf-apx table{width:100%;border-collapse:collapse;font-size:1.4cqw}
 .pf-apx th{background:var(--pf-dark);color:#fff;padding:.8cqw 1cqw;font-weight:600}
 .pf-apx td{border:1px solid var(--pf-line);padding:.8cqw 1cqw;vertical-align:top;line-height:1.55}
@@ -713,7 +720,7 @@ input,select,textarea{font-family:inherit;font-size:1rem}
     <div class="dp-card" style="max-width:420px">
       <div class="dp-head"><b style="color:var(--danger)">⚠️ حذف جميع البيانات نهائيًا</b><button class="btn btn-ghost btn-sm" onclick="closeDeleteDataModal()">إغلاق</button></div>
       <div style="background:#FBEAE6;border:1px solid #E8C7BE;border-radius:10px;padding:12px 14px;margin:12px 0;font-size:.86rem;color:#8A4A3B">
-        هذا الإجراء يحذف <b>كل</b> بياناتك المحفوظة على هذا الجهاز نهائيًا — الشواهد، الطلاب، الدروس، الاختبارات، بيانات الهوية المهنية، كل شي — <b>ولا يمكن التراجع عنه بعد التنفيذ.</b>
+        هذا الإجراء يحذف <b>كل</b> بياناتك نهائيًا — على هذا الجهاز <b>وفي السحابة</b> إن كنت مسجّلًا — الشواهد، الطلاب، الدروس، الاختبارات، بيانات الهوية المهنية، كل شي — <b>ولا يمكن التراجع عنه بعد التنفيذ.</b>
       </div>
       <div style="background:#FBF8EF;border:1px dashed var(--gold-soft,#E0CA8B);border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:.86rem;color:var(--ink-soft)">
         💡 <b style="color:var(--teal-deep)">قبل ما تكمل:</b> ننصحك تنزّل نسخة احتياطية من بياناتك وتحفظها بجهازك أو ترفعها قوقل درايف — عشان تقدر ترجّعها لاحقًا لو احتجت.
@@ -1613,6 +1620,8 @@ input,select,textarea{font-family:inherit;font-size:1rem}
       <div class="note"><span class="ni">📧</span><div>للدعم الفني والاستفسارات راسلنا مباشرة على
         <a href="mailto:tech@malaffi.sa" style="color:var(--teal-deep);font-weight:700">tech@malaffi.sa</a>
         — أو أرسل شكواك من هنا وسنصلك عليه.</div></div>
+      <div class="note"><span class="ni">💬</span><div>وللاستفسارات والاقتراحات والأفكار والشكاوى عبر واتساب:
+        <a href="https://wa.me/966504445355" target="_blank" rel="noopener" style="color:var(--teal-deep);font-weight:700;direction:ltr;display:inline-block">0504445355</a></div></div>
 
       <div class="picker" id="fdbk-mode-picker">
         <button class="chip sel" data-m="general" onclick="fdbkSetMode(this)">📝 شكوى / اقتراح عام</button>
@@ -2791,7 +2800,7 @@ function confirmDeleteAll(){
   if($('delete-confirm-input').value.trim()!=='حذف')return;
   /* نغلق نافذة الحذف أولًا حتى لا تحجب نافذة التأكيد */
   closeDeleteDataModal();
-  customConfirm('⚠️ تأكيد أخير: سيُحذف كل شي نهائيًا من هذا الجهاز ولا يمكن استرجاعه. متابعة؟',()=>{
+  customConfirm('⚠️ تأكيد أخير: سيُحذف كل شي نهائيًا من الجهاز ومن السحابة، ولا يمكن استرجاعه. متابعة؟',()=>{
     wipeAllData();
   });
 }
@@ -6801,6 +6810,21 @@ let _quotaWarned=false;
    نوقف الحفظ نهائيًا قبل المسح. */
 let _wiping=false,_autoSaveTimer=null;
 async function wipeAllData(){
+  /* الحذف كان يمسّ الجهاز وحده، فتبقى نسخة كاملة في السحابة تعود عند أول
+     تسجيل دخول — وهذا يخالف ما نَعِد به المعلم. نحذف نسخته السحابية أولًا،
+     وإن تعذّر أوقفنا العملية بدل أن نوهمه أن بياناته زالت. */
+  if(typeof _sbUser!=='undefined'&&_sbUser){
+    try{
+      const sb=await ensureSb();
+      const {error}=await sb.from('app_state').delete().eq('user_id',_sbUser.id);
+      if(error)throw error;
+      try{await sb.auth.signOut()}catch(e){}
+    }catch(e){
+      console.error('cloud wipe failed',e);
+      toast('⚠️ تعذّر حذف نسختك في السحابة — تأكّد من اتصالك وأعد المحاولة');
+      return;
+    }
+  }
   _wiping=true;
   if(_autoSaveTimer){clearInterval(_autoSaveTimer);_autoSaveTimer=null}
   window.removeEventListener('beforeunload',saveState);
