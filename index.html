@@ -1249,7 +1249,6 @@ input,select,textarea{font-family:inherit;font-size:1rem}
     <div id="form-builder" class="screen">
       <div class="builder-head"><span class="back" onclick="go('forms')">→ رجوع للنماذج</span><h2>إنشاء نموذج خاص</h2></div>
       <p class="builder-sub">سمِّ نموذجك، ثم أضف الحقول التي تحتاجها بأنواعها — ويصبح جاهزًا للاستخدام مثل النماذج الجاهزة.</p>
-      <div class="note"><span class="ni">💾</span><div>في هذا النموذج التجريبي، نماذجك الخاصة تبقى متاحة <b>طوال الجلسة</b>. الحفظ الدائم عبر الأجهزة يأتي في النسخة الكاملة.</div></div>
       <div class="panel">
         <div class="panel-title">📋 بيانات النموذج</div>
         <div class="grid2">
@@ -1726,7 +1725,7 @@ input,select,textarea{font-family:inherit;font-size:1rem}
     <div id="voice" class="screen">
       <div class="builder-head"><span class="back" onclick="go('dashboard')">→ رجوع</span><h2>من كلامك إلى ملفات</h2></div>
       <p class="builder-sub">احكِ ما دار في حصتك بالعربي، واختر نوع الملف، ويحوّله المساعد لوثيقة جاهزة.</p>
-      <div class="note"><span class="ni">🎙️</span><div>اضغط <b>زر الميكروفون</b> وتكلّم بالعربي — يتحوّل كلامك إلى نص تلقائيًا (عبر متصفح جوالك). أو اكتب/الصق يدويًا. <b>دقة أعلى للهجة السعودية</b> تُضاف في النسخة الإنتاجية.</div></div>
+      <div class="note"><span class="ni">🎙️</span><div>اضغط <b>زر الميكروفون</b> وتكلّم بالعربي — يتحوّل كلامك إلى نص تلقائيًا (عبر متصفح جوالك). أو اكتب/الصق يدويًا.</div></div>
       <div class="ai-box">
         <div class="ai-head"><div class="ai-ic">🎙️</div><div><b>حوّل الكلام إلى ملف</b><small>تحضير • شاهد • تقرير حصة • سجل زيارة صفية</small></div></div>
         <div style="text-align:center;margin-bottom:14px">
@@ -4825,7 +4824,7 @@ function optsWithOther(list,cur){let o=list.map(x=>`<option ${cur===x?'selected'
 function lessonSel(el,i,field){if(el.value==='__other__'){const inp=document.createElement('input');inp.placeholder='اكتب '+(field==='strat'?'الاستراتيجية':'أداة التقويم')+'...';inp.value='';inp.oninput=()=>{S.lessons[i][field]=inp.value};el.parentNode.replaceChild(inp,el);inp.focus();S.lessons[i][field]=''}else{S.lessons[i][field]=el.value}}
 /* استيراد المنهج من صورة أو PDF */
 function captureImg(input){
-  const f=input.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{const box=$('curr-img-prev');box.innerHTML=`<img src="${e.target.result}" style="width:100%;border-radius:12px;border:1px solid var(--line)"><div class="note" style="margin-top:8px"><span class="ni">ℹ️</span><div>حُفظت صورة الفهرس كمرجع. اكتب العناوين في الصندوق أعلاه (استخراج النص تلقائيًا من الصورة يُفعّل في النسخة الكاملة).</div></div>`;box.style.display='block';$('curr-import').style.display='block'};r.readAsDataURL(f);input.value=''}
+  const f=input.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{const box=$('curr-img-prev');box.innerHTML=`<img src="${e.target.result}" style="width:100%;border-radius:12px;border:1px solid var(--line)"><div class="note" style="margin-top:8px"><span class="ni">ℹ️</span><div>حُفظت صورة الفهرس كمرجع. اكتب العناوين في الصندوق أعلاه (أو استخدم زر الاستخراج بالذكاء الاصطناعي أعلاه لقراءتها من الصورة).</div></div>`;box.style.display='block';$('curr-import').style.display='block'};r.readAsDataURL(f);input.value=''}
 /* ===== استخراج فهرس الدروس من كتاب PDF =====
    pdf.js يعيد قطعًا نصية مبعثرة بإحداثياتها، ودمجها بالترتيب الخام يعطي نصًا
    ملخبطًا خصوصًا في العربية. لذا نعيد بناء الأسطر من الإحداثيات، ثم نلتقط
@@ -6462,7 +6461,7 @@ function chipList(arr,empty){return (arr&&arr.length?arr:[empty]).map(x=>`<span 
 function liList(arr){return '<ul style="margin:6px 18px 0;font-size:.9rem;line-height:1.9">'+(arr||[]).map(x=>`<li>${esc(x)}</li>`).join('')+'</ul>'}
 function renderAnalysis(d,usedAI){
   $('an-result').innerHTML=`
-    ${usedAI?'':'<div class="note"><span class="ni">ℹ️</span><div>تحليل تجريبي بدون اتصال بالنموذج (يعمل بالكامل في النسخة الإنتاجية).</div></div>'}
+    ${usedAI?'':'<div class="note"><span class="ni">ℹ️</span><div>تحليل مبدئي بدون اتصال بالنموذج — سجّل دخولك وأعد المحاولة لتحليل كامل.</div></div>'}
     <div class="panel"><div class="panel-title">🔴 الطلاب المتعثرون (${(d.struggling||[]).length})</div>${chipList(d.struggling,'لا يوجد')}</div>
     <div class="panel"><div class="panel-title">🟢 الطلاب المتفوقون (${(d.outstanding||[]).length})</div>${chipList(d.outstanding,'لا يوجد')}${(d.outstanding&&d.outstanding.length)?`<div style="margin-top:12px"><button class="btn btn-ai btn-sm" onclick='openCertsForOutstanding(${JSON.stringify(d.outstanding)})'>🏅 ولّد شهادات تفوق لهم بضغطة</button></div>`:''}</div>
     <div class="panel"><div class="panel-title">⚠️ المهارات الضعيفة</div>${chipList(d.weakSkills,'لا توجد')}</div>
@@ -7054,6 +7053,11 @@ async function cloudPull(){
 function cloudSafeState(){
   const c=Object.assign({},S);
   delete c.authPass;delete c.authSalt;
+  /* بريد القفل بلا فائدة بعد استبعاد التجزئة، وبريد الحساب محفوظ أصلًا في
+     نظام الدخول، فرفعه تكرارٌ لبيانٍ شخصي بلا مقابل.
+     ومعرّف البصمة مرتبط بمُصادِق هذا الجهاز وحده: نقله لجهاز آخر يجعله
+     يظنّ البصمة مفعّلة وهي غير موجودة عنده. */
+  delete c.authEmail;delete c.biometricCredId;
   if(c.cv){c.cv=Object.assign({},c.cv);delete c.cv.civilId}
   return c;
 }
@@ -7129,6 +7133,26 @@ async function cloudSignIn(){
     await loadSubscription();
     await cloudReconcile();renderCloudUI();
   }catch(e){toast(cloudErr(e))}
+}
+/* الحذف النهائي للحساب. نطلب تأكيدًا مكتوبًا لأنه لا رجعة فيه، ولا نُخرج
+   المعلّم من حسابه إلا بعد أن يؤكّد الخادم الحذف فعلًا — وإلا ظنّ أن حسابه
+   زال وهو باقٍ. بيانات الجهاز شأن منفصل له زرّه. */
+async function deleteAccount(){
+  if(!_sbUser){toast('سجّل دخولك أولًا');return}
+  customConfirm('🚫 حذف حسابك «'+(_sbUser.email||'')+'» نهائيًا\n\n'
+    +'سيُحذف من السحابة: بياناتك واشتراكك وحساب الدخول نفسه.\n'
+    +'لا يمكن التراجع، ولن نستطيع استرجاعها لك.\n\n'
+    +'ننصحك تنزّل نسخة احتياطية قبلها. متابعة؟',async function(){
+    toast('⏳ يحذف حسابك...');
+    try{
+      const res=await fetch('/api/delete-account',{method:'POST',headers:await aiHeaders()});
+      const d=await res.json().catch(function(){return {}});
+      if(!res.ok){toast(d.message||'تعذّر حذف الحساب، حاول مرة أخرى');return}
+      try{const sb=await ensureSb();await sb.auth.signOut()}catch(e){}
+      _sbUser=null;_sub=null;renderCloudUI();
+      toast('✓ حُذف حسابك نهائيًا — بيانات هذا الجهاز ما زالت عندك');
+    }catch(e){toast('تعذّر الاتصال بالخادم، حاول مرة أخرى')}
+  });
 }
 async function cloudSignOut(){
   try{const sb=await ensureSb();await sb.auth.signOut()}catch(e){}
@@ -7240,6 +7264,12 @@ function renderCloudUI(){
         <button class="btn btn-gold btn-sm" onclick="cloudSyncNow()">${_syncing?'<span class="spinner"></span> يرفع...':'⬆️ زامن الآن'}</button>
         <button class="btn btn-primary btn-sm" onclick="openSubscribe()">⭐ الاشتراك</button>
         <button class="btn btn-ghost btn-sm" onclick="cloudSignOut()">تسجيل خروج</button>
+      </div>
+      <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--line)">
+        <button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="deleteAccount()">🚫 احذف حسابي نهائيًا</button>
+        <div style="font-size:.76rem;color:var(--ink-soft);margin-top:6px;line-height:1.7">
+          يحذف بياناتك من السحابة وحسابك معها. بيانات هذا الجهاز تبقى — امسحها من «حذف جميع البيانات».
+        </div>
       </div>`;
   }else{
     b.innerHTML=`
