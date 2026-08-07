@@ -6446,13 +6446,35 @@ function localAnalyze(){
     remedial:['تنفيذ حصص تقوية مركّزة للطلاب المتعثرين','أوراق عمل علاجية متدرّجة','إشراك ولي الأمر في المتابعة الأسبوعية','تقسيم المهارة المتعثرة إلى خطوات صغيرة'],
     enrichment:['مهام إثرائية وتحديات للمتفوقين','تكليفهم بقيادة مجموعات التعلم التعاوني','مشاريع بحثية قصيرة موسّعة'],_ai:false};
 }
+/* النموذج لا يحتاج اسم الطالب ليحلّل درجاته، وإرسال الأسماء نقلٌ لبيانات
+   قاصرين خارج المملكة. نستبدلها برموز قبل الإرسال ونعيدها بعد الرد، فيبقى
+   التحليل والشهادات كما هي ويرى المعلّم الأسماء الحقيقية وحده. */
+function pseudonymize(names){
+  const to=new Map(),from=new Map();
+  names.forEach(function(n,i){const tag='طالب'+(i+1);to.set(n,tag);from.set(tag,n)});
+  return {to:to,from:from};
+}
+function restoreNames(v,from){
+  if(typeof v==='string'){
+    /* الرمز قد يأتي وحده في قائمة أو داخل جملة في الخطة العلاجية.
+       نبدأ بالأطول لئلا يبتلع «طالب1» أوّلَ «طالب10». */
+    const tags=Array.from(from.keys()).sort(function(a,b){return b.length-a.length});
+    let s=v;tags.forEach(function(t){s=s.split(t).join(from.get(t))});
+    return s;
+  }
+  if(Array.isArray(v))return v.map(function(x){return restoreNames(x,from)});
+  if(v&&typeof v==='object'){const o={};for(const k in v)o[k]=restoreNames(v[k],from);return o}
+  return v;
+}
 async function aiAnalyze(){
   const list=anList();if(list.length===0){toast('أضف طلابًا ودرجاتهم أولًا');return}
   const m=maxTotal();const btn=$('an-btn');btn.innerHTML='<span class="spinner"></span> يحلّل...';
   const lo=S.thresholds.low,hi=S.thresholds.high;
-  const rows=list.map(s=>`${s.name}: ${S.criteria.map(c=>c.label+' '+(getScore(s,c.key)||0)+'/'+c.max).join('، ')}، غياب ${getAbs(s)||0}، المجموع ${studTotal(s)}/${m}`).join('\n');
+  const {to:_an,from:_deAn}=pseudonymize(list.map(s=>s.name));
+  const rows=list.map(s=>`${_an.get(s.name)}: ${S.criteria.map(c=>c.label+' '+(getScore(s,c.key)||0)+'/'+c.max).join('، ')}، غياب ${getAbs(s)||0}، المجموع ${studTotal(s)}/${m}`).join('\n');
   const prompt=`أنت خبير تربوي سعودي. حلّل نتائج طلاب مادة ${S.subject} للصف ${S.grade} شعبة ${S.curClass} (${S.curPeriod}). أعد JSON فقط:\n{"struggling":[أسماء المتعثرين],"outstanding":[أسماء المتفوقين],"weakSkills":[البنود/المهارات الضعيفة العامة],"remedial":[إجراءات الخطة العلاجية],"enrichment":[إجراءات الخطة الإثرائية]}\nالمجموع من ${m} (تعثر أقل من ${lo}%، تفوق ${hi}%+):\n${rows}`;
   let data=parseJSON(await aiCall(prompt));let usedAI=!!data;
+  if(data)data=restoreNames(data,_deAn);
   if(!data)data=localAnalyze();
   btn.innerHTML='🤖 حلّل نتائج الطلاب';
   renderAnalysis(data,usedAI);
