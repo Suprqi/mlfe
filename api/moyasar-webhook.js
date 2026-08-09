@@ -29,61 +29,83 @@ module.exports = async (req, res) => {
     }
 
     const data = body.data || body;
-    const paymentId = data.id;
-    if (!paymentId) {
-      res.status(400).json({ message: 'no payment id' });
+    const objectId = data.id;
+    if (!objectId) {
+      res.status(400).json({ message: 'no id' });
       return;
     }
 
-    // تحقق ثانٍ وهو الحاسم: نسأل مويسر مباشرة عن هذه الدفعة
-    const vr = await fetch('https://api.moyasar.com/v1/payments/' + encodeURIComponent(paymentId), {
-      headers: { Authorization: 'Basic ' + Buffer.from(MOYASAR_SECRET + ':').toString('base64') }
-    });
-    const payment = await vr.json();
-    if (!vr.ok) {
-      console.error('verify failed', payment);
+    // تحقق ثانٍ وهو الحاسم: نسأل مويسر مباشرة عن هذا الكائن.
+    // نحن ننشئ فواتير لا دفعات مباشرة، ومويسر يرسل أحداثًا على المستويين،
+    // فسؤال نقطة الدفعات وحدها كان يفشل عند حدث الفاتورة فيردّ ٥٠٢ ويعيد
+    // مويسر المحاولة بلا نهاية ولا يُفعَّل الاشتراك أبدًا.
+    const auth = 'Basic ' + Buffer.from(MOYASAR_SECRET + ':').toString('base64');
+    let obj = null;
+    for (const path of ['/v1/payments/', '/v1/invoices/']) {
+      const r = await fetch('https://api.moyasar.com' + path + encodeURIComponent(objectId), {
+        headers: { Authorization: auth }
+      });
+      if (r.ok) { obj = await r.json(); break; }
+    }
+    if (!obj) {
+      console.error('verify failed', objectId);
       res.status(502).json({ message: 'verify failed' });
       return;
     }
-    if (payment.status !== 'paid') {
+    if (obj.status !== 'paid') {
       // ليست فشلًا في المعالجة، فلا نطلب من مويسر إعادة المحاولة
-      res.status(200).json({ ok: true, ignored: payment.status });
+      res.status(200).json({ ok: true, ignored: obj.status });
       return;
     }
 
-    const userId = payment.metadata && payment.metadata.user_id;
+    const userId = obj.metadata && obj.metadata.user_id;
     if (!userId) {
-      console.error('payment without user_id', paymentId);
+      console.error('paid object without user_id', objectId);
       res.status(200).json({ ok: true, ignored: 'no user' });
       return;
     }
 
-    // نمدّد سنة من اليوم، أو من نهاية الاشتراك الحالي إن كان ما زال ساريًا
+    // نمدّد سنة من اليوم، أو من نهاية الاشتراك الحالي إن كان ما زال ساريًا.
+    // ومويسر يعيد الإشعار عند أي تعثّر وقد تكرّره الشبكة، فبلا فحص المرجع
+    // كانت كل إعادة إرسال تمنح سنة إضافية بلا مقابل.
     let base = Date.now();
-    try {
-      const cur = await fetch(
-        SUPA_URL + '/rest/v1/subscriptions?select=expires_at&user_id=eq.' + userId,
-        { headers: { apikey: SERVICE_KEY, Authorization: 'Bearer ' + SERVICE_KEY } }
-      );
-      const rows = await cur.json();
-      const exp = rows && rows[0] && rows[0].expires_at;
-      if (exp && new Date(exp).getTime() > base) base = new Date(exp).getTime();
-    } catch (e) { /* نكمل من اليوم */ }
+    const cur = await fetch(
+      SUPA_URL + '/rest/v1/subscriptions?select=expires_at,provider_ref&user_id=eq.' + userId,
+      { headers: { apikey: SERVICE_KEY, Authorization: 'Bearer ' + SERVICE_KEY } }
+    );
+    if (!cur.ok) {
+      // لا نُفعّل ونحن نجهل ما سبق: منح سنة مكرّرة أسوأ من تأخّر يعيد مويسر بعده
+      console.error('read subscription failed', await cur.text());
+      res.status(502).json({ message: 'read failed' });
+      return;
+    }
+    const rows = await cur.json();
+    const row = rows && rows[0];
+    if (row && row.provider_ref === objectId) {
+      res.status(200).json({ ok: true, already: true });
+      return;
+    }
+    if (row && row.expires_at && new Date(row.expires_at).getTime() > base) {
+      base = new Date(row.expires_at).getTime();
+    }
 
-    const up = await fetch(SUPA_URL + '/rest/v1/subscriptions?user_id=eq.' + userId, {
-      method: 'PATCH',
+    // إدراج مدمج لا تعديل: التعديل لا يطابق شيئًا إن لم يكن للمعلّم صفّ بعد،
+    // فيردّ نجاحًا ولا يُفعَّل شيء — يدفع المعلّم ولا يحصل على اشتراكه.
+    const up = await fetch(SUPA_URL + '/rest/v1/subscriptions', {
+      method: 'POST',
       headers: {
         apikey: SERVICE_KEY,
         Authorization: 'Bearer ' + SERVICE_KEY,
         'Content-Type': 'application/json',
-        Prefer: 'return=minimal'
+        Prefer: 'resolution=merge-duplicates,return=minimal'
       },
       body: JSON.stringify({
+        user_id: userId,
         status: 'active',
         plan: 'annual',
         expires_at: new Date(base + YEAR_MS).toISOString(),
         provider: 'moyasar',
-        provider_ref: paymentId,
+        provider_ref: objectId,
         updated_at: new Date().toISOString()
       })
     });
