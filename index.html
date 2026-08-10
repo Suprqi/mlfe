@@ -26,6 +26,16 @@ input,select,textarea{font-family:inherit;font-size:1rem}
 .subbar-btn{background:#fff;color:var(--teal-deep);border:1.5px solid var(--line);border-radius:9px;padding:5px 10px;font-size:.78rem;font-weight:600;cursor:pointer;font-family:inherit}
 .subbar-btn:hover{border-color:var(--teal)}
 @media(max-width:640px){.subbar{padding:7px 14px;top:56px}}
+/* روابط الصفحات النظامية: تطلبها بوابة الدفع، ويحتاجها المعلّم ليعرف
+   حقوقه قبل أن يدفع. نتركها بعيدة عن مسار العمل وقريبة المنال. */
+.legal-foot{padding:26px 18px calc(88px + env(safe-area-inset-bottom,0px));
+  text-align:center;font-size:.78rem;line-height:2.2;color:var(--ink-soft);
+  border-top:1px solid var(--line);margin-top:34px}
+.legal-foot a{color:var(--teal-deep);text-decoration:none;padding:0 6px;white-space:nowrap}
+.legal-foot a:hover{text-decoration:underline}
+.legal-foot span{opacity:.4}
+.legal-foot .lf-co{margin-top:8px;font-size:.72rem;opacity:.75;line-height:1.9}
+.onb-card .legal-foot{border-top:none;padding:20px 0 4px;margin-top:22px}
 .bottom-nav{display:none}
 @media(max-width:640px){
   .bottom-nav{display:flex;position:fixed;bottom:0;right:0;left:0;background:#fff;border-top:1px solid var(--line);z-index:60;padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px));justify-content:space-around;align-items:center;box-shadow:0 -4px 20px -10px rgba(0,0,0,.15)}
@@ -676,6 +686,7 @@ input,select,textarea{font-family:inherit;font-size:1rem}
       <input type="file" id="ob-logo-file" accept="image/*" style="display:none" onchange="uploadLogo(this)">
     </div>
     <button class="btn btn-primary btn-block btn-lg" onclick="finishOnboarding()" style="margin-top:10px">يلا نبدأ ✨</button>
+    <div class="legal-foot no-print"><a href="/privacy">سياسة الخصوصية</a><span>·</span><a href="/terms">الشروط والأحكام</a><span>·</span><a href="/refund">الاسترجاع والإلغاء</a><span>·</span><a href="/about">من نحن</a><span>·</span><a href="/contact">اتصل بنا</a><div class="lf-co">مَلَفّي — منتج من مجموعة بجيلة القابضة · سجل تجاري ٧٠٣١٩٢٣٠٢٧</div></div>
   </div>
 </div>
 
@@ -2058,6 +2069,7 @@ input,select,textarea{font-family:inherit;font-size:1rem}
     <div class="dp-actions"><button class="btn btn-ghost btn-sm" onclick="closeDP()">إلغاء</button><button class="btn btn-gold btn-sm" onclick="confirmDP()">تعيين</button></div>
   </div>
 </div>
+<div class="legal-foot no-print"><a href="/privacy">سياسة الخصوصية</a><span>·</span><a href="/terms">الشروط والأحكام</a><span>·</span><a href="/refund">الاسترجاع والإلغاء</a><span>·</span><a href="/about">من نحن</a><span>·</span><a href="/contact">اتصل بنا</a><div class="lf-co">مَلَفّي — منتج من مجموعة بجيلة القابضة · سجل تجاري ٧٠٣١٩٢٣٠٢٧</div></div>
 <div class="bottom-nav no-print" id="bottom-nav">
   <button class="bn-item active" data-bn="dashboard" onclick="bnGo('dashboard')"><span class="bn-ic">🏠</span><span>الرئيسية</span></button>
   <button class="bn-item" data-bn="records" onclick="bnGo('records')"><span class="bn-ic">👥</span><span>الطلاب</span></button>
