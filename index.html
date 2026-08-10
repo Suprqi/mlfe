@@ -256,6 +256,16 @@ input,select,textarea{font-family:inherit;font-size:1rem}
 .mcq-opt{display:inline-flex;align-items:center;gap:7px;font-size:.95em}
 .bub{width:1.55em;height:1.55em;min-width:1.55em;border:1.6px solid var(--teal-deep);border-radius:50%;
   display:inline-grid;place-items:center;font-size:.82em;font-weight:700;color:var(--teal-deep);line-height:1}
+/* المعلّم كان يرى دائرةً بلا شرح فلا يعرف أنها تُعلّم الإجابة الصحيحة.
+   نُبرز الصفّ المختار ونكتب الإجابة صراحةً أسفل القائمة. */
+.opt-hint{font-size:.79rem;color:var(--ink-soft);line-height:1.7;margin:2px 0 9px}
+.opt-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;padding:5px 7px;
+  border:1.5px solid transparent;border-radius:10px;cursor:pointer;transition:.16s}
+.opt-row:hover{background:var(--teal-light)}
+.opt-row.is-right{background:#EAF6EF;border-color:#BFE3D0}
+.opt-tag{font-size:.72rem;font-weight:700;color:#1E7A4C;white-space:nowrap}
+.opt-answer{margin-top:9px;padding:8px 12px;background:var(--teal-light);border-radius:9px;
+  font-size:.84rem;color:var(--teal-deep)}
 .opt-letter{width:26px;height:26px;min-width:26px;border:1.5px solid var(--teal);border-radius:50%;
   display:grid;place-items:center;font-size:.8rem;font-weight:700;color:var(--teal-deep)}
 @media print{
@@ -1215,7 +1225,8 @@ input,select,textarea{font-family:inherit;font-size:1rem}
           <button type="button" class="dp-field" id="rem-date-btn" style="flex:1;min-width:120px" onclick="openDP('reminder')">اختر التاريخ</button>
           <button class="btn btn-ghost" onclick="addReminder()">+ تنبيه</button>
         </div>
-        <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="enableNotif()">🔔 فعّل إشعارات الجهاز</button>
+        <button class="btn btn-ghost btn-sm" id="notif-btn" style="margin-top:8px" onclick="enableNotif()">🔔 فعّل إشعارات الجهاز</button>
+        <div id="notif-note" style="font-size:.78rem;color:var(--ink-soft);line-height:1.7;margin-top:6px"></div>
       </div>
 
       <div class="panel">
@@ -1683,7 +1694,8 @@ input,select,textarea{font-family:inherit;font-size:1rem}
           <div class="acts" style="flex-wrap:wrap;align-items:center">
             <button class="btn btn-ghost btn-sm" onclick="printWithSize('A4')">🖨️ طباعة</button>
             <button class="btn btn-ghost btn-sm" onclick="saveAsPdf('fdbk-doc','اقتراح',this)">⬇️ حفظ PDF</button>
-            <button class="btn btn-primary btn-sm" onclick="shareViaWhatsapp('fdbk-doc','اقتراح',this)">📲 إرسال واتساب</button>
+            <button class="btn btn-primary btn-sm" onclick="sendFeedbackWhatsapp()">📲 إرسال واتساب</button>
+            <button class="btn btn-ghost btn-sm" onclick="shareViaWhatsapp('fdbk-doc','اقتراح',this)">📎 أرسلها ملفًا</button>
           </div>
         </div>
         <div class="doc" id="fdbk-doc"></div>
@@ -5860,7 +5872,10 @@ function renderExamQuestions(){
     let body='';
     if(q.type==='mcq'){
       body=`<div class="field"><label>نص السؤال</label><textarea ${examField(i,'text')}>${esc(q.text)}</textarea></div>
-        <div class="field"><label>الخيارات (اختر الإجابة الصحيحة)</label>${q.options.map((op,oi)=>`<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span class="opt-letter" title="حرف هذا الخيار في ورقة الاختبار">${AR_LETTERS[oi]}</span><input type="radio" name="mcq-${i}" ${q.correctIdx===oi?'checked':''} onchange="S.examQuestions[${i}].correctIdx=${oi}"><input value="${esc(op)}" placeholder="اكتب الخيار ${AR_LETTERS[oi]}..." oninput="S.examQuestions[${i}].options[${oi}]=this.value" style="flex:1;padding:8px;border:1.5px solid var(--line);border-radius:8px">${q.options.length>2?`<button class="btn btn-ghost btn-sm" style="color:var(--danger);padding:6px 9px" title="احذف هذا الخيار" onclick="delOption(${i},${oi})">✕</button>`:''}</div>`).join('')}
+        <div class="field"><label>الخيارات</label>
+        <div class="opt-hint">علّم الدائرة أمام <b>الإجابة الصحيحة</b>. الحرف على اليمين هو الذي سيظهر للطالب في ورقة الاختبار.</div>
+        ${q.options.map((op,oi)=>`<label class="opt-row${q.correctIdx===oi?' is-right':''}"><span class="opt-letter" title="حرف هذا الخيار في ورقة الاختبار">${AR_LETTERS[oi]}</span><input type="radio" name="mcq-${i}" ${q.correctIdx===oi?'checked':''} onchange="S.examQuestions[${i}].correctIdx=${oi};renderExamQuestions()"><input value="${esc(op)}" placeholder="اكتب الخيار ${AR_LETTERS[oi]}..." oninput="S.examQuestions[${i}].options[${oi}]=this.value" style="flex:1;padding:8px;border:1.5px solid var(--line);border-radius:8px">${q.correctIdx===oi?'<span class="opt-tag">✓ الصحيحة</span>':''}${q.options.length>2?`<button type="button" class="btn btn-ghost btn-sm" style="color:var(--danger);padding:6px 9px" title="احذف هذا الخيار" onclick="delOption(${i},${oi})">✕</button>`:''}</label>`).join('')}
+        <div class="opt-answer">الإجابة الصحيحة الآن: <b>${AR_LETTERS[q.correctIdx]||'—'}</b>${q.options[q.correctIdx]&&String(q.options[q.correctIdx]).trim()?' — '+esc(q.options[q.correctIdx]):' <span style="color:var(--danger)">(الخيار فارغ، اكتبه)</span>'}</div>
         <button class="btn btn-ghost btn-sm" onclick="addOption(${i})">+ خيار</button></div>`;
     }else if(q.type==='tf'){
       body=`<div class="field"><label>نص العبارة</label><textarea ${examField(i,'text')}>${esc(q.text)}</textarea></div>
@@ -5959,7 +5974,39 @@ function renderReminders(){
 }
 function addReminder(){const label=$('rem-label').value.trim();if(!label){toast('اكتب التنبيه');return}if(!remDate){toast('اختر التاريخ');return}S.reminders.push({label,date:remDate});$('rem-label').value='';remDate='';const b=$('rem-date-btn');if(b)b.textContent='اختر التاريخ';renderReminders();toast('✓ أُضيف التنبيه');scheduleNotifs()}
 function delReminder(i){S.reminders.splice(i,1);renderReminders()}
-function enableNotif(){if(!('Notification'in window)){toast('جهازك لا يدعم الإشعارات');return}Notification.requestPermission().then(p=>{if(p==='granted'){toast('✓ فُعّلت الإشعارات');scheduleNotifs()}else{toast('لم يُسمح بالإشعارات')}})}
+/* الزر كان يطلب الإذن ولا يقول شيئًا عن حالته، فيضغطه المعلّم مرارًا ولا
+   يدري: أمفعّلة هي أم محظورة من إعدادات المتصفح؟ ولا يذكر القيد الحقيقي:
+   التنبيهات مجدولة بـsetTimeout فلا تعمل والتطبيق مغلق. */
+function notifState(){
+  if(!('Notification' in window))return 'unsupported';
+  return Notification.permission;            // granted | denied | default
+}
+function renderNotifBtn(){
+  const b=$('notif-btn');if(!b)return;
+  const s=notifState();
+  const txt={granted:'🔔 الإشعارات مفعّلة',denied:'🔕 محظورة من المتصفح',
+             unsupported:'🔕 جهازك لا يدعمها',default:'🔔 فعّل إشعارات الجهاز'}[s];
+  b.textContent=txt;
+  b.disabled=(s==='denied'||s==='unsupported');
+  b.style.opacity=b.disabled?'.6':'1';
+  const n=$('notif-note');
+  if(n)n.textContent = s==='granted'
+    ? 'تصلك التنبيهات في الثامنة صباحًا ما دام التطبيق مفتوحًا في المتصفح. إن أغلقته لن تصل، وستجدها بانتظارك عند فتحه.'
+    : s==='denied'
+    ? 'حظرتَها سابقًا. لإعادتها: اضغط القفل بجانب العنوان في المتصفح ثم اسمح بالإشعارات.'
+    : 'تنبيهات مواعيد الرصد. تعمل ما دام التطبيق مفتوحًا في المتصفح.';
+}
+function enableNotif(){
+  const s=notifState();
+  if(s==='unsupported'){toast('جهازك لا يدعم الإشعارات');return}
+  if(s==='denied'){toast('الإشعارات محظورة — اسمح بها من إعدادات المتصفح لهذا الموقع');return}
+  if(s==='granted'){toast('الإشعارات مفعّلة أصلًا');scheduleNotifs();renderNotifBtn();return}
+  Notification.requestPermission().then(p=>{
+    renderNotifBtn();
+    if(p==='granted'){toast('✓ فُعّلت الإشعارات');scheduleNotifs()}
+    else toast('لم يُسمح بالإشعارات');
+  });
+}
 let notifTimers=[];
 function scheduleNotifs(){
   if(!('Notification'in window)||Notification.permission!=='granted')return;
@@ -6893,6 +6940,24 @@ async function saveAsPdf(containerId,filename,btn){
   }catch(e){toast('تعذّر إنشاء PDF — جرّب زر «طباعة مباشرة» بدلًا منه')}
   if(btn)btn.innerHTML=old;
 }
+/* رقم فريق مَلَفّي بصيغة واتساب الدولية (بلا صفر ولا +) */
+const MALAFFI_WA='966504445355';
+/* زر الشكاوى كان يفتح نافذة مشاركة عامة، بينما النصّ فوقه يَعِد بالإرسال
+   «مباشرة لفريق التطوير» — فلا يصل شيء لأحد. واتساب لا يسمح بإرفاق ملف
+   عبر رابط، لكنه يسمح بنصّ مُعبّأ لرقم محدّد، وهذا ما تحتاجه الشكوى. */
+function sendFeedbackWhatsapp(){
+  const doc=$('fdbk-doc');
+  const NL=String.fromCharCode(10);
+  let body=doc?(doc.innerText||doc.textContent||'').trim():'';
+  /* المعاينة تخرج بأسطر فارغة كثيرة، وواتساب يعرضها كما هي فتُربك القارئ */
+  while(body.indexOf(NL+NL+NL)>=0)body=body.split(NL+NL+NL).join(NL+NL);
+  if(!body){toast('اكتب شكواك أو اقتراحك أولًا');return}
+  const who=S.name?('من: '+S.name+(S.school?' — '+S.school:'')):'';
+  const txt='مَلَفّي — شكوى/اقتراح'+(who?NL+who:'')+NL+NL+body.slice(0,1500);
+  const w=window.open('https://wa.me/'+MALAFFI_WA+'?text='+encodeURIComponent(txt),'_blank','noopener');
+  if(!w)toast('امنع حظر النوافذ ثم أعد المحاولة');
+  else toast('✓ فُتح واتساب — اضغط إرسال');
+}
 async function shareViaWhatsapp(containerId,filename,btn){
   const old=btn?btn.innerHTML:'';if(btn)btn.innerHTML='<span class="spinner"></span> يجهّز...';
   try{
@@ -7052,7 +7117,7 @@ if(_restored&&S.name){
   obRowsRender();
   document.getElementById('ob-name').focus();
 }
-checkDueReminders();scheduleNotifs();
+checkDueReminders();scheduleNotifs();renderNotifBtn();
 /* ===== الحساب السحابي: تسجيل دخول ومزامنة ونسخة احتياطية =====
    المفتاح أدناه عام بطبيعته ومصمَّم للمتصفح؛ الحماية من سياسات RLS
    في قاعدة البيانات لا من إخفائه. */
@@ -7154,7 +7219,10 @@ function applyRemote(remote){
 }
 async function cloudSignUp(){
   const em=($('cl-email').value||'').trim(),pw=$('cl-pass').value||'';
+  const pw2=($('cl-pass2')&&$('cl-pass2').value)||'';
   if(!em||pw.length<6){toast('اكتب بريدًا وكلمة مرور لا تقل عن ٦ أحرف');return}
+  /* بلا تأكيد، خطأٌ مطبعي واحد يحبس المعلّم خارج حسابه بلا وسيلة اكتشاف */
+  if(pw!==pw2){toast('كلمتا المرور غير متطابقتين');return}
   try{
     const sb=await ensureSb();
     const {data,error}=await sb.auth.signUp({email:em,password:pw});
@@ -7317,6 +7385,7 @@ function renderCloudUI(){
       <div class="note"><span class="ni">☁️</span><div>سجّل حسابًا لتُحفظ بياناتك في السحابة وتتزامن بين جوالك وحاسبك — ولا تضيع لو تغيّر جهازك.</div></div>
       <div class="field" style="margin-top:12px"><label>البريد الإلكتروني</label><input id="cl-email" type="email" placeholder="you@example.com" autocomplete="email"></div>
       <div class="field"><label>كلمة المرور</label><input id="cl-pass" type="password" placeholder="٦ أحرف فأكثر" autocomplete="current-password"></div>
+      <div class="field"><label>تأكيد كلمة المرور <small style="font-weight:400;color:var(--ink-soft)">— للحساب الجديد فقط</small></label><input id="cl-pass2" type="password" placeholder="أعد كتابتها" autocomplete="new-password"></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
         <button class="btn btn-gold btn-sm" onclick="cloudSignIn()">دخول</button>
         <button class="btn btn-primary btn-sm" onclick="cloudSignUp()">حساب جديد</button>
