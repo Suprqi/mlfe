@@ -28,6 +28,14 @@ input,select,textarea{font-family:inherit;font-size:1rem}
 @media(max-width:640px){.subbar{padding:7px 14px;top:56px}}
 /* روابط الصفحات النظامية: تطلبها بوابة الدفع، ويحتاجها المعلّم ليعرف
    حقوقه قبل أن يدفع. نتركها بعيدة عن مسار العمل وقريبة المنال. */
+/* الموافقة الصريحة قبل الاستخدام: تطلبها بوابة الدفع عند الاعتماد،
+   ويحتاجها المعلّم ليعرف ما يوافق عليه قبل إدخال بيانات طلابه. */
+.agree-box{display:flex;align-items:flex-start;gap:10px;margin-top:18px;
+  padding:12px 14px;background:var(--sand,#F7F4EE);border:1px solid var(--line);
+  border-radius:12px;font-size:.84rem;line-height:1.85;cursor:pointer}
+.agree-box input{margin-top:5px;width:18px;height:18px;min-width:18px;accent-color:var(--teal-deep);cursor:pointer}
+.agree-box a{color:var(--teal-deep);font-weight:600}
+.btn.btn-block[disabled]{opacity:.5;cursor:not-allowed}
 .legal-foot{min-width:0;overflow-wrap:anywhere;
   padding:26px 18px calc(88px + env(safe-area-inset-bottom,0px));
   text-align:center;font-size:.78rem;line-height:2.2;color:var(--ink-soft);
@@ -689,7 +697,13 @@ body.pre-app .bottom-nav{display:none!important}
       <input type="file" id="ob-moe-file" accept="image/*" style="display:none" onchange="uploadMoeLogo(this)">
       <input type="file" id="ob-logo-file" accept="image/*" style="display:none" onchange="uploadLogo(this)">
     </div>
-    <button class="btn btn-primary btn-block btn-lg" onclick="finishOnboarding()" style="margin-top:10px">يلا نبدأ ✨</button>
+    <label class="agree-box">
+      <input type="checkbox" id="ob-agree" onchange="obAgreeChanged()">
+      <span>أوافق على <a href="/terms" target="_blank" rel="noopener">الشروط والأحكام</a>
+      و<a href="/privacy" target="_blank" rel="noopener">سياسة الخصوصية</a>،
+      وأُقرّ بأن لديّ الصلاحية النظامية لإدخال بيانات طلابي.</span>
+    </label>
+    <button class="btn btn-primary btn-block btn-lg" id="ob-start" onclick="finishOnboarding()" style="margin-top:10px">يلا نبدأ ✨</button>
     <div class="legal-foot no-print"><a href="/privacy">سياسة الخصوصية</a><span>·</span><a href="/terms">الشروط والأحكام</a><span>·</span><a href="/refund">الاسترجاع والإلغاء</a><span>·</span><a href="/about">من نحن</a><span>·</span><a href="/contact">اتصل بنا</a><div class="lf-co">مَلَفّي — منتج من مجموعة بجيلة القابضة · سجل تجاري ٧٠٣١٩٢٣٠٢٧</div></div>
   </div>
 </div>
@@ -2970,7 +2984,14 @@ function obRowName(r){
 }
 function obSubjToggle(sel,otherId){$(otherId).style.display=sel.value==='__other__'?'block':'none'}
 function readSubjSelect(selId,otherId){const sel=$(selId);if(!sel)return'';return sel.value==='__other__'?($(otherId).value.trim()||'مادة أخرى'):sel.value}
+/* الزر يبقى معطّلًا حتى يوافق، فلا يكتشف بعد الضغط أن شيئًا ينقصه */
+function obAgreeChanged(){
+  const c=$('ob-agree'),b=$('ob-start');
+  if(b)b.disabled=!(c&&c.checked);
+}
 function finishOnboarding(){
+  const agree=$('ob-agree');
+  if(agree&&!agree.checked){toast('وافق على الشروط وسياسة الخصوصية للمتابعة');return}
   const roleSel=$('ob-role');
   if(roleSel&&roleSel.value&&roleSel.value!=='__new__')S.role=roleSel.value;
   applyRole(S.role);
@@ -7137,6 +7158,7 @@ if(_restored&&S.name){
   }    
 }else{
   obRowsRender();
+  obAgreeChanged();
   document.getElementById('ob-name').focus();
 }
 checkDueReminders();scheduleNotifs();renderNotifBtn();syncChrome();
