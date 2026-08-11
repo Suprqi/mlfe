@@ -28,17 +28,21 @@ input,select,textarea{font-family:inherit;font-size:1rem}
 @media(max-width:640px){.subbar{padding:7px 14px;top:56px}}
 /* روابط الصفحات النظامية: تطلبها بوابة الدفع، ويحتاجها المعلّم ليعرف
    حقوقه قبل أن يدفع. نتركها بعيدة عن مسار العمل وقريبة المنال. */
-.legal-foot{padding:26px 18px calc(88px + env(safe-area-inset-bottom,0px));
+.legal-foot{min-width:0;overflow-wrap:anywhere;
+  padding:26px 18px calc(88px + env(safe-area-inset-bottom,0px));
   text-align:center;font-size:.78rem;line-height:2.2;color:var(--ink-soft);
   border-top:1px solid var(--line);margin-top:34px}
-.legal-foot a{color:var(--teal-deep);text-decoration:none;padding:0 6px;white-space:nowrap}
+.legal-foot a{color:var(--teal-deep);text-decoration:none;padding:2px 6px;display:inline-block}
 .legal-foot a:hover{text-decoration:underline}
 .legal-foot span{opacity:.4}
 .legal-foot .lf-co{margin-top:8px;font-size:.72rem;opacity:.75;line-height:1.9}
 .onb-card .legal-foot{border-top:none;padding:20px 0 4px;margin-top:22px}
 .bottom-nav{display:none}
 @media(max-width:640px){
-  .bottom-nav{display:flex;position:fixed;bottom:0;right:0;left:0;background:#fff;border-top:1px solid var(--line);z-index:60;padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px));justify-content:space-around;align-items:center;box-shadow:0 -4px 20px -10px rgba(0,0,0,.15)}
+  /* الشريط كان يظهر فوق شاشتَي التسجيل والقفل لأنه مرتبط بعرض الشاشة
+   لا بحالة التطبيق، فيربك المعلّم بأزرارٍ لا تعمل قبل أن يبدأ. */
+body.pre-app .bottom-nav{display:none!important}
+.bottom-nav{display:flex;position:fixed;bottom:0;right:0;left:0;background:#fff;border-top:1px solid var(--line);z-index:60;padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px));justify-content:space-around;align-items:center;box-shadow:0 -4px 20px -10px rgba(0,0,0,.15)}
   .bn-item{background:none;border:none;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:.62rem;color:var(--ink-soft);cursor:pointer;padding:4px 8px;border-radius:10px;min-width:52px}
   .bn-item .bn-ic{font-size:19px}
   .bn-item.active{color:var(--teal-deep);font-weight:700}
@@ -2403,6 +2407,12 @@ function basicTextCleanup(text){
   return text.trim().replace(/\s+/g,' ').replace(/([.!؟,،])\1+/g,'$1').replace(/ ،/g,'،').replace(/ \./g,'.');
 }
 function toast(m){const t=$('toast');t.innerHTML=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800)}
+/* مصدر واحد للحقيقة: الشريط السفلي يتبع ظهور التطبيق لا مقاس الشاشة */
+function syncChrome(){
+  const a=document.getElementById('app');
+  const hidden=!a||getComputedStyle(a).display==='none';
+  document.body.classList.toggle('pre-app',hidden);
+}
 function go(s){if(typeof recording!=='undefined'&&recording)stopMic();document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));$(s).classList.add('active');window.scrollTo(0,0);if(s==='dashboard')renderMetrics();syncBottomNav(s)}
 function syncBottomNav(s){
   const map={dashboard:'dashboard',records:'records',achievement:'achievement'};
@@ -2734,7 +2744,7 @@ async function loginWithBiometric(){
       timeout:60000
     }});
     if(!assertion)throw new Error('no assertion');
-    $('auth-wrap').style.display='none';$('app').style.display='flex';go('dashboard');
+    $('auth-wrap').style.display='none';$('app').style.display='flex';syncChrome();go('dashboard');
   }catch(e){toast('تعذّر التحقق بالبصمة — استخدم كلمة المرور')}
 }
 function renderLockPanel(){
@@ -2805,7 +2815,7 @@ function renderLockReminder(){
 function dismissLockReminder(){S.lockReminderDismissed=true;saveState();renderLockReminder()}
 function logoutApp(){
   saveState();
-  $('app').style.display='none';
+  $('app').style.display='none';syncChrome();
   $('auth-wrap').style.display='grid';
   if(S.authEmail&&S.authPass){showAuthScreen('login')}else{showAuthScreen('signup')}
 }
@@ -2824,15 +2834,15 @@ async function doSignup(){
   if(pass!==pass2){toast('كلمتا المرور غير متطابقتين');return}
   S.authEmail=email;S.authPass=await hashPass(pass);
   saveState();
-  $('auth-wrap').style.display='none';$('app').style.display='flex';
+  $('auth-wrap').style.display='none';$('app').style.display='flex';syncChrome();
   go('dashboard');toast('✓ تم تفعيل القفل المحلي');
 }
-function skipAuthSetup(){$('auth-wrap').style.display='none';$('app').style.display='flex';go('dashboard')}
+function skipAuthSetup(){$('auth-wrap').style.display='none';$('app').style.display='flex';syncChrome();go('dashboard')}
 async function doLogin(){
   const email=$('auth-li-email').value.trim();
   const pass=$('auth-li-pass').value;
   if(email===S.authEmail&&await verifyPass(pass)){
-    $('auth-wrap').style.display='none';$('app').style.display='flex';go('dashboard');
+    $('auth-wrap').style.display='none';$('app').style.display='flex';syncChrome();go('dashboard');
   }else{$('auth-li-error').style.display='block'}
 }
 function forgotPassword(){
@@ -2981,7 +2991,7 @@ function finishOnboarding(){
   S.lastUpdated=new Date().toISOString();
   if(!S.registeredAt)S.registeredAt=S.lastUpdated;
   hasOnboarded=true;
-  $('onboarding').style.display='none';$('app').style.display='flex';paintCalBtn();paintProfile();renderMetrics();renderSubjectSwitcher();go('dashboard');
+  $('onboarding').style.display='none';$('app').style.display='flex';syncChrome();paintCalBtn();paintProfile();renderMetrics();renderSubjectSwitcher();go('dashboard');
   saveState();
 }
 function setSubjectSelectValue(selId,otherId,value){
@@ -7114,13 +7124,13 @@ if(_restored&&S.name){
   applyTheme(S.theme);
   $('onboarding').style.display='none';
   if(S.authEmail&&S.authPass){
-    $('app').style.display='none';
+    $('app').style.display='none';syncChrome();
     $('auth-wrap').style.display='grid';
     showAuthScreen('login');
     paintCalBtn();paintProfile();renderMetrics();renderSubjectSwitcher();
     if(typeof renderStds==='function')renderStds();
   }else{
-    $('app').style.display='flex';
+    $('app').style.display='flex';syncChrome();
     paintCalBtn();paintProfile();renderMetrics();renderSubjectSwitcher();
     if(typeof renderStds==='function')renderStds();
     go('dashboard');
@@ -7129,7 +7139,7 @@ if(_restored&&S.name){
   obRowsRender();
   document.getElementById('ob-name').focus();
 }
-checkDueReminders();scheduleNotifs();renderNotifBtn();
+checkDueReminders();scheduleNotifs();renderNotifBtn();syncChrome();
 /* ===== الحساب السحابي: تسجيل دخول ومزامنة ونسخة احتياطية =====
    المفتاح أدناه عام بطبيعته ومصمَّم للمتصفح؛ الحماية من سياسات RLS
    في قاعدة البيانات لا من إخفائه. */
