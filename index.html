@@ -6,7 +6,7 @@
 <title>مَلَفّي — المساعد المهني الذكي للمعلم والمعلمة</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Cairo:wght@400;600;700&family=Tajawal:wght@400;500;700&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#F5F1E8;--paper:#FBF8F1;--ink:#1B2A28;--ink-soft:#43534F;--teal:#0E5A52;--teal-deep:#0A423C;--teal-light:#E3EEEB;--gold:#C9A24B;--gold-soft:#F0E4C6;--line:#E0D8C7;--danger:#B84A3B;--purple:#7A4E94;--shadow:0 10px 40px -12px rgba(14,90,82,.22);--shadow-sm:0 3px 14px -6px rgba(14,90,82,.25)}
 [data-theme="navy"]{--teal:#1B3B6F;--teal-deep:#122647;--teal-light:#E4EAF5;--bg:#EEF1F6;--paper:#F8FAFC;--shadow:0 10px 40px -12px rgba(27,59,111,.24);--shadow-sm:0 3px 14px -6px rgba(27,59,111,.26)}
@@ -421,10 +421,10 @@ body.pre-app .bottom-nav{display:none!important}
 .cert-title-row{display:flex;align-items:center;gap:6px;margin:1.5% 0 0;width:100%;justify-content:center;flex-shrink:0}
 .cert-title-row .ln{flex:0 0 20px;height:1px;background:var(--cert-ink);opacity:.5}
 .cert-orn{color:var(--cert-ink);font-size:.5rem;transform:rotate(45deg);display:inline-block;opacity:.75}
-.cert-title{font-family:'IBM Plex Sans Arabic',sans-serif;font-weight:700;font-size:1.25rem;color:var(--cert-ink);letter-spacing:.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:80%}
+.cert-title{font-family:var(--cert-font,'IBM Plex Sans Arabic'),sans-serif;font-weight:700;font-size:1.25rem;color:var(--cert-ink);letter-spacing:.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:80%}
 .cert-lead{font-size:.56rem;color:var(--ink-soft);max-width:82%;margin-top:1.2%;line-height:1.5;flex-shrink:0}
 .cert-name-wrap{margin:1.5% 0 0;max-width:88%;flex-shrink:0}
-.cert-name{font-family:'IBM Plex Sans Arabic',sans-serif;font-weight:700;font-size:1.05rem;color:var(--ink);padding:0 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;max-width:100%}
+.cert-name{font-family:var(--cert-font,'IBM Plex Sans Arabic'),sans-serif;font-weight:700;font-size:1.05rem;color:var(--ink);padding:0 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;max-width:100%}
 .cert-name-rule{width:min(200px,55%);height:1.2px;background:var(--cert-ink);opacity:.7;margin:4px auto 0;position:relative}
 .cert-name-rule::before,.cert-name-rule::after{content:'';position:absolute;top:-2px;width:4px;height:4px;border-radius:50%;background:var(--cert-ink)}
 .cert-name-rule::before{right:-2px}
@@ -500,8 +500,20 @@ body.pre-app .bottom-nav{display:none!important}
 .pf-swatches{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:8px 2px 2px}
 .pf-sw{width:30px;height:30px;border-radius:50%;border:2.5px solid #fff;box-shadow:0 0 0 1.5px var(--line);cursor:pointer}
 .pf-sw.sel{box-shadow:0 0 0 2.5px var(--teal-deep,#123A3C)}
+.pf-fw{padding:5px 12px;border-radius:9px;border:1.5px solid var(--line);background:#fff;
+  font-size:.82rem;color:var(--ink);cursor:pointer;transition:.16s}
+.pf-fw:hover{border-color:var(--teal)}
+.pf-fw.sel{border-color:var(--teal-deep);background:var(--teal-deep);color:#fff}
 /* ===== ملف الأداء الوظيفي — التخطيط الرسمي (نمط ملف الإنجاز المعتمد) =====
    كل المقاسات بوحدة cqw (نسبة من عرض الصفحة) حتى تتناسب الصفحة مع أي شاشة وعند الطباعة */
+/* خطّ الملف المطبوع يختاره المعلّم، وواجهة التطبيق تبقى بخطّها.
+   الافتراضي هو خط المتن الواضح لا الكوفي الزخرفي، لأن الأخير يقطع
+   اتصال الحروف فتُقرأ العناوين كأن فيها أخطاء إملائية. */
+.pf-doc{--pf-head:'IBM Plex Sans Arabic';--pf-body:'IBM Plex Sans Arabic'}
+.pf-doc[data-font="cairo"]{--pf-head:'Cairo';--pf-body:'Cairo'}
+.pf-doc[data-font="tajawal"]{--pf-head:'Tajawal';--pf-body:'Tajawal'}
+.pf-doc[data-font="amiri"]{--pf-head:'Amiri';--pf-body:'Amiri'}
+.pf-doc{font-family:var(--pf-body),'IBM Plex Sans Arabic',sans-serif}
 .pf-doc{background:#fff;direction:rtl;padding:0}
 .pf-page{container-type:inline-size;position:relative;width:100%;max-width:794px;aspect-ratio:1/1.414;background:#fff;overflow:hidden;margin:0 auto 22px;border:1px solid #E3E3E3;box-shadow:0 4px 18px -10px rgba(0,0,0,.25);page-break-after:always;break-after:page}
 .pf-page:last-child{page-break-after:auto;break-after:auto;margin-bottom:0}
@@ -530,7 +542,7 @@ body.pre-app .bottom-nav{display:none!important}
 /* --- الغلاف --- */
 .pf-cover-in{position:relative;z-index:2;height:100%;display:flex;flex-direction:column;justify-content:center;padding:0 8% 0 34%;text-align:right}
 .pf-cover-badge{background:var(--pf-tint);border-radius:1.8cqw;padding:2.6cqw 4.6cqw;margin-bottom:9%;align-self:flex-end}
-.pf-cover-badge b{display:block;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:6cqw;line-height:1.25}
+.pf-cover-badge b{display:block;font-family:var(--pf-head),'IBM Plex Sans Arabic',sans-serif;font-size:6cqw;line-height:1.25}
 .pf-cover-badge .l1{color:#1B1B1B;font-weight:500}
 .pf-cover-badge .l2{color:var(--pf-main);font-weight:700}
 .pf-cover-f{margin-bottom:2.2cqw;font-size:2cqw;line-height:1.6}
@@ -539,11 +551,11 @@ body.pre-app .bottom-nav{display:none!important}
 
 /* --- صفحة فاصلة --- */
 .pf-div-in{position:relative;z-index:2;height:100%;display:flex;align-items:center;padding:0 8% 0 30%}
-.pf-div-t{font-family:'IBM Plex Sans Arabic',sans-serif;font-size:5.2cqw;line-height:1.7;color:#1B1B1B;text-align:right;width:100%;font-weight:500}
+.pf-div-t{font-family:var(--pf-head),'IBM Plex Sans Arabic',sans-serif;font-size:5.2cqw;line-height:1.7;color:#1B1B1B;text-align:right;width:100%;font-weight:500}
 
 /* --- شريط رأس صفحة الشاهد --- */
 .pf-band{position:relative;z-index:2;display:flex;align-items:stretch;background:var(--pf-dark);color:#fff;min-height:11%;border-top:.7cqw solid var(--pf-main)}
-.pf-band-r{flex:0 0 30%;display:flex;align-items:center;padding:1.8cqw 4.2cqw 1.8cqw 1.2cqw;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:2.7cqw;line-height:1.45}
+.pf-band-r{flex:0 0 30%;display:flex;align-items:center;padding:1.8cqw 4.2cqw 1.8cqw 1.2cqw;font-family:var(--pf-head),'IBM Plex Sans Arabic',sans-serif;font-size:2.7cqw;line-height:1.45}
 .pf-band-sep{flex:0 0 3.2cqw;background:var(--pf-main);transform:skewX(-13deg)}
 .pf-band-l{flex:1;display:flex;align-items:center;padding:1.8cqw 3.2cqw 1.8cqw 4.2cqw;font-size:2cqw;line-height:1.6;color:#F2F7F5}
 
@@ -559,7 +571,7 @@ body.pre-app .bottom-nav{display:none!important}
 .pf-body.g4 .pf-nofile h4,.pf-body.g6 .pf-nofile h4{font-size:1.7cqw;margin-bottom:.8cqw}
 .pf-body.g4 .pf-nofile p,.pf-body.g6 .pf-nofile p{font-size:1.35cqw;line-height:1.6}
 .pf-nofile{width:86%;border:.22cqw dashed var(--pf-dash);border-radius:1.6cqw;padding:3.2cqw 3.6cqw;text-align:right;background:var(--pf-paper)}
-.pf-nofile h4{font-family:'IBM Plex Sans Arabic',sans-serif;color:var(--pf-dark);font-size:2.3cqw;margin-bottom:1.4cqw;line-height:1.5}
+.pf-nofile h4{font-family:var(--pf-head),'IBM Plex Sans Arabic',sans-serif;color:var(--pf-dark);font-size:2.3cqw;margin-bottom:1.4cqw;line-height:1.5}
 .pf-nofile p{font-size:1.85cqw;color:#3E4C49;line-height:1.75;margin-bottom:.5cqw}
 .pf-nofile p b{color:var(--pf-main)}
 
@@ -567,12 +579,12 @@ body.pre-app .bottom-nav{display:none!important}
 .pf-foot{position:absolute;bottom:0;right:0;left:0;z-index:2}
 .pf-foot-line{height:.65cqw;background:var(--pf-main)}
 .pf-foot-in{display:flex;justify-content:space-between;align-items:center;padding:1.2cqw 3.4cqw;background:#fff;font-size:1.6cqw;color:#5A5A5A}
-.pf-foot-brand{color:var(--pf-dark);font-weight:700;font-family:'IBM Plex Sans Arabic',sans-serif}
+.pf-foot-brand{color:var(--pf-dark);font-weight:700;font-family:var(--pf-head),'IBM Plex Sans Arabic',sans-serif}
 .pf-foot-bar{height:1.8cqw;background:var(--pf-main)}
 
 /* --- صفحة عناصر التقييم --- */
 .pf-crit-wrap{position:relative;z-index:2;height:100%;padding:5% 6% 6%;display:flex;flex-direction:column}
-.pf-crit-title{text-align:center;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:2.6cqw;color:var(--pf-dark);margin-bottom:2cqw;padding-bottom:1cqw;border-bottom:.26cqw solid var(--pf-main)}
+.pf-crit-title{text-align:center;font-family:var(--pf-head),'IBM Plex Sans Arabic',sans-serif;font-size:2.6cqw;color:var(--pf-dark);margin-bottom:2cqw;padding-bottom:1cqw;border-bottom:.26cqw solid var(--pf-main)}
 .pf-crit-grid{column-count:2;column-gap:2.6cqw;flex:1;min-height:0}
 .pf-crit{break-inside:avoid;page-break-inside:avoid;margin-bottom:1.5cqw}
 .pf-crit-h{display:flex;align-items:center;gap:1cqw;background:var(--pf-tint2);border-right:.5cqw solid var(--pf-main);border-radius:.5cqw;padding:.6cqw 1.1cqw;font-weight:700;color:var(--pf-dark);font-size:1.45cqw;line-height:1.45}
@@ -586,9 +598,9 @@ body.pre-app .bottom-nav{display:none!important}
 
 /* --- صفحات نصية (مقدمة / تعريف / خاتمة) --- */
 .pf-text{position:relative;z-index:2;height:100%;padding:7% 8% 9%;display:flex;flex-direction:column}
-.pf-text h3{font-family:'IBM Plex Sans Arabic',sans-serif;font-size:3.1cqw;color:var(--pf-dark);margin-bottom:2cqw;padding-bottom:1.1cqw;border-bottom:.3cqw solid var(--pf-main)}
+.pf-text h3{font-family:var(--pf-head),'IBM Plex Sans Arabic',sans-serif;font-size:3.1cqw;color:var(--pf-dark);margin-bottom:2cqw;padding-bottom:1.1cqw;border-bottom:.3cqw solid var(--pf-main)}
 .pf-text .lead{font-size:2.05cqw;line-height:2;color:#2E3A38;white-space:pre-wrap}
-.pf-sub{font-family:'IBM Plex Sans Arabic',sans-serif;font-size:2.3cqw;color:var(--pf-main);margin:2.6cqw 0 .8cqw}
+.pf-sub{font-family:var(--pf-head),'IBM Plex Sans Arabic',sans-serif;font-size:2.3cqw;color:var(--pf-main);margin:2.6cqw 0 .8cqw}
 .pf-text ul{list-style:none;padding:0;margin:0}
 .pf-text ul li{position:relative;padding-right:2cqw;font-size:2cqw;line-height:1.95;color:#2E3A38}
 .pf-text ul li::before{content:"—";position:absolute;right:0;color:var(--pf-main)}
@@ -624,7 +636,7 @@ body.pre-app .bottom-nav{display:none!important}
 }
 /* --- الملحق --- */
 .pf-apx{position:relative;z-index:2;height:100%;padding:6% 7%;overflow:hidden}
-.pf-apx h3{font-family:'IBM Plex Sans Arabic',sans-serif;color:var(--pf-dark);font-size:2.4cqw;margin-bottom:1.6cqw;padding-bottom:.9cqw;border-bottom:.26cqw solid var(--pf-main)}
+.pf-apx h3{font-family:var(--pf-head),'IBM Plex Sans Arabic',sans-serif;color:var(--pf-dark);font-size:2.4cqw;margin-bottom:1.6cqw;padding-bottom:.9cqw;border-bottom:.26cqw solid var(--pf-main)}
 .pf-apx table{width:100%;border-collapse:collapse;font-size:1.4cqw}
 .pf-apx th{background:var(--pf-dark);color:#fff;padding:.8cqw 1cqw;font-weight:600}
 .pf-apx td{border:1px solid var(--pf-line);padding:.8cqw 1cqw;vertical-align:top;line-height:1.55}
@@ -737,7 +749,7 @@ body.pre-app .bottom-nav{display:none!important}
 
   <div id="app" class="app" style="display:none">
   <div class="topbar">
-    <div class="brand" onclick="go('dashboard')"><div class="mark"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKAAAACvCAMAAABNRyXKAAAA/1BMVEUNLikAAADRn1X4+filcCj08e2apqXw6du5gzm4iUbl07ZZbGZ6e3vtyZB8i4itra3EjDvh0KDw8e4yTUh0h4S8vHyapKLm07ElQjrbt4bUsp9cVzbxxHxmd3OMdkWq4OC7w8Jvgn68xMP6+nystbTwsW1vgXxqq6u2c3PUuZAbb2+4wL52qHa337f//wB///++xMP/AAD/f39//3+4wb3MmTMAAFUAAP8AfwAA/wAA//9/AABQY19/f7+qVQC/f78AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlZmMPAAAAQHRSTlP+AP4M/F3qmv39ovMD9rgF+Anc++oEpmD9+wj//Zz/Be/uogJnBKIFBKcD6wUHAQJ0AQICnQUDAQIBAQJ4BAME3jX5gwAAC3tJREFUeNrNnYlW47gShiVXZMeRg8AOxiR0WBoael9mufud93+rUSlO8CLZsmQn6MzpAwycfPlLVSqVSwqhzQEAVIjnpG8IkL9KJx+kRadeFSwGPcogTf0oMBDMaggmIRM4HqB8KWAsCkPOV7VxL/+7XzUH53fp9DrWFYQo5RkZMFa5VBGOAohTnoWD6NQII0jEEQBBAEQr4jBWjCbTA+L0e+CEFA6EZ5Ma+aAgyzNSuPARnk9JSMrwJ73DST5FyCCZFlAq4MFHsoOE4D/0gMBWxGPwx52fiEs1Xl5eLp3HxRpagAmFsPABLMIx1+X/1BDJTkAPAyvCBwwDlF15D4bLJ72AKmACngJiMIxkIKXpddAxbpZ2Y4GMFxVA+c5XJPMkvGNwkbBgdj4/jPPqCAYMhfj0bQ+ILpwRXwm5etdRgCQxjsBnLBeSEPaAwD57C4jrCYgLWCrtfPkQUWbNsAMUGGMKb0AZrf+BEs7GAUTCEjBBHx5hrDDUlBLOg2AMwl+lk6TZGIBZvqaCSj8ZQT45zoMFfCsB78gog0sBGaTBbDbz92RJuFRLPAKG4wAWMruWO5WlNgZqx2vsuzEYeVRA6Sc4C9kichiLxbL1zpZMRq4xAWVyDa4pjVzirq6ajAu5wGMcHA0wi+B/sHZJEJ4w15CYdcLlhQrU0R0ZVULHNPCXwLy+TigjF5HJ9GgKylAj475T3vUkExhYP9EqIfqxkAqm4wHietIvocodsYRRGbufwkWNMGBwOTKgzLsi1qdWojyJsnQZyABzc4OZ2CICeimkiHK1fB1XBAGjMQEJv4t6SjqolWT8CbCoBxVcfeGP6k93CrJRAeVE5J1jtQqlyCBaPnGzUIRVI0fwfnQF7d5CiHNV7j2kXOfVuCd97KkiYTS6k9jPhFCZGljaIJR+El3XFWSnACwRsZ5WnYdXmEjD8tQmPoR1hbhopqlsWTfxyQAJj+C5KlgQXF/Ri/+/IkcMTmfiHaEKiMtafvBEG4Dp6QBxMwjfIK3aGC4rgCc2MRZogdaWt4/4/aLuJHBKwOwBvsp85aaWpC7eRJh5rSCvpYTnBsCTmxgrY2L9amOdgqcFxAwNWLRfTxqAyotPDCiT3ASYAVCZ+LRzEEON+Lm38fkbNLHKwrWA52/CSdRe8AVMgO/fgImzHMR++W0BwhsALELMunZe0gQ8+Vp8eJY2LWBRZAXuNsJwxXmWDa3mnfUo6OkkWbY6y6PosJeTX+YhL94KYLaSmbsqDL6WgeTXyDgQMDACujtJxvNHUBWtT9V9+SfcUEpG24f3fYDOCvIcKxb0GfblDlHWgRJVO2DMEtEEOPcDzNSurHxYUKkYQVl5wSdYkPNTARY8ZSDELTU8yy4frFq1GZicxAcwO9vXo8w1IrS5/CfPTgCIj7CpTR8AWjvlRwfkD2BbqESv6SMcHVDut+2fX8Ntr4YawHMfQLkRG9LlgdGnex6e0UOVaxRAOf8GtRqhq+SFB+DAlSQc3CWD1Y3waAqqCWj0B/3/w3SK2wFeawAHpVtZxLT+kYBQfZlfdITyL6L0SIBnoJt/oqag0InL7p0Bh5iYM41EQqUG0ecwDNMoAqpBxIcOmQXg3FfBsN3PiKqxkJcpasbvQ9Z+D9C1KvcBDlCQt/kE9kXyeh4hEVtvg5qDYSVQ7wGx7SEeDlio7LlhXl1KJX9PQBPQuJ5oFJSAcwdAzgRtva62rbQVjKDjdXaA8xEAQ40uoTFc1n9Xer/Jxn2A1itJ9iB3+t8rL7o26LdTu+HLt8ZgPZqCTQtDZ8vNCui6EWnCAYDzeTwbDEhF0jDwqitppM8NwM+DAOeDAUOo9cV3RY79I4b6Y2LDr78CxlpA20Bd5PUIrNr6uqZsYxYK0yQcC5BHNcA+AbG2W3tDgg4AnLsA1qN0T5K3cxNRV7wbMPZVkFZ74mVc6+uaa0QauTmZ1sSr+jKX0Md+QKgDrroVjP1MHNYOtwjauyXPSMPEhmWnAjgbDxD6m6+zx1MDkuMARq6AfXWh7McpAW/7ARteLGetfl+ST2Li4YBgCjOnA4SGgp0ryezogEWjBtG7Fo/uxaveIuKX+lr8kHUqiClgCTg7BmBrCrKUOAFOFWZW8AlqVbioM6OexeMDFt3ZWV1AEKbkItcCzg6AzBrwtyGAzTKdOfvpA7RX8PsAE983ypwyFbrL3ABtneQOBszB+0aBBiAxCjGSgkVeO8PZHQfvGTQOHt9SYw1TBzgbrmDxCNQym+F5q9QqeY11ap0XqzFMwRU0AfWS8LK1slUgvCeOgDZerEpq0OiGln/ZHrlq2m4eLJcCRhmZTkF88KorjVeeY+8fZxsK7F17aG9AHuJu6bvmdV++Nmvpt4muxi7fy+8ZmcrEWOv7t9/Jze6DXUbA2MqLQ8Z8D5YCjfof5MzUVlgH2PnHWWiaVkP44CHzAOwyMSad1J8v4mQiBeWKSm4n5vMBxJzTT0LAMmxIJgLMcm/3kHvN6J5YAc6HA8oJmPjJ92w6MrXdaABnAwF55HWRh+qfYQ/a+RfHGgVnQ7049IHbHQE03B4SBDoTzwYqyH+A9oIHq0NflH5pPcQ7xK46Xw0wGLCScAbPuj6YBmUNG796TnbfRYa+qE2DrwI4Q8C1JWCmbZ4QSSJE8mc1SRCfBL08LLo722IToaGHcBsEm1EA+WPbwPgT6DqSFqVpBOxHHnJTbI5bfHvA2VDA1hqsHl3D73ku09IwDT+Hd2m6T1Pl9/K7NL3DC4nM/ZeF5NuSUQCLs1aQFrtH68R9bLCSbwzUr4CxBWDWvEUG9cv9juvr+TQKxhZxUE5BgObTSr/bDrb4uJDYANrEwaaPYGXAC4+oywM24wGy5iYu8rJvYeRzNHHYSPQTv6NPG9URuCUugHoFV/V17i8/Abnii8l4gMU7gH9WZuBvHRtvS/fQOogNYGoCTGoufOfpHoYJOBqgxxTs4XNzEgSkowBuyvNJnIwO+GkMQF7ybYkz4KQm3vPFZGzAD7Vs0BVwuz+ARiYAHEHBw9U4Gx/AaLI5aMfnuJKcYQu5F2BxODS8JW6A86588ENtT+wAuDnwxcQPUK/gO09Abs03kYKbwpIvKJwBO9OtHkBpwG1hEV76HOQAGA/2Yta91MVdxouH8PUCpk6ARYd/Vvi2xBJwaKDud5KNiaCoXI0REzKRghZevNGLtBnKNxngqydwA5/NBJwSsDLXtprwYsvXBahOaBvioEXCWrRgtg58HYBM3VzmFma09qzxbYkv4HV5c5nJxKR/qatZtH7xYEx8AWMGXQraJazmyxDJGIC0CxD+ZZMPmgg33oAxXp5HnVcS7TR04msBlt8ErLzmNPVLt7SEM+IMCKWCwa441JkP2qX8szbflrgDUgGLMkjTPkDLhLU1DWPiDIiOAUvFRyh0mhiqZzOg8+Kh2GMCNhWMgLLrIGZsvb8o1ggICew/BwIfWoY22w8Xvl3nUQn4Ea9Ouf4I+8Pz1JhRv6vfIyg6H/pufPiqgMEVvVS3UV/uV1rjRbEf6oA9zSszRwduAYK6ifqPA5+6C1hbmuR5foYjV+Os7+aJ2J0PDyyXgDHBs2Rw8at65bgw9LQUWVbIkeGwuLDfzYHVC4WHlF8K+L51q7zvlfL1abhxAMRDgh+VgFfwAi3AZKSrbDeYzTjwqaNI7Br5pPNeau7lB6/6eM1RXPjU7bIIOL/WtUgQm8NJtoROfAX6CIuVfmvQAgo2zpXZjjVibPFbBnL+0RfQfzZEctIL9FQ76fKj/Pfyp+HDKyR3xE8nIP26axJ5b/50jaS3vWqykT2Ux3wvofMDVITFrSuT8H1Wn7DzzdyCRQ6fzpSeQMOs/1oO8tpDd3xC/tjfHEaqOWl+VMQstGkNq32QFOA9T8eZi+q+YpveMNJoypLe8t934cRj9S6PZI5i1Vn3Nyki/0T15uFsAAAAAElFTkSuQmCC" alt="مَلَفّي"></div><div><span class="name">مَلَفّي <span style="font-size:.6rem;color:var(--gold);font-weight:700;vertical-align:super">v2.5</span></span><span class="sub"><a href="https://malaffi.sa" target="_blank" rel="noopener" onclick="if(event&&event.stopPropagation)event.stopPropagation()" style="color:inherit;text-decoration:none">malaffi.sa</a> — من بجيلة للتقنية</span></div></div>
+    <div class="brand" onclick="go('dashboard')"><div class="mark"><img src="data:image/png;base64,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" alt="مَلَفّي"></div><div><span class="name">مَلَفّي <span style="font-size:.6rem;color:var(--gold);font-weight:700;vertical-align:super">v2.5</span></span><span class="sub"><a href="https://malafi.sa" target="_blank" rel="noopener" onclick="if(event&&event.stopPropagation)event.stopPropagation()" style="color:inherit;text-decoration:none">malafi.sa</a> — من بجيلة للتقنية</span></div></div>
     <div class="who"><span class="name-tb" id="tb-name"></span><div class="av" id="tb-av">م</div><button class="edit" onclick="openProfileScreen()">👤 الهوية المهنية</button><button class="edit" onclick="openMoreMenu()" title="المزيد" style="padding:5px 10px">⋮</button></div>
   </div>
   <div class="subbar">
@@ -1671,7 +1683,7 @@ body.pre-app .bottom-nav{display:none!important}
       <div class="builder-head"><span class="back" onclick="go('dashboard')">→ رجوع</span><h2>الشكاوى والاقتراحات</h2></div>
       <p class="builder-sub">رأيك يهمنا — وإذا كانت فكرتك قوية وتم تنفيذها فعليًا، تستحق مكافأة مالية.</p>
       <div class="note"><span class="ni">📧</span><div>للدعم الفني والاستفسارات راسلنا مباشرة على
-        <a href="mailto:tech@malaffi.sa" style="color:var(--teal-deep);font-weight:700">tech@malaffi.sa</a>
+        <a href="mailto:tech@malafi.sa" style="color:var(--teal-deep);font-weight:700">tech@malafi.sa</a>
         — أو أرسل شكواك من هنا وسنصلك عليه.</div></div>
       <div class="note"><span class="ni">💬</span><div>وللاستفسارات والاقتراحات والأفكار والشكاوى عبر واتساب:
         <a href="https://wa.me/966504445355" target="_blank" rel="noopener" style="color:var(--teal-deep);font-weight:700;direction:ltr;display:inline-block">0504445355</a></div></div>
@@ -1849,6 +1861,7 @@ body.pre-app .bottom-nav{display:none!important}
       <div class="panel">
         <div class="panel-title">🎨 التصميم</div>
         <div id="cert-design-chips" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px"></div>
+        <div class="pf-swatches" id="cert-font-chips" style="margin-top:10px"><span style="font-size:.8rem;color:var(--ink-soft)">خط الشهادة:</span></div>
         <input type="file" id="cert-custom-file" accept="image/*" style="display:none" onchange="handleCustomCertUpload(this)">
       </div>
 
@@ -2235,7 +2248,7 @@ function roleStandards(key){const r=ROLES[key]||(S.customRoles&&S.customRoles[ke
 function roleLabel(key){const r=ROLES[key]||(S.customRoles&&S.customRoles[key]);if(!r)return{m:'معلم',f:'معلمة'};return r.label}
 function applyRole(key){S.role=key;S.standards=roleStandards(key)}
 let hasOnboarded=false;
-const S={gender:'m',role:'teacher',customRoles:{},calendar:'hijri',theme:'green',pfTheme:'green',pfLayout:'wave',name:'',school:'',region:'',subject:'',subjects:[],principal:'',phone:'',email:'',grade:'',term:'',
+const S={gender:'m',role:'teacher',customRoles:{},calendar:'hijri',theme:'green',pfTheme:'green',pfLayout:'wave',pfFont:'plex',certFont:'plex',name:'',school:'',region:'',subject:'',subjects:[],principal:'',phone:'',email:'',grade:'',term:'',
   photo:'',employeeId:'',specialization:'',classesTaught:'',yearsExp:'',homeroom:false,homeroomClass:'',
   authEmail:'',authPass:'',authSalt:'',registeredAt:'',lockReminderDismissed:false,biometricEnabled:false,biometricCredId:'',
   customCertTemplates:[],seenBadges:{},budget:{items:[],invoices:[]},annualPlan:[],teacherEvals:[],prepGrade:'',circulars:[],
@@ -4247,6 +4260,19 @@ function addLinkEvidence(){const url=$('ev-link').value.trim();if(!url){toast('�
 function setEvNote(i,j,v){S.standards[i].ev[j].note=v}
 function setEvResult(i,j,v){S.standards[i].ev[j].result=v}
 function setEvReflection(i,j,v){S.standards[i].ev[j].reflection=v}
+/* أربعة خطوط للملف المطبوع. الافتراضي خط المتن الواضح؛ ولم نُدرج
+   الكوفي الزخرفي لأنه يقطع اتصال الحروف فيبدو المكتوب مغلوطًا. */
+const PF_FONTS=[['plex','واضح','IBM Plex Sans Arabic'],['cairo','القاهرة','Cairo'],['tajawal','تجوّل','Tajawal'],['amiri','أميري','Amiri']];
+function pfApplyFont(k){
+  S.pfFont=k||'plex';saveState();
+  const d=$('ach-doc');if(d)d.setAttribute('data-font',S.pfFont);
+  document.querySelectorAll('.pf-fw').forEach(el=>el.classList.toggle('sel',el.dataset.f===S.pfFont));
+}
+function pfFontPicker(){
+  return `<div class="pf-swatches no-print"><span style="font-size:.8rem;color:var(--ink-soft)">خط الملف:</span>`
+   +PF_FONTS.map(([k,label,fam])=>`<button type="button" class="pf-fw${(S.pfFont||'plex')===k?' sel':''}" data-f="${k}" style="font-family:'${fam}',sans-serif" onclick="pfApplyFont('${k}')">${label}</button>`).join('')
+   +`</div>`;
+}
 const PF_THEMES=[['green','أخضر رسمي','#12A05F'],['teal','تركوازي','#0E9E93'],['navy','كحلي','#1A5FA8'],['plum','بنفسجي','#6D3B9E'],['rose','وردي','#BE4A72'],['sand','ذهبي رملي','#A9761F']];
 function pfApplyTheme(k){
   S.pfTheme=k||'green';saveState();
@@ -4664,8 +4690,9 @@ function generateAchievement(){
   </div>`;
 
   const d=$('ach-doc');d.classList.add('pf-doc');d.innerHTML=html;
-  const bar=$('pf-theme-bar');if(bar)bar.innerHTML=pfLayoutPicker()+pfSwatches();
+  const bar=$('pf-theme-bar');if(bar)bar.innerHTML=pfLayoutPicker()+pfSwatches()+pfFontPicker();
   pfApplyTheme(S.pfTheme||'green');
+  pfApplyFont(S.pfFont||'plex');
   pfApplyLayout(S.pfLayout||'wave');
   go('ach-preview');
 }
@@ -5618,7 +5645,7 @@ function renderCustomCertPreview(){
   const p=_pendingCustomCert;
   box.innerHTML=`<div class="cert" style="padding:0"><div class="cert-frame" style="padding-bottom:${p.ratio}%">
     <img class="cert-bg-img" src="${p.img}" alt="">
-    <div class="cert-inner" style="--cert-ink:${p.ink}">
+    <div class="cert-inner" style="--cert-ink:${p.ink};--cert-font:'${certFontFamily()}'">
       ${certBrand()}
       <div class="cert-bism">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</div>
       <div class="cert-title-row"><span class="ln"></span><span class="cert-orn">◆</span><span class="cert-title">شهادة شكر وتقدير</span><span class="cert-orn">◆</span><span class="ln"></span></div>
@@ -5656,11 +5683,30 @@ function deleteCustomCertDesign(key){
   });
 }
 function renderCertDesignChips(){
+  certRenderFontChips();
   const box=$('cert-design-chips');if(!box)return;
   const builtIn=CERT_TEMPLATES.map(t=>`<button type="button" class="cert-tpl-thumb${curCertDesign===t.k?' sel':''}" data-d="${t.k}" onclick="certPickDesign(this)"><img src="${CERT_BG[t.k]}" alt="${t.label}"><span>${t.label}</span></button>`).join('');
   const custom=(S.customCertTemplates||[]).map(t=>`<button type="button" class="cert-tpl-thumb${curCertDesign===t.k?' sel':''}" data-d="${t.k}" onclick="certPickDesign(this)"><img src="${t.img}" alt="${esc(t.label)}"><span>🖼️ ${esc(t.label)} <span onclick="event.stopPropagation();deleteCustomCertDesign('${t.k}')" style="color:var(--danger)">✕</span></span></button>`).join('');
   const addTile=`<button type="button" class="cert-tpl-thumb" style="border:2px dashed var(--line);align-items:center;justify-content:center;min-height:70px" onclick="document.getElementById('cert-custom-file').click()"><span style="font-size:1.6rem">➕</span><span>ارفع تصميمك</span></button>`;
   box.innerHTML=builtIn+custom+addTile;
+}
+/* خطّ الشهادة مستقل عن خطّ الملف: الشهادة تُطبع وتُوزّع على الطلاب،
+   وقد يريدها المعلّم بخطٍّ غير الذي اختاره لملفه. */
+const CERT_FONTS=[['plex','واضح','IBM Plex Sans Arabic'],['cairo','القاهرة','Cairo'],['tajawal','تجوّل','Tajawal'],['amiri','أميري','Amiri']];
+function certFontFamily(){
+  const f=CERT_FONTS.find(x=>x[0]===(S.certFont||'plex'))||CERT_FONTS[0];
+  return f[2];
+}
+function certRenderFontChips(){
+  const box=$('cert-font-chips');if(!box)return;
+  box.innerHTML='<span style="font-size:.8rem;color:var(--ink-soft)">خط الشهادة:</span>'
+    +CERT_FONTS.map(([k,label,fam])=>`<button type="button" class="pf-fw${(S.certFont||'plex')===k?' sel':''}" data-f="${k}" style="font-family:'${fam}',sans-serif" onclick="certApplyFont('${k}')">${label}</button>`).join('');
+}
+function certApplyFont(k){
+  S.certFont=k||'plex';saveState();
+  certRenderFontChips();
+  /* الشهادات مبنيّة مسبقًا، فنعيد بناءها لتأخذ الخط الجديد */
+  if(typeof buildCerts==='function'&&document.querySelectorAll('#certs-doc .cert').length)buildCerts();
 }
 function certPickDesign(b){document.querySelectorAll('#cert-design-chips button').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');curCertDesign=b.dataset.d}
 function certHTML(name){
@@ -5677,7 +5723,7 @@ function certHTML(name){
   const principalLabel=isF?'قائدة المدرسة':'قائد المدرسة';
   return `<div class="cert"><div class="cert-frame" style="padding-bottom:${tpl.ratio}%">
     <img class="cert-bg-img" src="${CERT_BG[tpl.k]||tpl.img}" alt="">
-    <div class="cert-inner" style="--cert-ink:${tpl.ink}">
+    <div class="cert-inner" style="--cert-ink:${tpl.ink};--cert-font:'${certFontFamily()}'">
       ${certBrand()}
       <div class="cert-bism">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</div>
       <div class="cert-title-row"><span class="ln"></span><span class="cert-orn">◆</span><span class="cert-title">${title}</span><span class="cert-orn">◆</span><span class="ln"></span></div>
@@ -5980,7 +6026,7 @@ function buildExamDocs(){
     sheet+=`<div class="sec-h">خامسًا: أسئلة مقالية</div><table>`+essays.map(q=>`<tr><td>${numLabel(n++)}) ${esc(q.text)} <small>(${q.points} د)</small>${q.img?`<br><img src="${q.img}" class="q-img">`:''}<br><br>............................................................</td></tr>`).join('')+`</table>`;
   }
   sheet+=`<div class="sig"><div><b>${roleName()}</b>${S.name}</div><div><b>${V('المشرف','المشرفة')}</b>التوقيع</div></div>`;
-  sheet+=`<div style="text-align:center;font-size:.72rem;color:var(--ink-soft);margin-top:14px">أُعدّت بواسطة مَلَفّي — malaffi.sa</div>`;
+  sheet+=`<div style="text-align:center;font-size:.72rem;color:var(--ink-soft);margin-top:14px">أُعدّت بواسطة مَلَفّي — malafi.sa</div>`;
 
   let n2=1;
   let answers=`${moeHeader()}<h3 class="doc-title">نموذج الإجابة — ${esc(title)}</h3><div class="doc-meta">${S.subject} — ${S.grade} — ${S.term}</div>`;
