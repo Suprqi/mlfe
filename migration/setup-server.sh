@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ═══════════════════════════════════════════════════════════════
-#  تجهيز خادم مَلَفّي — Ubuntu 24.04 على Oracle Cloud (الرياض)
+#  تجهيز خادم مَلَفّي — Ubuntu 24.04 على Google Cloud (الدمام me-central2)
 #
 #  التشغيل على الخادم:  sudo bash setup-server.sh
 #
@@ -11,7 +11,7 @@ set -euo pipefail
 
 [ "$(id -u)" -eq 0 ] || { echo "شغّله بـ sudo"; exit 1; }
 
-DOMAIN="${DOMAIN:-malaffi.sa}"
+DOMAIN="${DOMAIN:-malafi.sa}"
 DB_NAME=malaffi
 DB_USER=malaffi
 
@@ -51,13 +51,9 @@ ufw allow 80/tcp >/dev/null
 ufw allow 443/tcp >/dev/null
 ufw --force enable >/dev/null
 
-# Oracle يضع جدارًا ناريًا ثانيًا داخل الخادم يحجب 80 و443 افتراضيًا
-# رغم قواعد الشبكة، وهذا أكثر ما يُوقف الناس عند أول نشر.
-if command -v netfilter-persistent >/dev/null 2>&1; then
-  iptables -I INPUT 6 -p tcp --dport 80  -j ACCEPT || true
-  iptables -I INPUT 6 -p tcp --dport 443 -j ACCEPT || true
-  netfilter-persistent save || true
-fi
+# على Google الجدار الحقيقي في VPC لا داخل الخادم، فلا حاجة لعبث iptables.
+# لكن تأكّد أن قاعدتَي 80 و443 موجودتان في الشبكة، وأن الخادم يحمل
+# الوسمين http-server و https-server — راجع create-vm-gcp.sh.
 
 echo "── nginx ──"
 mkdir -p /var/www/malaffi/public
