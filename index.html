@@ -1796,7 +1796,7 @@ body.pre-app .bottom-nav{display:none!important}
           <button id="mic-btn" class="mic-btn" onclick="toggleMic()"><span id="mic-ic">🎙️</span></button>
           <div id="mic-status" style="font-size:.82rem;color:var(--ink-soft);margin-top:8px">اضغط للتحدّث</div>
         </div>
-        <div class="field"><label>النص (من الميكروفون أو بالكتابة)</label><textarea id="voice-text" style="min-height:110px" placeholder="مثال: اليوم شرحت درس جمع الكسور، سوّيت نشاط جماعي بالمحطات، وأجريت اختبار قصير، وكان تفاعل الطلاب ممتاز..."></textarea></div>
+        <div class="field"><label>النص (من الميكروفون أو بالكتابة)</label><textarea id="voice-text" oninput="voiceTyped()" style="min-height:110px" placeholder="مثال: اليوم شرحت درس جمع الكسور، سوّيت نشاط جماعي بالمحطات، وأجريت اختبار قصير، وكان تفاعل الطلاب ممتاز..."></textarea></div>
         <div class="field"><label>نوع الملف المطلوب</label>
           <div class="picker" id="voice-kind">
             <button class="chip sel" data-k="prep" onclick="voicePick(this)">📝 تحضير</button>
@@ -6677,21 +6677,42 @@ function toggleMic(){
   if(recording){stopMic();return}
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   recognizer=new SR();recognizer.lang='ar-SA';recognizer.continuous=true;recognizer.interimResults=true;
-  voiceBase=$('voice-text').value?$('voice-text').value.trim()+' ':'';
-  /* كان يجمع من e.resultIndex ويراكم على voiceBase، والمتصفح يعيد إطلاق
-     الحدث لنفس المقطع أحيانًا فيتكرر الكلام. نعيد بناء النص من كل النتائج
-     في كل مرة، وvoiceBase يبقى نص ما قبل التسجيل فقط — فلا تكرار ممكن. */
+  voiceBase=$('voice-text').value?$('voice-text').value.replace(/\s+$/,'')+' ':'';
+  /* المتصفح يوقف المحرّك دوريًا من نفسه ويبدأ جلسة جديدة تُصفّر e.results.
+     فالقراءة من الصفر تعيد كتابة ما نُطق سابقًا، والاعتماد على onend
+     لإيقاف التسجيل يقطع على المعلّم عند أول سكتة. الصحيح: نقرأ من
+     resultIndex وحده، ونحتفظ بالنهائي في متغيّر مستقل، ونُسنِد ولا نُضيف،
+     ونعيد التشغيل ما دام المعلّم لم يضغط الإيقاف. */
   recognizer.onresult=e=>{
-    let fin='',interim='';
-    for(let i=0;i<e.results.length;i++){
+    let interim='';
+    for(let i=e.resultIndex;i<e.results.length;i++){
       const tr=e.results[i][0].transcript;
-      if(e.results[i].isFinal)fin+=tr+' ';else interim+=tr;
+      if(e.results[i].isFinal)voiceBase+=tr+' ';else interim+=tr;
     }
-    $('voice-text').value=voiceBase+fin+interim;
+    const ta=$('voice-text');
+    ta.value=voiceBase+interim;      /* إسناد لا إضافة — النص المؤقت لا يُثبَّت */
+    ta.scrollTop=ta.scrollHeight;
   };
-  recognizer.onerror=ev=>{stopMic();toast(ev.error==='not-allowed'?'فضلًا اسمح بالوصول للميكروفون':'تعذّر التسجيل — حاول مرة ثانية')};
-  recognizer.onend=()=>{if(recording)stopMic()};
+  recognizer.onerror=ev=>{
+    /* الصمت ليس عطلًا، والإجهاض يأتي مع كل إعادة تشغيل عادية */
+    if(ev.error==='no-speech'||ev.error==='aborted')return;
+    if(ev.error==='not-allowed'||ev.error==='service-not-allowed'){
+      recording=false;stopMic();toast('إذن الميكروفون مرفوض — فعّله من إعدادات المتصفح');return;
+    }
+    toast('تعذّر التسجيل — حاول مرة ثانية، أو اكتب النص يدويًا');
+  };
+  recognizer.onend=()=>{
+    if(!recording)return;                     /* أوقفه المعلّم بنفسه */
+    try{recognizer.start()}catch(e){}         /* تجاهل التشغيل المزدوج */
+  };
   try{recognizer.start();recording=true;$('mic-btn').classList.add('rec');$('mic-ic').textContent='⏹️';$('mic-status').textContent='يستمع... تكلّم الآن (اضغط للإيقاف)'}catch(e){toast('تعذّر بدء التسجيل')}
+}
+/* لو عدّل المعلّم النص بيده أثناء التسجيل، لا بد أن يصير تعديله هو
+   الأساس، وإلا محاه أول مقطع نهائي تالٍ. */
+function voiceTyped(){
+  if(!recording)return;
+  const ta=$('voice-text');
+  voiceBase=ta.value?ta.value.replace(/\s+$/,'')+' ':'';
 }
 function stopMic(){recording=false;if(recognizer){try{recognizer.stop()}catch(e){}}const b=$('mic-btn');if(b)b.classList.remove('rec');const ic=$('mic-ic');if(ic)ic.textContent='🎙️';const st=$('mic-status');if(st)st.textContent='اضغط للتحدّث';}
 function voicePick(b){document.querySelectorAll('#voice-kind .chip').forEach(c=>c.classList.remove('sel'));b.classList.add('sel');voiceKind=b.dataset.k}
@@ -7336,12 +7357,35 @@ async function cloudSignIn(){
 /* الحذف النهائي للحساب. نطلب تأكيدًا مكتوبًا لأنه لا رجعة فيه، ولا نُخرج
    المعلّم من حسابه إلا بعد أن يؤكّد الخادم الحذف فعلًا — وإلا ظنّ أن حسابه
    زال وهو باقٍ. بيانات الجهاز شأن منفصل له زرّه. */
-async function deleteAccount(){
+/* الحذف لا رجعة فيه، ونافذة تأكيد واحدة تُضغط بالخطأ — خاصة على الجوال
+   حيث تتبدّل النافذة تحت الإصبع بعد تسجيل الدخول. فنطلب كتابة كلمة كما
+   في حذف بيانات الجهاز: لا يُمحى حساب بلمستين متتاليتين. */
+function deleteAccount(){
   if(!_sbUser){toast('سجّل دخولك أولًا');return}
-  customConfirm('🚫 حذف حسابك «'+(_sbUser.email||'')+'» نهائيًا\n\n'
-    +'سيُحذف من السحابة: بياناتك واشتراكك وحساب الدخول نفسه.\n'
-    +'لا يمكن التراجع، ولن نستطيع استرجاعها لك.\n\n'
-    +'ننصحك تنزّل نسخة احتياطية قبلها. متابعة؟',async function(){
+  const b=$('cloud-body');if(!b)return;
+  b.innerHTML=`
+    <div class="note" style="border-color:#E8C7BE"><span class="ni">🚫</span><div>
+      حذف حساب <b>${esc(_sbUser.email||'')}</b> نهائيًا.<br>
+      سيُحذف من السحابة: بياناتك واشتراكك وحساب الدخول نفسه. <b>لا يمكن التراجع.</b>
+    </div></div>
+    <div style="margin:10px 0"><button class="btn btn-gold btn-sm" onclick="downloadBackup()">⬇️ نزّل نسخة احتياطية أولًا</button></div>
+    <div class="field"><label>للتأكيد، اكتب كلمة <b style="color:var(--danger)">حذف</b>:</label>
+      <input id="del-acc-confirm" placeholder="اكتب: حذف" oninput="delAccCheck()"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-ghost btn-sm" onclick="renderCloudUI()">إلغاء</button>
+      <button class="btn btn-sm" id="del-acc-btn" disabled style="background:var(--danger);color:#fff;opacity:.5" onclick="deleteAccountConfirmed()">احذف حسابي نهائيًا</button>
+    </div>`;
+}
+function delAccCheck(){
+  const v=(($('del-acc-confirm')||{}).value||'').trim();
+  const b=$('del-acc-btn');if(!b)return;
+  b.disabled=(v!=='حذف');
+  b.style.opacity=b.disabled?'.5':'1';
+}
+async function deleteAccountConfirmed(){
+  if(!_sbUser)return;
+  if(((($('del-acc-confirm')||{}).value)||'').trim()!=='حذف')return;
+  await (async function(){
     toast('⏳ يحذف حسابك...');
     try{
       const res=await fetch('/api/delete-account',{method:'POST',headers:await aiHeaders()});
@@ -7351,7 +7395,7 @@ async function deleteAccount(){
       _sbUser=null;_sub=null;renderCloudUI();
       toast('✓ حُذف حسابك نهائيًا — بيانات هذا الجهاز ما زالت عندك');
     }catch(e){toast('تعذّر الاتصال بالخادم، حاول مرة أخرى')}
-  });
+  })();
 }
 async function cloudSignOut(){
   try{const sb=await ensureSb();await sb.auth.signOut()}catch(e){}
