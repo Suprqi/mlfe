@@ -672,8 +672,8 @@ body.pre-app .bottom-nav{display:none!important}
     </div>
     <div class="field"><label>الاسم</label><input id="ob-name" placeholder="مثال: عبدالله المالكي"></div>
     <div class="grid2">
-      <div class="field"><label>المدرسة</label><input id="ob-school" placeholder="مثال: ثانوية الطائف"></div>
-      <div class="field"><label>إدارة التعليم</label><input id="ob-region" placeholder="مثال: الطائف"></div>
+      <div class="field"><label>المدرسة <span style="color:var(--danger)">*</span></label><input id="ob-school" placeholder="مثال: ثانوية الطائف"></div>
+      <div class="field"><label>إدارة التعليم <span style="color:var(--danger)">*</span></label><input id="ob-region" placeholder="مثال: الطائف"></div>
     </div>
     <div class="field"><label>اسم قائد/ة المدرسة <small style="font-weight:400;color:var(--ink-soft)">(اختياري — يُعبّى تلقائيًا في الشهادات)</small></label><input id="ob-principal" placeholder="مثال: أ. سعد القحطاني"></div>
     <div class="field">
@@ -2248,7 +2248,7 @@ function roleStandards(key){const r=ROLES[key]||(S.customRoles&&S.customRoles[ke
 function roleLabel(key){const r=ROLES[key]||(S.customRoles&&S.customRoles[key]);if(!r)return{m:'معلم',f:'معلمة'};return r.label}
 function applyRole(key){S.role=key;S.standards=roleStandards(key)}
 let hasOnboarded=false;
-const S={gender:'m',role:'teacher',customRoles:{},calendar:'hijri',theme:'green',pfTheme:'green',pfLayout:'wave',pfFont:'plex',certFont:'plex',name:'',school:'',region:'',subject:'',subjects:[],principal:'',phone:'',email:'',grade:'',term:'',
+const S={gender:'m',role:'teacher',customRoles:{},calendar:'hijri',theme:'green',pfTheme:'green',pfLayout:'wave',pfFont:'plex',certFont:'plex',signPartner:'principal',name:'',school:'',region:'',subject:'',subjects:[],principal:'',phone:'',email:'',grade:'',term:'',
   photo:'',employeeId:'',specialization:'',classesTaught:'',yearsExp:'',homeroom:false,homeroomClass:'',
   authEmail:'',authPass:'',authSalt:'',registeredAt:'',lockReminderDismissed:false,biometricEnabled:false,biometricCredId:'',
   customCertTemplates:[],seenBadges:{},budget:{items:[],invoices:[]},annualPlan:[],teacherEvals:[],prepGrade:'',circulars:[],
@@ -3005,6 +3005,12 @@ function obAgreeChanged(){
 function finishOnboarding(){
   const agree=$('ob-agree');
   if(agree&&!agree.checked){toast('وافق على الشروط وسياسة الخصوصية للمتابعة');return}
+  /* المدرسة وإدارة التعليم يظهران في ترويسة كل وثيقة رسمية. تركهما فارغين
+     يُخرج وثائق ناقصة لا تصلح للاعتماد، فنطلبهما مرة واحدة هنا. */
+  const nm=$('ob-name').value.trim(),sc=$('ob-school').value.trim(),rg=$('ob-region').value.trim();
+  if(!nm){toast('اكتب اسمك — يظهر في كل وثيقة تُصدرها');$('ob-name').focus();return}
+  if(!sc){toast('اكتب اسم المدرسة — يظهر في ترويسة كل وثيقة');$('ob-school').focus();return}
+  if(!rg){toast('اكتب إدارة التعليم — تظهر في ترويسة كل وثيقة');$('ob-region').focus();return}
   const roleSel=$('ob-role');
   if(roleSel&&roleSel.value&&roleSel.value!=='__new__')S.role=roleSel.value;
   applyRole(S.role);
@@ -3568,7 +3574,7 @@ function renderCirculars(){
 }
 function buildCircularsDoc(){
   if(!S.circulars.length){toast('أضف تعميمًا واحدًا على الأقل أولًا');return}
-  let html=`${moeHeader()}<h3 class="doc-title">سجل التعاميم الواردة</h3><div class="doc-meta">${S.school} — ${S.term} — ${yearLabel()}</div>
+  let html=`${moeHeader()}<h3 class="doc-title">سجل التعاميم الواردة</h3><div class="doc-meta">${S.school} — ${termValue()} — ${yearLabel()}</div>
   <table><tr><th style="width:6%">م</th><th style="width:12%">الرقم</th><th style="width:14%">التاريخ</th><th style="width:18%">الجهة</th><th>الموضوع</th><th style="width:14%">التصنيف</th></tr>
   ${S.circulars.map((c,i)=>`<tr><td style="text-align:center">${i+1}</td><td style="text-align:center">${esc(c.num)||'—'}</td><td>${esc(c.date)||'—'}</td><td>${esc(c.from)||'—'}</td><td>${esc(c.subject)}</td><td>${esc(c.cat||'عام')}</td></tr>`).join('')}
   </table>
@@ -3933,7 +3939,7 @@ function buildActivitiesDoc(){
       ${rows.map(r=>`<tr><td>${esc(r.name)||'—'}</td><td>${esc(r.date)||'—'}</td><td style="text-align:center">${esc(r.participants)||'—'}</td><td>${esc(r.outcome)||'—'}</td></tr>`).join('')}
     </table>`;
   });
-  let html=`${moeHeader()}<h3 class="doc-title">تقرير الأنشطة المدرسية</h3><div class="doc-meta">${S.school} — ${S.term} — ${yearLabel()}</div>
+  let html=`${moeHeader()}<h3 class="doc-title">تقرير الأنشطة المدرسية</h3><div class="doc-meta">${S.school} — ${termValue()} — ${yearLabel()}</div>
     <div class="doc-meta">📊 إجمالي الأنشطة: ${S.activities.length} — إجمالي المشاركين: ${S.activities.reduce((a,r)=>a+(parseInt(r.participants)||0),0)}</div>
     ${sections}
     <div class="sig"><div><b>${roleName()}</b>${S.name}</div><div><b>${V('قائد المدرسة','قائدة المدرسة')}</b>التوقيع</div></div>`;
@@ -4013,7 +4019,7 @@ function renderFdbkHistory(){
 }
 function buildCommitteesTasksDoc(){
   if(!S.committees.length&&!S.tasks.length){toast('أضف لجنة أو مهمة واحدة على الأقل أولًا');return}
-  let html=`${moeHeader()}<h3 class="doc-title">اللجان المدرسية والمهام</h3><div class="doc-meta">${S.school} — ${S.term} — ${yearLabel()}</div>`;
+  let html=`${moeHeader()}<h3 class="doc-title">اللجان المدرسية والمهام</h3><div class="doc-meta">${S.school} — ${termValue()} — ${yearLabel()}</div>`;
   html+=`<div class="sec-h">اللجان المدرسية</div><table><tr><th style="width:10%">م</th><th style="width:38%">اللجنة</th><th style="width:26%">الدور/المهمة بها</th><th>تاريخ التكليف</th></tr>${S.committees.length?S.committees.map((r,i)=>`<tr><td style="text-align:center">${i+1}</td><td>${esc(r.name)||'—'}</td><td>${esc(r.source)||'—'}</td><td>${esc(r.date)||'—'}</td></tr>`).join(''):'<tr><td colspan="4" style="text-align:center;color:var(--ink-soft)">لا يوجد</td></tr>'}</table>`;
   html+=`<div class="sec-h">المهام المكلف بها</div><table><tr><th style="width:10%">م</th><th style="width:38%">المهمة</th><th style="width:26%">الجهة المكلِّفة</th><th>تاريخ التكليف</th></tr>${S.tasks.length?S.tasks.map((r,i)=>`<tr><td style="text-align:center">${i+1}</td><td>${esc(r.name)||'—'}</td><td>${esc(r.source)||'—'}</td><td>${esc(r.date)||'—'}</td></tr>`).join(''):'<tr><td colspan="4" style="text-align:center;color:var(--ink-soft)">لا يوجد</td></tr>'}</table>`;
   html+=`<div class="sig"><div><b>${roleName()}</b>${S.name}</div><div><b>${V('قائد المدرسة','قائدة المدرسة')}</b>التوقيع</div></div>`;
@@ -4052,7 +4058,7 @@ function meetingsStats(){
 function buildMeetingsDoc(){
   if(!S.meetingsLog.length){toast('أضف اجتماعًا واحدًا على الأقل أولًا');return}
   const st=meetingsStats();
-  let html=`${moeHeader()}<h3 class="doc-title">سجل الاجتماعات</h3><div class="doc-meta">${S.school} — ${S.term} — ${yearLabel()}</div>
+  let html=`${moeHeader()}<h3 class="doc-title">سجل الاجتماعات</h3><div class="doc-meta">${S.school} — ${termValue()} — ${yearLabel()}</div>
     ${st.count?`<div class="doc-meta">📊 اجتماعات أولياء الأمور/مجلس الأمهات: ${st.count} — إجمالي الحضور: ${st.totalAttendance}</div>`:''}
     <table><tr><th style="width:8%">م</th><th style="width:14%">النوع</th><th style="width:10%">التاريخ</th><th style="width:8%">الحضور</th><th style="width:22%">الموضوع</th><th>القرار/الخلاصة</th></tr>
     ${S.meetingsLog.map((r,i)=>`<tr><td style="text-align:center">${i+1}</td><td>${esc(r.type||'عام')}</td><td>${esc(r.date)||'—'}</td><td style="text-align:center">${esc(r.attendance)||'—'}</td><td>${esc(r.subject)||'—'}</td><td>${esc(r.decision)||'—'}</td></tr>`).join('')}
@@ -4492,7 +4498,7 @@ function teacherReport(){
   const q=totalEv?Math.round(described/totalEv*100):0;
   $('ach-doc').classList.remove('pf-doc');
   $('ach-doc').innerHTML=`${moeHeader()}<h3 class="doc-title">تقرير الأداء المهني الشامل</h3>
-  <div class="doc-meta">${esc(S.name)} — ${roleName()} — ${S.subject} — ${S.grade} — ${S.term} ${yearLabel()}</div>
+  <div class="doc-meta">${esc(S.name)} — ${roleName()} — ${S.subject} — ${S.grade} — ${termValue()} ${yearLabel()}</div>
   <div class="sec-h">ملخص الأعمال المنجزة</div>
   <table><tr><th style="width:60%">البند</th><th>الإنجاز</th></tr>
     <tr><td>الدروس المحضّرة</td><td style="text-align:center;font-weight:bold">${prepped} من ${S.lessons.length||prepped}</td></tr>
@@ -4836,7 +4842,7 @@ function generateClassicAchievement(){
   const subjectGoals=(cd.subjectGoals.trim()?cd.subjectGoals.split('\n').filter(x=>x.trim()):[]);
   const conclusion=cd.conclusion.trim()||'وفي ختام هذا الملف، أسأل الله أن يكون شاهدًا على جهد بُذل وأثر يُرجى نفعه، وأن يوفقني لمزيد من العطاء في خدمة أبنائي وبناتي الطلاب. وما توفيقي إلا بالله، وصلى الله وسلم على نبينا محمد.';
 
-  let html=`<div class="cover">${S.logo?`<div class="crest-lg" style="background:none">${docLogo(true)}</div>`:''}<div class="kingdom">المملكة العربية السعودية<br>وزارة التعليم<br>إدارة تعليم ${S.region}<br>${S.school}</div><div class="big-title">ملف إنجاز ${roleName()}</div><div class="sub-title">${yearLabel()} — ${S.term}</div>
+  let html=`<div class="cover">${S.logo?`<div class="crest-lg" style="background:none">${docLogo(true)}</div>`:''}<div class="kingdom">المملكة العربية السعودية<br>وزارة التعليم<br>إدارة تعليم ${S.region}<br>${S.school}</div><div class="big-title">ملف إنجاز ${roleName()}</div><div class="sub-title">${yearLabel()} — ${termValue()}</div>
     <div class="cover-box"><div class="field-row"><span class="k">${roleName()}:</span><span>${S.name}</span></div><div class="field-row"><span class="k">المادة:</span><span>${S.subject}</span></div><div class="field-row"><span class="k">الصف:</span><span>${S.grade}</span></div></div></div><div class="page-break"></div>`;
 
   html+=`<h3 class="doc-title">الفهرس</h3><ul class="toc">
@@ -5363,7 +5369,7 @@ function rows(arr){return (arr&&arr.length?arr:['—']).map(x=>`<tr><td>${esc(x)
 function buildPrepDocs(){
   const l=S.lessons[0];const ai=l.ai||{};   /* بلا تلفيق: الفارغ يبقى فارغًا */
   const objs=(l.obj?l.obj.split('\n').filter(x=>x.trim()):ai.objectives);
-  prepData.daily=`${moeHeader()}<h3 class="doc-title">التحضير اليومي</h3><div class="doc-meta">${S.subject} — ${prepGradeVal()} — ${S.term}</div>
+  prepData.daily=`${moeHeader()}<h3 class="doc-title">التحضير اليومي</h3><div class="doc-meta">${S.subject} — ${prepGradeVal()} — ${termValue()}</div>
     <table><tr><th style="width:22%">${roleName()}</th><td>${S.name}</td><th style="width:18%">المادة</th><td>${S.subject}</td></tr><tr><th>عنوان الدرس</th><td>${esc(l.title)}</td><th>التاريخ</th><td>${weekDate(1)||fmtDate(new Date().toISOString().slice(0,10))}</td></tr></table>
     <div class="sec-h">الأهداف السلوكية</div><table>${rows(objs)}</table>
     <div class="sec-h">نواتج التعلم</div><table>${rows(ai.outcomes)}</table>
@@ -5372,13 +5378,13 @@ function buildPrepDocs(){
     <div class="sec-h">التمايز التعليمي</div><table><tr><th>الإثراء (المتفوقون)</th><th>العلاج (المتعثرون)</th></tr><tr><td>${(ai.enrichment||[]).join('<br>')}</td><td>${(ai.remediation||[]).join('<br>')}</td></tr></table>
     <div class="sec-h">ربط الدرس بالحياة</div><table>${rows(ai.realLife)}</table>
     <div class="sec-h">الواجب المنزلي</div><table>${rows(ai.homework)}</table>
-    <div class="sig"><div><b>${roleName()}</b>${S.name}</div><div><b>${V('المشرف','المشرفة')}</b>التوقيع</div></div>`;
+    <div class="sig"><div><b>${roleName()}</b>${S.name}</div><div><b>${signPartner()}</b>التوقيع</div></div>`;
   const per=Math.max(1,Math.ceil(S.lessons.length/S.weeks));const wk=S.lessons.slice(0,per);
   prepData.weekly=`${moeHeader()}<h3 class="doc-title">الخطة الأسبوعية</h3><div class="doc-meta">الأسبوع الأول${weekDate(1)?' — '+weekDate(1):''} — ${S.subject} — ${prepGradeVal()}</div>
     <table><tr><th style="width:14%">اليوم</th><th>الدرس</th><th style="width:24%">الاستراتيجية</th><th style="width:20%">التقويم</th></tr>${['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس'].map((d,k)=>{const ls=wk[k];return `<tr><td><b>${d}</b></td><td>${ls?esc(ls.title):'حصة نشاط / مراجعة'}</td><td>${ls?ls.strat:'—'}</td><td>${ls?ls.assess:'—'}</td></tr>`}).join('')}</table>
     <div class="sig"><div><b>${roleName()}</b>${S.name}</div><div><b>${V('قائد المدرسة','قائدة المدرسة')}</b>التوقيع</div></div>`;
   let r='',idx=0;for(let w=1;w<=S.weeks&&idx<S.lessons.length;w++){const sl=S.lessons.slice(idx,idx+per);idx+=per;r+=`<tr><td><b>الأسبوع ${w}</b></td><td>${weekDate(w)||'—'}</td><td>${sl.map(x=>esc(x.title)).join(' — ')}</td></tr>`}
-  prepData.dist=`${moeHeader()}<h3 class="doc-title">توزيع المنهج على أسابيع الفصل</h3><div class="doc-meta">${S.subject} — ${prepGradeVal()} — ${S.term} (${S.weeks} أسبوع)</div><table><tr><th style="width:16%">الأسبوع</th><th style="width:18%">التاريخ</th><th>الدروس</th></tr>${r}</table><div class="sig"><div><b>${roleName()}</b>${S.name}</div><div><b>${V('المشرف','المشرفة')}</b>التوقيع</div></div>`;
+  prepData.dist=`${moeHeader()}<h3 class="doc-title">توزيع المنهج على أسابيع الفصل</h3><div class="doc-meta">${S.subject} — ${prepGradeVal()} — ${termValue()} (${S.weeks} أسبوع)</div><table><tr><th style="width:16%">الأسبوع</th><th style="width:18%">التاريخ</th><th>الدروس</th></tr>${r}</table><div class="sig"><div><b>${roleName()}</b>${S.name}</div><div><b>${V('المشرف','المشرفة')}</b>التوقيع</div></div>`;
 }
 function prepTab(b,t){document.querySelectorAll('#prep-preview .mini-tabs button').forEach(x=>x.classList.remove('on'));b.classList.add('on');curPrepTab=t;renderPrepTab()}
 function renderPrepTab(){$('prep-doc').innerHTML=prepData[curPrepTab]||''}
@@ -5985,7 +5991,7 @@ function buildExamDocs(){
 
   let n=1;
   let sheet=`${moeHeader()}<h3 class="doc-title">${esc(title)}</h3>
-    <div class="doc-meta">${S.subject} — ${S.grade} — ${S.term} — المدة: ${S.examMeta.duration||45} دقيقة — الدرجة الكلية: ${totalPts}</div>
+    <div class="doc-meta">${S.subject} — ${S.grade} — ${termValue()} — المدة: ${S.examMeta.duration||45} دقيقة — الدرجة الكلية: ${totalPts}</div>
     <table><tr><th style="width:25%">اسم الطالب/ة</th><td></td><th style="width:20%">الشعبة</th><td></td></tr></table>`;
   if(mcqs.length){
     sheet+=`<div class="sec-h">أولًا: اختيار من متعدد</div><table>`+mcqs.map(q=>`<tr><td>${numLabel(n++)}) ${esc(q.text)} <small>(${q.points} د)</small>${q.img?`<br><img src="${q.img}" class="q-img">`:''}<div class="mcq-opts">${q.options.map((op,oi)=>({op,oi})).filter(x=>String(x.op).trim()).map(x=>`<span class="mcq-opt"><span class="bub">${AR_LETTERS[x.oi]}</span>${esc(x.op)}</span>`).join('')}</div></td></tr>`).join('')+`</table>`;
@@ -6008,7 +6014,7 @@ function buildExamDocs(){
   sheet+=`<div style="text-align:center;font-size:.72rem;color:var(--ink-soft);margin-top:14px">أُعدّت بواسطة مَلَفّي — malafi.sa</div>`;
 
   let n2=1;
-  let answers=`${moeHeader()}<h3 class="doc-title">نموذج الإجابة — ${esc(title)}</h3><div class="doc-meta">${S.subject} — ${S.grade} — ${S.term}</div>`;
+  let answers=`${moeHeader()}<h3 class="doc-title">نموذج الإجابة — ${esc(title)}</h3><div class="doc-meta">${S.subject} — ${S.grade} — ${termValue()}</div>`;
   if(mcqs.length)answers+=`<div class="sec-h">أولًا: اختيار من متعدد</div><table>`+mcqs.map(q=>`<tr><td>${numLabel(n2++)}) ${AR_LETTERS[q.correctIdx]||'-'}- ${esc(q.options[q.correctIdx]||'')}</td></tr>`).join('')+`</table>`;
   if(tfs.length)answers+=`<div class="sec-h">ثانيًا: صح أو خطأ</div><table>`+tfs.map(q=>`<tr><td>${numLabel(n2++)}) ${q.correct?'صح':'خطأ'}</td></tr>`).join('')+`</table>`;
   if(fills.length)answers+=`<div class="sec-h">ثالثًا: أكمل الفراغ</div><table>`+fills.map(q=>`<tr><td>${numLabel(n2++)}) ${esc(q.answer||'—')}</td></tr>`).join('')+`</table>`;
@@ -6546,7 +6552,7 @@ async function aiFillForm(){
   else toast('⚠️ تعذّر ملء النموذج — تحقّق من اتصالك ثم أعد المحاولة');
   btn.innerHTML='✨ تعبئة تلقائية';
 }
-function generateForm(){const t=formTemplates[curForm];if(!t)return;const vals={};t.fields.forEach(f=>{const el=$('f-'+f.key);vals[f.key]=el?el.value:''});let body=`${moeHeader()}<h3 class="doc-title">${t.title}</h3><div class="doc-meta">${S.school} — ${S.term} — ${yearLabel()}</div>`;const simple=t.fields.filter(f=>f.type!=='list'&&f.type!=='rubric');if(simple.length)body+=`<table>`+simple.map(f=>`<tr><th style="width:32%">${f.label}</th><td>${f.type==='date'?(vals[f.key]?fmtDate(vals[f.key]):'—'):(esc(vals[f.key])||'—')}</td></tr>`).join('')+`</table>`;
+function generateForm(){const t=formTemplates[curForm];if(!t)return;const vals={};t.fields.forEach(f=>{const el=$('f-'+f.key);vals[f.key]=el?el.value:''});let body=`${moeHeader()}<h3 class="doc-title">${t.title}</h3><div class="doc-meta">${S.school} — ${termValue()} — ${yearLabel()}</div>`;const simple=t.fields.filter(f=>f.type!=='list'&&f.type!=='rubric');if(simple.length)body+=`<table>`+simple.map(f=>`<tr><th style="width:32%">${f.label}</th><td>${f.type==='date'?(vals[f.key]?fmtDate(vals[f.key]):'—'):(esc(vals[f.key])||'—')}</td></tr>`).join('')+`</table>`;
   const rubricField=t.fields.find(f=>f.type==='rubric');
   if(rubricField){
     const items=rubricField.items||[];let total=0;const max=items.length*5;
@@ -7091,15 +7097,47 @@ async function shareViaWhatsapp(containerId,filename,btn){
 }
 
 /* shared */
+/* القائمة تخزّن «الفصل الدراسي الأول» قيمةً، والترويسة تسبقها بـ«الفصل
+   الدراسي:» فتخرج مكرّرة. نجرّد التسمية عند العرض، فتصحّ الوثائق القديمة
+   والجديدة معًا بلا ترحيل بيانات. */
+/* التحضير يعتمده قائد المدرسة، وسجل الزيارة يوقّعه المشرف التربوي —
+   جهتان مختلفتان، وكان التحضير يحمل «المشرف» خطأً. يبقى الافتراضي
+   قائد المدرسة، ويستطيع المعلّم تغييره من إعدادات الوثيقة. */
+function signPartner(){
+  return S.signPartner==='supervisor'
+    ? V('المشرف التربوي','المشرفة التربوية')
+    : V('قائد المدرسة','قائدة المدرسة');
+}
+function setSignPartner(v){
+  S.signPartner=(v==='supervisor')?'supervisor':'principal';saveState();
+  if(typeof buildPrepDocs==='function'&&document.querySelector('#prep-doc')&&$('prep-doc').innerHTML.trim())buildPrepDocs();
+  toast('✓ جهة الاعتماد: '+signPartner());
+}
+function termValue(){return String(S.term||'').replace(/^\s*الفصل\s+الدراسي\s*/,'').trim()}
 function stageValue(){
   const g=S.grade||'';
   if(/ابتدائي/.test(g))return 'الابتدائية';
   if(/متوسط/.test(g))return 'المتوسطة';
   if(/ثانوي/.test(g))return 'الثانوية';
-  return '—';
+  return '';   /* بلا صف لا مرحلة — والفارغ يُحذف سطره في الترويسة */
 }
 /* الشعاران على الطرفين: الوزارة مع نص الوزارة يمينًا، والمدرسة يسارًا */
-function moeHeader(){return `<div class="moe"><div class="r" style="display:flex;align-items:center;gap:10px">${S.moeLogo?`<div class="crest" style="background:none;flex:0 0 auto">${docMoeLogo(false)}</div>`:''}<div>المملكة العربية السعودية<br>وزارة التعليم<br>إدارة تعليم ${S.region}<br>المدرسة: ${S.school||'—'}</div></div><div class="l" style="display:flex;align-items:center;gap:10px">${S.logo?`<div class="crest" style="background:none;flex:0 0 auto">${docLogo(false)}</div>`:''}<div>المرحلة: ${stageValue()}<br>الصف: ${S.grade||'—'}<br>الفصل الدراسي: ${S.term||'—'}<br>العام الدراسي: ${yearLabel()}</div></div></div>`}
+/* المكوّن المشترك لكل الوثائق. كان يطبع «إدارة تعليم» بلا اسم بعدها،
+   و«المدرسة: —»، و«الصف: —» — أسطرًا فارغة في وثيقة رسمية. الحقل الذي
+   لا قيمة له يُحذف سطره كاملًا بدل أن يُملأ بشرطة. */
+function moeHeader(){
+  const line=(k,v)=>(v&&String(v).trim())?`${k}: ${esc(String(v).trim())}<br>`:'';
+  const region=String(S.region||'').trim();
+  const right='المملكة العربية السعودية<br>وزارة التعليم<br>'
+    +(region?`إدارة تعليم ${esc(region)}<br>`:'')
+    +line('المدرسة',S.school);
+  const left=line('المرحلة',stageValue())+line('الصف',S.grade)
+    +line('الفصل الدراسي',termValue())+`العام الدراسي: ${yearLabel()}`;
+  const crestR=S.moeLogo?`<div class="crest" style="background:none;flex:0 0 auto">${docMoeLogo(false)}</div>`:'';
+  const crestL=S.logo?`<div class="crest" style="background:none;flex:0 0 auto">${docLogo(false)}</div>`:'';
+  return `<div class="moe"><div class="r" style="display:flex;align-items:center;gap:10px">${crestR}<div>${right.replace(/<br>$/,'')}</div></div>`
+    +`<div class="l" style="display:flex;align-items:center;gap:10px">${crestL}<div>${left}</div></div></div>`;
+}
 const STORAGE_KEY='malaffi_state_v1';
 let _quotaWarned=false;
 /* الحفظ التلقائي مربوط بـ beforeunload/pagehide، فكان المسح ثم إعادة التحميل
