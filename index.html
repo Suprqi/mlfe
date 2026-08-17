@@ -3008,7 +3008,10 @@ function finishOnboarding(){
   const roleSel=$('ob-role');
   if(roleSel&&roleSel.value&&roleSel.value!=='__new__')S.role=roleSel.value;
   applyRole(S.role);
-  S.name=$('ob-name').value.trim()||roleName();S.school=$('ob-school').value.trim()||'—';S.region=$('ob-region').value.trim()||'—';
+  /* كان يخزّن «معلم» اسمًا حين يتركه المعلّم فارغًا، والشرطة قيمةً للمدرسة
+     والإدارة — فتُطبع في كل وثيقة «معلم | معلم» و«المدرسة: —». النائب
+     للعرض لا للتخزين: الفارغ يبقى فارغًا ويُخفى وقت الطباعة. */
+  S.name=$('ob-name').value.trim();S.school=$('ob-school').value.trim();S.region=$('ob-region').value.trim();
   S.principal=$('ob-principal')?$('ob-principal').value.trim():S.principal;
   S.term=$('ob-term').value;
   /* حتى خمس مواد، ولكل واحدة صفّها؛ نتجاهل المكرّر ونبقي على الترتيب */
@@ -4601,10 +4604,10 @@ function generateAchievement(){
   const jobLine=[T(S.specialization)||T(S.subject),T(S.grade)].filter(Boolean).join(' — ');
   html+=pfPage(`<div class="pf-cover-in">
       <div class="pf-cover-badge"><b class="l1">ملف</b><b class="l2">إنجاز</b></div>
-      <div class="pf-cover-f"><span>${roleName()}</span><b>${esc(T(S.name)||'—')}</b></div>
+      ${T(S.name)?`<div class="pf-cover-f"><span>${roleName()}</span><b>${esc(T(S.name))}</b></div>`:''}
       ${jobLine?`<div class="pf-cover-f"><span>التخصص</span><b>${esc(jobLine)}</b></div>`:''}
       ${(S.role!=='principal'&&T(S.principal)&&T(S.principal)!==T(S.name))?`<div class="pf-cover-f"><span>${V('المدير','المديرة')}</span><b>${esc(T(S.principal))}</b></div>`:''}
-      <div class="pf-cover-f"><span>المدرسة</span><b>${esc(T(S.school)||'—')}</b></div>
+      ${T(S.school)?`<div class="pf-cover-f"><span>المدرسة</span><b>${esc(T(S.school))}</b></div>`:''}
     </div>`,{wave:true});
 
   /* (2) الفهرس */
@@ -4680,7 +4683,7 @@ function generateAchievement(){
     <h3>ملحق: جدول الشواهد التفصيلي</h3>
     <table><tr><th style="width:7%">م</th><th>الشاهد</th><th style="width:22%">الوصف / السياق</th><th style="width:19%">الأثر</th><th style="width:19%">تأمل ذاتي</th></tr>
     ${secs.map((sec,i)=>`<tr><td colspan="5" style="background:var(--pf-tint2);font-weight:700;color:var(--pf-dark)">${i+1}. ${esc(sec.s.t)}${pfWeight(sec.s)!=null?' — الوزن '+pfWeight(sec.s)+'٪':''} — ${sec.s.ev.length} شاهد</td></tr>`+
-      sec.s.ev.map((e,j)=>`<tr><td style="text-align:center">${i+1}-${j+1}</td><td>${esc(e.title)}<br><small>${esc(e.type||'')} ${e.date?'• '+fmtDate(e.date):''}</small></td><td>${esc(e.note||'—')}</td><td>${esc(e.result||'—')}</td><td>${esc(e.reflection||'—')}</td></tr>`).join('')).join('')}
+      sec.s.ev.map((e,j)=>`<tr><td style="text-align:center">${i+1}-${j+1}</td><td>${esc(e.title)}<br><small>${esc(e.type||'')} ${e.date?'• '+fmtDate(e.date):''}</small></td><td>${esc(e.note||'')}</td><td>${esc(e.result||'')}</td><td>${esc(e.reflection||'')}</td></tr>`).join('')).join('')}
     </table>
     <div class="pf-sig">
       <div><b>${roleName()}</b>${esc(T(S.name))}</div>
@@ -6891,6 +6894,20 @@ function walk(D,node,out){
     const cl=(el.getAttribute&&el.getAttribute('class'))||'';const tag=el.tagName;
     /* الرسوم لا تُنقل إلى Word، فنتخطاها بدل التعثّر بها */
     if(tag==='svg'||tag==='SVG'||(el.namespaceURI&&el.namespaceURI.indexOf('svg')>=0))return;
+    /* زخرفة الصفحة وأرقامها وترويسة الشعارين: معناها في الورقة المطبوعة،
+       وفي Word تتحوّل إلى أرقام عارية وسطور مبعثرة بين الفقرات. */
+    if(/pf-wave|pf-num|pf-foot|pf-brand|pf-shot-cap/.test(cl))return;
+    /* كل صفحة من ملف الإنجاز ورقة مستقلة — بلا هذا يخرج الملف كتلة متصلة */
+    if(cl.includes('pf-page')){
+      if(out.length)out.push(new D.Paragraph({children:[new D.PageBreak()]}));
+      walk(D,el,out);return;
+    }
+    /* الصور كانت تُنقل من معرض الشواهد وحده، فتضيع كل صور ملف الإنجاز */
+    if(tag==='IMG'){
+      const im=imgFromDataUrl(D,el.getAttribute('src')||'');
+      if(im)out.push(new D.Paragraph({alignment:D.AlignmentType.CENTER,children:[im],spacing:{before:60,after:60}}));
+      return;
+    }
     if(tag==='TABLE'){const t=buildTable(D,el);if(t){out.push(t);out.push(P(D,'',{spacing:{after:60}}))}return}
     if(cl.includes('page-break')){out.push(new D.Paragraph({children:[new D.PageBreak()]}));return}
     if(cl.includes('big-title')){out.push(P(D,el.textContent.trim(),{bold:true,size:44,color:'0A423C',align:D.AlignmentType.CENTER,spacing:{before:120,after:60}}));return}
@@ -6901,7 +6918,17 @@ function walk(D,node,out){
     if(cl.includes('sec-h')){out.push(P(D,el.textContent.trim(),{bold:true,size:22,color:'0A423C',fill:'E3EEEB',spacing:{before:120,after:60}}));return}
     if(cl.includes('field-row')){const k=el.querySelector('.k');const parts=[...el.childNodes].map(n=>n.textContent).join(' ');if(k){const v=parts.replace(k.textContent,'').trim();out.push(P(D,[R(D,k.textContent+' ',{bold:true,color:'0A423C'}),R(D,v)]))}else out.push(P(D,el.textContent.trim()));return}
     if(cl.includes('moe')){const txt=el.textContent.replace(/\s+/g,' ').trim();out.push(P(D,txt,{color:'43534F',size:16,spacing:{after:120}}));out.push(new D.Paragraph({border:{bottom:{style:D.BorderStyle.SINGLE,size:6,color:'0E5A52',space:1}},spacing:{after:120}}));return}
-    if(cl.includes('toc')){[...el.querySelectorAll('li')].forEach(li=>out.push(P(D,'•  '+li.textContent.replace(/\s+/g,' ').trim())));return}
+    if(cl.includes('toc')){
+      /* textContent يلصق العنوان برقم الصفحة: «...للمعلمين3» */
+      [...el.querySelectorAll('li')].forEach(li=>{
+        const kids=[...li.children];
+        const txt=kids.length
+          ? kids.map(k=>k.textContent.replace(/\s+/g,' ').trim()).filter(Boolean).join('  —  ')
+          : li.textContent.replace(/\s+/g,' ').trim();
+        out.push(P(D,'•  '+txt));
+      });
+      return;
+    }
     if(cl.includes('ev-gallery')){const cells=[...el.children].map(ph=>{const img=ph.querySelector('img');let kids;if(img){const ir=imgFromDataUrl(D,img.src);kids=[new D.Paragraph({alignment:D.AlignmentType.CENTER,children:ir?[ir]:[R(D,ph.textContent.trim(),{size:16})]})]}else kids=[P(D,ph.textContent.trim(),{align:D.AlignmentType.CENTER,size:16})];return new D.TableCell({width:{size:3000,type:D.WidthType.DXA},borders:cellBorders(D),margins:{top:50,bottom:50,left:50,right:50},children:kids})});
       const chunks=[];for(let i=0;i<cells.length;i+=3)chunks.push(cells.slice(i,i+3));
       chunks.forEach(ch=>{while(ch.length<3)ch.push(new D.TableCell({borders:cellBorders(D),children:[P(D,'')]}));});
