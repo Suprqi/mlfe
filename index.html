@@ -5318,18 +5318,19 @@ function setWeeks(b,n){document.querySelectorAll('#prep .picker .chip').forEach(
 function newLesson(title){return {title,obj:'',strat:'تعلم تعاوني',assess:'ورقة عمل',ai:null}}
 function addLesson(){const v=$('new-lesson').value.trim();if(!v)return;S.lessons.push(newLesson(v));$('new-lesson').value='';renderLessons()}
 function loadSample(){['مدخل إلى الكسور','جمع الكسور المتشابهة','طرح الكسور المتشابهة','الكسور غير المتشابهة','ضرب الكسور','قسمة الكسور','الأعداد العشرية','النسبة المئوية','تطبيقات على النسبة','مراجعة عامة'].forEach(t=>S.lessons.push(newLesson(t)));renderLessons()}
-function fallbackLesson(title){return{objectives:[`أن يتعرف الطالب على مفهوم «${title}»`,`أن يطبّق الطالب «${title}» في أمثلة متنوعة`,`أن يحل الطالب تمارين متدرجة على «${title}»`],outcomes:[`يوضّح الطالب المقصود بـ«${title}»`,`يستخدم «${title}» في مواقف حياتية`],strategies:['التعلم التعاوني','الحوار والمناقشة','حل المشكلات'],assessment:['أسئلة شفهية','ورقة عمل','تقويم ختامي قصير'],homework:[`حل تمارين الكتاب على «${title}»`,'نشاط إثرائي على منصة عين'],enrichment:[`بحث قصير يوسّع فكرة «${title}»`,'تحدٍّ إضافي للطلاب المتفوقين'],remediation:[`إعادة شرح «${title}» بأمثلة مبسّطة`,'أوراق عمل علاجية فردية'],skills21:['التواصل','التعاون','التفكير الناقد'],values:['الإتقان','المسؤولية'],higherOrder:['التحليل','التطبيق','التقويم'],differentiation:['مهام إثرائية للمتفوقين','دعم فردي للمتعثرين'],realLife:[`ربط «${title}» بمواقف من حياة الطالب اليومية`]}}
 async function aiGenerateLesson(){
   const title=$('ai-lesson-title').value.trim();if(!title){toast('اكتب عنوان الدرس');return}
   const btn=$('ai-lesson-btn');btn.innerHTML='<span class="spinner"></span> يولّد...';
   const prompt=`أنت خبير مناهج سعودي. للدرس التالي أعد JSON فقط بدون أي نص آخر، بهذه المفاتيح وكل قيمة مصفوفة نصوص عربية قصيرة:\n{"objectives":[],"outcomes":[],"strategies":[],"assessment":[],"homework":[],"enrichment":[],"remediation":[],"skills21":[],"values":[],"higherOrder":[],"differentiation":[],"realLife":[]}\nالدرس: "${title}" | المادة: ${S.subject} | الصف: ${S.grade}`;
-  const raw=await aiCall(prompt);let data=parseJSON(raw);
-  let usedAI=!!data;
-  if(!data)data=fallbackLesson(title);
+  const raw=await aiCall(prompt);const data=parseJSON(raw);
+  btn.innerHTML='ولّد التحضير 🤖';
+  /* لا نُضيف درسًا بأهداف مُلفّقة. المعلّم يطبع هذا ويسلّمه لقائد مدرسته،
+     وقالبٌ ثابت مركّب فيه اسم الدرس يُكشف من النظرة الأولى. */
+  if(!data){toast('⚠️ تعذّر توليد التحضير — تحقّق من اتصالك ثم أعد المحاولة');return}
   const l=newLesson(title);l.ai=data;l.obj=(data.objectives||[]).join('\n');
-  S.lessons.push(l);$('ai-lesson-title').value='';btn.innerHTML='ولّد التحضير 🤖';
+  S.lessons.push(l);$('ai-lesson-title').value='';
   renderLessons();renderMetrics();
-  toast(usedAI?'✓ تم إنشاء التحضير الكامل':'⚠️ تعذر الاتصال بالذكاء الاصطناعي، جُهّز تحضير مبدئي بدلاً منه');
+  toast('✓ تم إنشاء التحضير الكامل');
 }
 function weekDate(w){if(!S.startDate)return '';const d=new Date(S.startDate);d.setDate(d.getDate()+(w-1)*7);return fmtDate(d.toISOString().slice(0,10),{day:'numeric',month:'short'})}
 function renderLessons(){
@@ -5357,7 +5358,7 @@ function delLesson(i){S.lessons.splice(i,1);renderLessons()}
 function generatePrep(){if(S.lessons.length===0){toast('أضف درسًا أول');return}S.lessons.forEach((l,i)=>{const o=$('obj-'+i);if(o)l.obj=o.value});buildPrepDocs();go('prep-preview');renderPrepTab()}
 function rows(arr){return (arr&&arr.length?arr:['—']).map(x=>`<tr><td>${esc(x)}</td></tr>`).join('')}
 function buildPrepDocs(){
-  const l=S.lessons[0];const ai=l.ai||fallbackLesson(l.title);
+  const l=S.lessons[0];const ai=l.ai||{};   /* بلا تلفيق: الفارغ يبقى فارغًا */
   const objs=(l.obj?l.obj.split('\n').filter(x=>x.trim()):ai.objectives);
   prepData.daily=`${moeHeader()}<h3 class="doc-title">التحضير اليومي</h3><div class="doc-meta">${S.subject} — ${prepGradeVal()} — ${S.term}</div>
     <table><tr><th style="width:22%">${roleName()}</th><td>${S.name}</td><th style="width:18%">المادة</th><td>${S.subject}</td></tr><tr><th>عنوان الدرس</th><td>${esc(l.title)}</td><th>التاريخ</th><td>${weekDate(1)||fmtDate(new Date().toISOString().slice(0,10))}</td></tr></table>
@@ -5389,31 +5390,13 @@ function openExtra(type,topic){
   if(topic!==undefined&&$('extra-title'))$('extra-title').value=topic;
   renderExtraList();go('extra');
 }
-function fallbackExtra(title,type){
-  const t=title||'المهارة المستهدفة';
-  const base={
-    remedial:{goal:`سد الفجوة لدى الطلاب المتعثرين في «${t}»`,target:'الطلاب دون مستوى الإتقان في هذه المهارة',
-      steps:[`تمهيد: مراجعة سريعة لأساسيات «${t}» بأمثلة مبسّطة`,`عرض: إعادة شرح «${t}» خطوة بخطوة بوتيرة أبطأ`,`تطبيق: تمارين متدرجة من السهل للأصعب على «${t}»`,'ختام: تقييم شفهي سريع للتأكد من الفهم'],
-      quickCheck:[`سؤالان شفهيان مباشرة على «${t}»`,'ورقة عمل قصيرة من 3 أسئلة متدرجة'],
-      followup:['متابعة فردية للطلاب الذين لم يتقنوا المهارة بعد','إشراك ولي الأمر بملاحظة قصيرة']},
-    enrichment:{goal:`تعميق فهم الطلاب المتفوقين في «${t}» بتحديات أعلى`,target:'الطلاب المتقنون للمهارة الأساسية',
-      steps:[`تمهيد: طرح سؤال تحدٍّ مرتبط بـ«${t}»`,`عرض: ربط «${t}» بتطبيقات أو مسائل أعمق`,`تطبيق: مهمة إثرائية أو مشروع قصير حول «${t}»`,'ختام: عرض الطلاب لحلولهم ومناقشتها'],
-      quickCheck:['تقييم عرض الحل ومنطق التفكير','ملاحظة جودة المشاركة في النقاش'],
-      followup:['تكليفهم بقيادة شرح المهارة لزملائهم','مهمة بحثية موسّعة اختيارية']},
-    review:{goal:`مراجعة عامة ومركّزة على «${t}» قبل التقييم`,target:'جميع طلاب الشعبة',
-      steps:[`تمهيد: استرجاع سريع لأهم نقاط «${t}»`,'عرض: تلخيص الأفكار الرئيسة في خريطة ذهنية','تطبيق: أسئلة تدريبية متنوعة الصعوبة','ختام: أسئلة سريعة (كويز) لقياس الجاهزية'],
-      quickCheck:['كويز قصير من 5 أسئلة متنوعة','جولة أسئلة وأجوبة سريعة'],
-      followup:['تزويد الطلاب بورقة مراجعة منزلية','تحديد نقاط تحتاج حصة إضافية أخرى']}
-  };
-  return base[type]||base.review;
-}
 async function aiGenerateExtra(){
   const title=$('extra-title').value.trim();if(!title){toast('اكتب موضوع/مهارة الحصة');return}
   const btn=$('extra-btn');btn.innerHTML='<span class="spinner"></span> يولّد...';
   const label=EXTRA_LABELS[curExtraType];
   const prompt=`أنت خبير تربوي سعودي. جهّز محتوى «${label}» لمادة ${S.subject} صف ${S.grade} حول: "${title}". أعد JSON فقط بلا أي نص آخر بهذه المفاتيح:\n{"goal":"هدف الحصة بجملة","target":"الفئة المستهدفة","steps":["تمهيد:...","عرض:...","تطبيق:...","ختام:..."],"quickCheck":["أدوات تقييم سريعة"],"followup":["إجراءات متابعة بعد الحصة"]}`;
   const raw=await aiCall(prompt);let data=parseJSON(raw);let usedAI=!!data;
-  if(!data)data=fallbackExtra(title,curExtraType);
+  if(!data){toast('⚠️ تعذّر توليد المحتوى — تحقّق من اتصالك ثم أعد المحاولة');return}
   const item=newExtra(title,curExtraType);item.ai=data;
   S.extraSessions.push(item);$('extra-title').value='';btn.innerHTML='ولّد الحصة 🤖';
   renderExtraList();renderMetrics();
@@ -5424,7 +5407,7 @@ function renderExtraList(){
   const wrap=$('extra-wrap');if(!wrap)return;
   if(!S.extraSessions.length){wrap.innerHTML='<div class="empty">ولّد حصتك الأولى فوق — أو اضغط «⚡ حصة سريعة» من نتائج تحليل الطلاب.</div>';return}
   wrap.innerHTML=S.extraSessions.map((x,i)=>{
-    const ai=x.ai||fallbackExtra(x.title,x.type);
+    const ai=x.ai||{};
     return `<div class="lesson-card open"><div class="lh"><div class="lt"><span class="wn">${esc(EXTRA_LABELS[x.type]||'حصة')}</span> ${esc(x.title)} ${x.ai?'<span class="badge-ai">✓ مُجهّزة</span>':''}</div></div>
     <div class="lb">
       <div class="field"><label>الهدف</label><textarea ${extraField(i,'goal')}>${esc(ai.goal||'')}</textarea></div>
@@ -5440,7 +5423,7 @@ function renderExtraList(){
 }
 function delExtra(i){S.extraSessions.splice(i,1);renderExtraList();renderMetrics()}
 function buildExtraDoc(i){
-  const x=S.extraSessions[i];const ai=x.ai||fallbackExtra(x.title,x.type);
+  const x=S.extraSessions[i];const ai=x.ai||{};
   const label=EXTRA_LABELS[x.type]||'حصة إضافية';
   $('extra-doc').innerHTML=`${moeHeader()}<h3 class="doc-title">${label}</h3><div class="doc-meta">${esc(x.title)} — ${S.subject} — ${prepGradeVal()} — ${fmtDate(new Date().toISOString().slice(0,10))}</div>
     <table><tr><th style="width:22%">${roleName()}</th><td>${S.name}</td><th style="width:18%">النوع</th><td>${label}</td></tr></table>
@@ -5796,15 +5779,6 @@ ${(examCurriculumContext()||content)?'مهم: لا تسأل عن أي معلوم
 أعد JSON فقط بلا أي نص آخر بهذا الشكل بالضبط:
 {"mcq":[{"text":"","options":["","","",""],"correctIdx":0}],"tf":[{"text":"","correct":true}],"fill":[{"text":"","answer":""}],"match":[{"a":"","b":""}],"essay":[{"text":"","modelAnswer":""}]}`;
 }
-function fallbackExam(topic,counts){
-  const t=topic||'الموضوع';
-  const mcq=[];for(let i=0;i<counts.mcq;i++)mcq.push({text:`سؤال تجريبي ${i+1} حول «${t}»`,options:['الخيار الأول','الخيار الثاني','الخيار الثالث','الخيار الرابع'],correctIdx:0});
-  const tf=[];for(let i=0;i<counts.tf;i++)tf.push({text:`عبارة تجريبية ${i+1} عن «${t}»`,correct:i%2===0});
-  const fill=[];for(let i=0;i<counts.fill;i++)fill.push({text:`أكمل: عبارة تجريبية ____ عن «${t}»`,answer:'إجابة نموذجية'});
-  const match=[];for(let i=0;i<counts.match;i++)match.push({a:`عنصر ${i+1}`,b:`تعريف ${i+1}`});
-  const essay=[];for(let i=0;i<counts.essay;i++)essay.push({text:`اكتب فقرة تشرح «${t}»`,modelAnswer:''});
-  return {mcq,tf,fill,match,essay};
-}
 function ingestExamData(data){
   let added=0;
   (data.mcq||[]).forEach(q=>{if(!q||!q.text)return;S.examQuestions.push({id:qid(),type:'mcq',text:q.text,options:(q.options&&q.options.length?q.options:['','','','']).slice(0,6),correctIdx:Math.max(0,Number(q.correctIdx)||0),points:2,img:null});added++});
@@ -5844,7 +5818,9 @@ async function aiGenerateExam(){
   if(!Object.values(counts).some(v=>v>0)){toast('حدد عدد أسئلة نوع واحد على الأقل');return}
   const btn=$('exam-gen-btn');btn.innerHTML='<span class="spinner"></span> يولّد...';
   const raw=await aiCall(examPrompt(topic,content,counts));let data=parseJSON(raw);let usedAI=!!data;
-  if(!data)data=fallbackExam(topic||content||(S.examMeta.selectedLessons||[]).join('، '),counts);
+  /* «سؤال تجريبي ١ حول ...» كان يدخل ورقة اختبار حقيقية تُوزَّع على طلاب */
+  if(!data){$('exam-loading')&&$('exam-loading').classList.remove('on');
+    toast('⚠️ تعذّر توليد الأسئلة — تحقّق من اتصالك ثم أعد المحاولة');return}
   const added=ingestExamData(data);
   btn.innerHTML='🤖 ولّد الأسئلة';
   renderExamQuestions();renderMetrics();
@@ -6564,7 +6540,7 @@ async function aiFillForm(){
   const raw=await aiCall(`أنت معلم سعودي خبير. لـ«${t.title}» في مادة ${S.subject} للصف ${S.grade}، أعد JSON فقط بمحتوى مناسب للحقول التالية، كل قيمة نص (الأسطر مفصولة بـ\\n): ${keys}`);
   const data=parseJSON(raw);
   if(data){t.fields.forEach(f=>{if(data[f.key]&&$('f-'+f.key))$('f-'+f.key).value=Array.isArray(data[f.key])?data[f.key].join('\n'):data[f.key]});toast('✓ تم ملء النموذج')}
-  else{t.fields.filter(f=>f.type==='list').forEach(f=>{if($('f-'+f.key))$('f-'+f.key).value=['عنصر مقترح ١','عنصر مقترح ٢','عنصر مقترح ٣'].join('\n')});toast('✓ مُلئ (وضع تجريبي بدون اتصال)')}
+  else toast('⚠️ تعذّر ملء النموذج — تحقّق من اتصالك ثم أعد المحاولة');
   btn.innerHTML='✨ تعبئة تلقائية';
 }
 function generateForm(){const t=formTemplates[curForm];if(!t)return;const vals={};t.fields.forEach(f=>{const el=$('f-'+f.key);vals[f.key]=el?el.value:''});let body=`${moeHeader()}<h3 class="doc-title">${t.title}</h3><div class="doc-meta">${S.school} — ${S.term} — ${yearLabel()}</div>`;const simple=t.fields.filter(f=>f.type!=='list'&&f.type!=='rubric');if(simple.length)body+=`<table>`+simple.map(f=>`<tr><th style="width:32%">${f.label}</th><td>${f.type==='date'?(vals[f.key]?fmtDate(vals[f.key]):'—'):(esc(vals[f.key])||'—')}</td></tr>`).join('')+`</table>`;
@@ -6858,7 +6834,7 @@ async function genLessonData(title){
   const prompt=`أنت خبير مناهج سعودي. للدرس التالي أعد JSON فقط بدون أي نص آخر، كل قيمة مصفوفة نصوص عربية قصيرة دقيقة:\n{"objectives":[],"outcomes":[],"strategies":[],"assessment":[],"homework":[],"enrichment":[],"remediation":[],"skills21":[],"values":[],"higherOrder":[],"differentiation":[],"realLife":[]}\nالدرس: "${title}" | المادة: ${S.subject} | الصف: ${S.grade}${guard}`;
   const data=parseJSON(await aiCall(prompt));
   if(data){data._ai=true;return data}
-  const fb=fallbackLesson(title);fb._ai=false;return fb;
+  return null;                 /* الفشل يُبلَّغ للمستدعي، ولا يُستبدل بقالب */
 }
 async function regenField(i,field){
   const l=S.lessons[i];if(!l)return;
