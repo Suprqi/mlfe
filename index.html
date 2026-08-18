@@ -523,6 +523,14 @@ body.pre-app .bottom-nav{display:none!important}
   /* المستندات العادية (ترويسة المدرسة والجداول) تحتاج هامشًا؛ صفحات ملف الإنجاز وحدها ملء الورقة */
   .doc{border:none!important;box-shadow:none!important;padding:10mm!important}
   .doc.pf-doc{padding:0!important}
+  /* بدون هذا السطر يُسقط المتصفح كل خلفية ولون عند الطباعة، فتخرج موجة
+     غلاف ملف الإنجاز وترويسات الجداول بيضاء تمامًا — والوثيقة المطبوعة
+     هي ما يصل قائد المدرسة، لا ما يُرى على الشاشة. */
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  /* لا يُقطع قسم ولا جدول بين ورقتين، ولا يُترك عنوان وحده في آخر ورقة */
+  table,.blk,.sec-h+table,.pf-page{break-inside:avoid}
+  h1,h2,h3,h4,.sec-h,.doc-title{break-after:avoid}
+  a[href]::after{content:none!important}
   @page{size:A4 portrait;margin:0}
 }
 .pf-wave{position:absolute;top:0;left:0;width:100%;height:100%;z-index:0}
@@ -6969,7 +6977,9 @@ function setPrintSize(b,which){
 function printCertsNow(){printWithSize(certPrintSize)}
 function printWithSize(sizeName){
   const sizes={A4:'A4',A5:'A5',LETTER:'letter'};
-  const css=`@page{size:${sizes[sizeName]||'A4'};margin:10mm}`;
+  /* الهوامش داخل الورقة كـpadding في .doc. وضعها هنا أيضًا يجمع هامشين
+     فيُقتطع المحتوى من اليسار — وهو ما ظهر في الطباعة سابقًا. */
+  const css=`@page{size:${sizes[sizeName]||'A4'};margin:0}`;
   const old=document.getElementById('temp-print-size');if(old)old.remove();
   const style=document.createElement('style');style.id='temp-print-size';style.textContent=css;document.head.appendChild(style);
   const cleanup=()=>{const el=document.getElementById('temp-print-size');if(el)el.remove();window.removeEventListener('afterprint',cleanup)};
@@ -7559,6 +7569,10 @@ function renderCloudUI(){
         <button class="btn btn-ghost btn-sm" onclick="cloudSignOut()">تسجيل خروج</button>
       </div>
       <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--line)">
+        <button class="btn btn-ghost btn-sm" onclick="downloadBackup()">⬇️ صدّر كل بياناتي</button>
+        <div style="font-size:.76rem;color:var(--ink-soft);margin:6px 0 12px;line-height:1.7">
+          ملف واحد فيه كل ما أدخلته: هويتك المهنية، والشواهد، والطلاب، والدرجات، والوثائق. حقّك في الوصول لبياناتك.
+        </div>
         <button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="deleteAccount()">🚫 احذف حسابي نهائيًا</button>
         <div style="font-size:.76rem;color:var(--ink-soft);margin-top:6px;line-height:1.7">
           يحذف بياناتك من السحابة وحسابك معها. بيانات هذا الجهاز تبقى — امسحها من «حذف جميع البيانات».
