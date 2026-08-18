@@ -876,7 +876,7 @@ body.pre-app .bottom-nav{display:none!important}
         <div class="card" data-tool="analysis" data-cat="students" onclick="openAnalysis()"><div class="ic">🧪</div><h3>تحليل نتائج الطلاب</h3><p>بعد رصد الدرجات، يحلّل الذكاء المتعثرين والمتفوقين والمهارات الضعيفة، ويقترح خطة علاجية وإثرائية.</p><div class="prog"><i id="an-bar" style="width:0%"></i></div><div class="prog-txt" id="an-prog">يحتاج رصد درجات أولًا</div></div>
         <div class="card" data-tool="voice" data-cat="tools" onclick="openVoice()"><div class="ic">🎙️</div><h3>من كلامك إلى ملفات</h3><p>احكِ ما دار في حصتك، ويحوّله المساعد إلى تحضير أو شاهد أو تقرير أو سجل زيارة تلقائيًا.</p><div class="prog"><i style="width:100%"></i></div><div class="prog-txt">تحضير • شاهد • تقرير • زيارة</div></div>
         <div class="card" data-tool="report" data-cat="tools" onclick="teacherReport()"><div class="ic">📋</div><h3>تقرير الأداء الشامل</h3><p>سيرة الفصل الدراسي كاملة بضغطة — يجمع كل بياناتك في تقرير واحد جاهز للطباعة.</p><div class="prog"><i style="width:100%"></i></div><div class="prog-txt">جاهز دائمًا</div></div>
-        <div class="card" data-tool="feedback" data-cat="tools" onclick="openFeedback()"><span class="tag hot" style="font-size:.5rem;padding:2px 5px;max-width:none">🏆 مكافأة</span><div class="ic">💬</div><h3>الشكاوى والاقتراحات</h3><p>رأيك يهمنا — وإذا كانت فكرتك قوية ونُفّذت فعليًا، تستحق مكافأة مالية من 500 إلى 10,000 ريال.</p><div class="prog"><i id="fdbk-bar" style="width:0%"></i></div><div class="prog-txt" id="fdbk-prog">لم ترسل شيئًا بعد</div></div>
+        <div class="card" data-tool="feedback" data-cat="tools" onclick="openFeedback()"><span class="tag hot" style="font-size:.5rem;padding:2px 5px;max-width:none">🏆 مكافأة</span><div class="ic">💬</div><h3>الشكاوى والاقتراحات</h3><p>رأيك يهمنا — وإذا كانت فكرتك قوية ونُفّذت فعليًا، تستحق مكافأة مالية من 500 إلى 15,000 ريال.</p><div class="prog"><i id="fdbk-bar" style="width:0%"></i></div><div class="prog-txt" id="fdbk-prog">لم ترسل شيئًا بعد</div></div>
       </div>
     </div>
 
@@ -1694,9 +1694,9 @@ body.pre-app .bottom-nav{display:none!important}
       </div>
 
       <div id="fdbk-idea-terms" class="panel" style="display:none;border-right:4px solid var(--gold)">
-        <div class="panel-title">🏆 اقترح فكرة، اربح مكافأة (500 – 10,000 ريال)</div>
+        <div class="panel-title">🏆 اقترح فكرة، اربح مكافأة (<span id="reward-range">500 – 15,000 ريال</span>)</div>
         <ul class="excel-list">
-          <li>يجب أن تكون الفكرة جديدة وغير موجودة أصلًا في التطبيق أو أي برنامج مشابه وقت التقديم</li>
+          <li>يجب أن تكون الفكرة جديدة وغير موجودة في التطبيق، وغير مدرجة مسبقًا في خطة تطويره وقت التقديم</li>
           <li>لا تُصرف أي مكافأة عن أفكار لم تُنفَّذ فعليًا، مهما كانت جودتها</li>
           <li>عند تشابه الأفكار من أكثر من شخص، تُعتمد الأسبقية بتاريخ التقديم الموثّق</li>
           <li>يحدد فريق التطوير قيمة المكافأة حصريًا حسب الأثر والجهد التقني، وتُصرف بعد التنفيذ والنشر فعليًا فقط</li>
@@ -4008,7 +4008,7 @@ function buildFeedbackDoc(entry){
     html+=`<div class="sec-h">📎 مرفق منفصل</div><table><tr><td>${esc(att.name)} — <b>غير مضمّن هنا</b>، أرفقه يدويًا مع رسالة واتساب عند الإرسال</td></tr></table>`;
   }
   if(isIdea){
-    html+=`<div style="background:#FBF3E0;border:1px solid #E8D6A8;border-radius:10px;padding:10px 14px;margin-top:14px;font-size:.82rem;color:#8A6D1F">⚠️ خاضع لشروط برنامج «اقترح فكرة، اربح مكافأة» — القبول والقيمة (500-10,000 ريال) بتقدير فريق التطوير حصريًا، وتُصرف بعد التنفيذ الفعلي فقط.</div>`;
+    html+=`<div style="background:#FBF3E0;border:1px solid #E8D6A8;border-radius:10px;padding:10px 14px;margin-top:14px;font-size:.82rem;color:#8A6D1F">⚠️ خاضع لشروط برنامج «اقترح فكرة، اربح مكافأة» — القبول والقيمة (${rewardRange()}) بتقدير فريق التطوير حصريًا، وتُصرف بعد التنفيذ الفعلي فقط.</div>`;
   }
   $('fdbk-doc').innerHTML=html;go('feedback-preview');
   toast(att&&att.name&&!att.img?'✓ جاهز — لا تنسَ إرفاق الملف يدويًا بواتساب':'✓ جاهز — أرسله عبر واتساب لفريق التطوير');
@@ -7237,6 +7237,13 @@ try{
    وحين كانت تُعرَّف لاحقًا كان ذلك خطأ منطقة موت زمنية يقتل تنفيذ بقية
    السكربت عند كل معلّم لديه بيانات محفوظة — فتتعطّل شاشات الحساب والاشتراك
    والخروج بلا أي رسالة. المستخدم الجديد لا يمرّ بالفرع فلا يظهر عنده. */
+/* قيمة مكافأة الأفكار التزام معلن في الشروط والأحكام لا نصّ تسويقي.
+   كانت مكتوبة يدويًا في ثلاثة مواضع بثلاث صيغ، واثنان منها ١٠٬٠٠٠
+   بينما المعتمد ١٥٬٠٠٠. مصدر واحد يمنع عودة التعارض.
+   وتُعرَّف هنا لا لاحقًا: كتلة التهيئة أدناه تقرؤها، والتعريف بعدها
+   يوقف تنفيذ بقية السكربت صامتًا. */
+const REWARD_MIN=500, REWARD_MAX=15000;
+function rewardRange(){return REWARD_MIN.toLocaleString('en-US')+' – '+REWARD_MAX.toLocaleString('en-US')+' ريال'}
 let _sb=null,_sbUser=null,_pushTimer=null,_syncing=false;
 let _sub=null;
 renderRoleOptions();
@@ -7270,6 +7277,8 @@ if(_restored&&S.name){
   document.getElementById('ob-name').focus();
 }
 checkDueReminders();scheduleNotifs();renderNotifBtn();syncChrome();
+/* العنوان يُقرأ من الثابت لا من نصّ مكتوب، فلا يتفرّع الرقم ثانيةً */
+(function(){const el=$('reward-range');if(el)el.textContent=rewardRange()})();
 /* ===== الحساب السحابي: تسجيل دخول ومزامنة ونسخة احتياطية =====
    المفتاح أدناه عام بطبيعته ومصمَّم للمتصفح؛ الحماية من سياسات RLS
    في قاعدة البيانات لا من إخفائه. */
