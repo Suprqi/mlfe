@@ -6663,7 +6663,17 @@ function prefillForm(kind,dataStr){
 
 /* ===== Voice to file ===== */
 function openVoice(){go('voice')}
-let recognizer=null,recording=false,voiceBase='';
+let recognizer=null,recording=false,voiceBase='',voiceSeen={};
+/* مقارنة بلا مسافات زائدة: أندرويد يُعيد المقطع أحيانًا بمسافة مختلفة،
+   فالمقارنة الحرفية تفشل ويتكرر الكلام في الحقل. */
+function voiceNorm(s){return String(s||'').split(' ').filter(Boolean).join(' ').trim()}
+function voiceIsTail(seg){
+  const s=voiceNorm(seg);
+  if(!s)return true;                       /* فارغ لا يُضاف */
+  const base=voiceNorm(voiceBase);
+  if(!base)return false;
+  return base===s||base.endsWith(' '+s)||base.endsWith(s);
+}
 function micSupported(){return 'webkitSpeechRecognition' in window||'SpeechRecognition' in window}
 function toggleMic(){
   if(!micSupported()){toast('متصفحك ما يدعم التفريغ الصوتي — استخدم الكتابة، أو جرّب Chrome');return}
@@ -6676,11 +6686,21 @@ function toggleMic(){
      لإيقاف التسجيل يقطع على المعلّم عند أول سكتة. الصحيح: نقرأ من
      resultIndex وحده، ونحتفظ بالنهائي في متغيّر مستقل، ونُسنِد ولا نُضيف،
      ونعيد التشغيل ما دام المعلّم لم يضغط الإيقاف. */
+  /* سفاري يحترم continuous فلا يُعيد إرسال شيء، وكروم أندرويد يُعيد إطلاق
+     المقطع النهائي نفسه، وعند إعادة التشغيل يُعيد ذيل الجلسة السابقة
+     والفهارس تبدأ من صفر. فحارس resultIndex وحده لا يكفي هناك:
+     نتذكّر ما ثُبِّت في الجلسة، ونرفض المقطع إن كان ذيلَ النص أصلًا. */
+  voiceSeen={};
   recognizer.onresult=e=>{
     let interim='';
     for(let i=e.resultIndex;i<e.results.length;i++){
-      const tr=e.results[i][0].transcript;
-      if(e.results[i].isFinal)voiceBase+=tr+' ';else interim+=tr;
+      const r=e.results[i];
+      const tr=r[0].transcript;
+      if(!r.isFinal){interim+=tr;continue}
+      if(voiceSeen[i])continue;                 /* أُطلق هذا الفهرس من قبل */
+      voiceSeen[i]=true;
+      if(voiceIsTail(tr))continue;              /* أُعيد ذيلٌ بعد إعادة تشغيل */
+      voiceBase+=tr+' ';
     }
     const ta=$('voice-text');
     ta.value=voiceBase+interim;      /* إسناد لا إضافة — النص المؤقت لا يُثبَّت */
@@ -6696,6 +6716,7 @@ function toggleMic(){
   };
   recognizer.onend=()=>{
     if(!recording)return;                     /* أوقفه المعلّم بنفسه */
+    voiceSeen={};                             /* جلسة جديدة، فالفهارس تبدأ من صفر */
     try{recognizer.start()}catch(e){}         /* تجاهل التشغيل المزدوج */
   };
   try{recognizer.start();recording=true;$('mic-btn').classList.add('rec');$('mic-ic').textContent='⏹️';$('mic-status').textContent='يستمع... تكلّم الآن (اضغط للإيقاف)'}catch(e){toast('تعذّر بدء التسجيل')}
