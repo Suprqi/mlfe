@@ -36,6 +36,12 @@ input,select,textarea{font-family:inherit;font-size:1rem}
 .agree-box input{margin-top:5px;width:18px;height:18px;min-width:18px;accent-color:var(--teal-deep);cursor:pointer}
 .agree-box a{color:var(--teal-deep);font-weight:600}
 .btn.btn-block[disabled]{opacity:.5;cursor:not-allowed}
+.an-row{display:flex;justify-content:space-between;align-items:center;gap:10px;
+  padding:9px 2px;border-bottom:1px dashed var(--line);font-size:.88rem}
+.an-row:last-of-type{border-bottom:0}
+.an-row b{color:var(--teal-deep);font-size:1rem}
+.an-mark{text-align:center;font-size:.78rem;color:var(--ink-soft);
+  border-top:1px solid var(--line);margin-top:14px;padding-top:10px;letter-spacing:.04em}
 .legal-foot{min-width:0;overflow-wrap:anywhere;
   padding:26px 18px calc(88px + env(safe-area-inset-bottom,0px));
   text-align:center;font-size:.78rem;line-height:2.2;color:var(--ink-soft);
@@ -1140,7 +1146,7 @@ body.pre-app .bottom-nav{display:none!important}
     <div id="ach-preview" class="screen">
       <div class="builder-head"><span class="back" onclick="go('achievement')">→ رجوع للتعديل</span><h2>ملف الأداء الوظيفي — جاهز</h2></div>
       <p class="builder-sub">غلاف + فهرس + ترقيم + أقسام مصنّفة — بدون أي تدخل يدوي.</p>
-      <div class="doc-wrap"><div class="doc-toolbar no-print"><span class="dt">معاينة الملف</span><div class="acts"><button class="btn btn-ghost btn-sm" onclick="window.print()">🖨️ طباعة / PDF</button><button class="btn btn-primary btn-sm" onclick="saveAsPdf('ach-doc','ملف_الإنجاز',this)">⬇️ تنزيل PDF</button><button class="btn btn-ghost btn-sm" onclick="exportDocx('ach-doc','ملف_الإنجاز')">⬇️ تصدير Word</button></div></div><div id="pf-theme-bar"></div><div class="doc" id="ach-doc"></div></div>
+      <div class="doc-wrap"><div class="doc-toolbar no-print"><span class="dt">معاينة الملف</span><div class="acts"><button class="btn btn-ghost btn-sm" onclick="window.print()">🖨️ طباعة / PDF</button><button class="btn btn-primary btn-sm" onclick="saveAsPdf('ach-doc','ملف_الإنجاز',this)">⬇️ تنزيل PDF</button><button class="btn btn-ghost btn-sm" onclick="exportDocx('ach-doc','ملف_الإنجاز')">⬇️ تصدير Word</button><button class="btn btn-ghost btn-sm" style="border-color:#E3CE96;color:#AE8129;background:#FBF6E9" onclick="anOpen()">🛡️ نسخة للتحكيم</button></div></div><div id="pf-theme-bar"></div><div class="doc" id="ach-doc"></div></div>
     </div>
 
     <div id="excellence" class="screen">
@@ -2129,6 +2135,34 @@ body.pre-app .bottom-nav{display:none!important}
     </div>
   </div>
 </div>
+<div class="dp-overlay" id="rd-modal">
+  <div class="dp-card" style="max-width:560px">
+    <div class="dp-head"><b>🖍️ اطمس اسمًا في الصورة</b><button class="btn btn-ghost btn-sm" onclick="rdCancel()">إغلاق</button></div>
+    <div style="font-size:.8rem;color:var(--ink-soft);line-height:1.75;margin-bottom:8px">
+      اسحب إصبعك فوق الاسم فيتحوّل إلى مستطيل أسود. <b>الحفظ نهائي ولا تراجع بعده</b> — الطمس الذي يُردّ ليس طمسًا.
+    </div>
+    <canvas id="rd-canvas" style="max-width:100%;touch-action:none;cursor:crosshair;border-radius:8px;border:1px solid var(--line);background:#fff"
+      onmousedown="rdStart(event)" onmousemove="rdMove(event)" onmouseup="rdEnd(event)" onmouseleave="rdEnd(event)"
+      ontouchstart="rdStart(event)" ontouchmove="rdMove(event)" ontouchend="rdEnd(event)"></canvas>
+    <div id="rd-count" style="font-size:.82rem;color:var(--ink-soft);margin-top:8px">اسحب إصبعك فوق الاسم</div>
+    <div class="dp-actions" style="margin-top:12px;flex-wrap:wrap;gap:8px">
+      <button class="btn btn-ghost btn-sm" onclick="rdUndo()">↶ تراجع</button>
+      <button class="btn btn-ghost btn-sm" onclick="rdClear()">مسح الكل</button>
+      <button class="btn btn-gold btn-sm" onclick="rdSave()">حفظ الصورة</button>
+    </div>
+  </div>
+</div>
+<div class="dp-overlay" id="an-modal">
+  <div class="dp-card" style="max-width:440px">
+    <div class="dp-head"><b>🛡️ نسخة مُجرَّدة للتحكيم</b><button class="btn btn-ghost btn-sm" onclick="anCancel()">إغلاق</button></div>
+    <div id="an-body"></div>
+    <div class="dp-actions" style="margin-top:14px">
+      <button class="btn btn-ghost btn-sm" onclick="anCancel()">إلغاء</button>
+      <button class="btn btn-gold btn-sm" id="an-go" onclick="anExport()">راجعتُ — صدّر النسخة</button>
+    </div>
+  </div>
+</div>
+<div id="an-stage" class="doc" style="display:none;position:absolute;right:-99999px;top:0;width:794px"></div>
 <div class="dp-overlay" id="cloud-modal">
   <div class="dp-card" style="max-width:420px">
     <div class="dp-head"><b>☁️ حسابي والمزامنة</b><button class="btn btn-ghost btn-sm" onclick="closeCloudModal()">إغلاق</button></div>
@@ -4790,13 +4824,13 @@ function renderStudentWork(){
     <div class="grid2">
       <div>
         <small style="display:block;color:var(--ink-soft);margin-bottom:4px">📌 قبل</small>
-        ${w.beforeImg?`<img src="${w.beforeImg}" style="max-width:100%;border-radius:8px;border:1px solid var(--line);display:block;margin-bottom:6px">`:''}
+        ${w.beforeImg?`<img src="${w.beforeImg}" style="max-width:100%;border-radius:8px;border:1px solid var(--line);display:block;margin-bottom:6px"><button class="btn btn-ghost btn-sm" style="margin-bottom:6px;border-color:#E3CE96;color:#AE8129" onclick="rdOpen('sw',${i},'beforeImg')">🖍️ اطمس اسمًا في الصورة</button>`:''}
         <button class="btn btn-ghost btn-sm" onclick="document.getElementById('sw-before-${i}').click()">🖼️ ${w.beforeImg?'تغيير':'أضف'} صورة "قبل"</button>
         <input type="file" id="sw-before-${i}" accept="image/*" style="display:none" onchange="attachStudentWorkImg(${i},this,'beforeImg')">
       </div>
       <div>
         <small style="display:block;color:var(--ink-soft);margin-bottom:4px">✅ بعد</small>
-        ${w.afterImg?`<img src="${w.afterImg}" style="max-width:100%;border-radius:8px;border:1px solid var(--line);display:block;margin-bottom:6px">`:''}
+        ${w.afterImg?`<img src="${w.afterImg}" style="max-width:100%;border-radius:8px;border:1px solid var(--line);display:block;margin-bottom:6px"><button class="btn btn-ghost btn-sm" style="margin-bottom:6px;border-color:#E3CE96;color:#AE8129" onclick="rdOpen('sw',${i},'afterImg')">🖍️ اطمس اسمًا في الصورة</button>`:''}
         <button class="btn btn-ghost btn-sm" onclick="document.getElementById('sw-after-${i}').click()">🖼️ ${w.afterImg?'تغيير':'أضف'} صورة "بعد"</button>
         <input type="file" id="sw-after-${i}" accept="image/*" style="display:none" onchange="attachStudentWorkImg(${i},this,'afterImg')">
       </div>
@@ -7628,6 +7662,277 @@ function closeCloudModal(){$('cloud-modal').classList.remove('on')}
 _autoSaveTimer=setInterval(saveState,4000);
 window.addEventListener('beforeunload',saveState);
 window.addEventListener('pagehide',saveState);
+
+
+/* ══════════════ تصدير نسخة مُجرَّدة للتحكيم ══════════════
+   تسليم ملف الإنجاز للتحكيم نقلٌ لبيانات قاصرين إلى طرف ثالث. والاعتماد
+   على المعلّم ليُنقّي ملفًا من عشرات الصفحات يدويًا غير عملي — فيصل الملف
+   مكشوفًا أو يمتنع المعلّم عن المشاركة. التجريد يقع على نسخة في الذاكرة،
+   والأصل في حساب المعلّم لا يُمسّ. */
+
+/* صور الحرف الواحد: المعلّم يكتب «إبراهيم» و«ابراهيم»، و«يحيى» و«يحيي» */
+const AN_CLASS={'ا':'[اأإآٱ]','أ':'[اأإآٱ]','إ':'[اأإآٱ]','آ':'[اأإآٱ]','ٱ':'[اأإآٱ]',
+  'ي':'[يى]','ى':'[يى]','ه':'[هة]','ة':'[هة]','و':'[وؤ]','ؤ':'[وؤ]','ئ':'[ئي]'};
+const AN_DIAC='[ً-ْـ]*';        /* تشكيل وتطويل بين الحروف */
+const AN_LETTER='[ء-ي]';
+/* السوابق: «ومحمد» و«بمحمد» و«للطالب» — بدونها يفلت ربع المواضع */
+const AN_PREFIX='(?:[وفبكل]?ال|[وفبكل])?';
+
+function anEsc(ch){return ch.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}
+function anArabicDigits(n){return String(n).replace(/[0-9]/g,function(d){return '٠١٢٣٤٥٦٧٨٩'[d]})}
+
+/* سفاري أقدم من ١٦٫٤ لا يدعم lookbehind، فنكشف مرة واحدة ولا نفترض */
+let _anLB=null;
+function anHasLookbehind(){
+  if(_anLB===null){try{new RegExp('(?<!x)y');_anLB=true}catch(e){_anLB=false}}
+  return _anLB;
+}
+
+/* الاسم كنمط: يقبل صور الحرف، ويتجاهل التشكيل، ويسمح بمسافات متعددة */
+function anBody(name){
+  return String(name).trim().split(/\s+/).map(function(word){
+    return word.split('').map(function(ch){return AN_CLASS[ch]||anEsc(ch)}).join(AN_DIAC);
+  }).join('\\s+');
+}
+
+/* مع lookbehind نستعمله. وبدونه نلتقط ما قبله ونعيده، ونكرّر حتى الاستقرار
+   لأن الفاصل المُستهلَك يمنع مطابقة اسمين متجاورين في مرور واحد. */
+function anReplace(text,name,alias){
+  const body=anBody(name);
+  let n=0;
+  if(anHasLookbehind()){
+    const re=new RegExp('(?<!'+AN_LETTER+')('+AN_PREFIX+')('+body+')(?!'+AN_LETTER+')','g');
+    const out=text.replace(re,function(m,pre){n++;return (pre||'')+alias});
+    return {text:out,count:n};
+  }
+  const re=new RegExp('(^|[^ء-ي])('+AN_PREFIX+')('+body+')(?!'+AN_LETTER+')','g');
+  let out=text,prev,guard=0;
+  do{ prev=out;
+      out=out.replace(re,function(m,before,pre){n++;return before+(pre||'')+alias});
+  }while(out!==prev&&++guard<12);
+  return {text:out,count:n};
+}
+
+/* الرمز ثابت للطالب نفسه في كل الملف، فيتتبّع المحكّم أثر التدخل على
+   طالب بعينه — وهو معيار تحكيم — دون أن يعرف من هو. */
+function anBuildMap(){
+  const list=(S.students||[]).filter(function(s){return s&&s.name&&s.name.trim()});
+  const map=new Map(), firsts=[];
+  list.forEach(function(st,i){
+    const alias='طالب '+anArabicDigits(i+1);
+    const parts=st.name.trim().split(/\s+/).filter(function(p){return p!=='بن'&&p!=='بنت'});
+    const forms=[st.name.trim()];
+    if(parts.length>1){
+      forms.push(parts.join(' '));
+      forms.push(parts[0]+' '+parts[parts.length-1]);
+    }
+    /* الاسم الأول وحده لا يُستبدل آليًا: «سعد» قد تكون كلمة في جملة.
+       يُعرض في «المشتبه بها» ليقرّر المعلّم بنفسه. */
+    if(parts[0])firsts.push(parts[0]);
+    forms.forEach(function(f){if(f&&!map.has(f))map.set(f,alias)});
+  });
+  return {map:map,firsts:firsts.filter(function(v,i,a){return a.indexOf(v)===i})};
+}
+
+const AN_PATTERNS=[
+  {re:/([12][0-9]{9})/g,                 to:'••••••••••'},
+  {re:/(\+?966|0)5[0-9]{8}/g,            to:'05••••••••'},
+  {re:/[\w.\-]+@[\w.\-]+\.\w{2,}/g,      to:'•••@•••'}
+];
+
+/* يعمل على العُقد النصية وحدها، فلا تنكسر الوسوم ولا الجداول */
+function anDom(root,map,skipName){
+  const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
+  const keys=Array.from(map.keys()).sort(function(a,b){return b.length-a.length});
+  let names=0,ids=0,node;
+  const nodes=[];
+  while((node=walker.nextNode()))nodes.push(node);
+  nodes.forEach(function(nd){
+    let t=nd.nodeValue;
+    if(!t||!t.trim())return;
+    keys.forEach(function(k){
+      /* اسم المعلّم يبقى ظاهرًا — هو صاحب الملف لا أحد طلابه */
+      if(skipName&&k.trim()===String(skipName).trim())return;
+      const r=anReplace(t,k,map.get(k));
+      t=r.text;names+=r.count;
+    });
+    AN_PATTERNS.forEach(function(p){
+      t=t.replace(p.re,function(){ids++;return p.to});
+    });
+    if(t!==nd.nodeValue)nd.nodeValue=t;
+  });
+  return {names:names,ids:ids,images:root.querySelectorAll('img').length};
+}
+
+/* المشتبه بها: الاسم الأول وحده، بعدد مواضعه، ليقرّر المعلّم */
+function anSuspects(root,firsts){
+  const text=root.innerText||root.textContent||'';
+  const out=[];
+  firsts.forEach(function(f){
+    let re;
+    try{re=new RegExp('(^|[^ء-ي])('+AN_PREFIX+')('+anBody(f)+')(?!'+AN_LETTER+')','g')}
+    catch(e){return}
+    let m,hits=0;
+    while((m=re.exec(text))!==null){hits++;if(hits>50)break}
+    if(hits)out.push({name:f,hits:hits});
+  });
+  return out;
+}
+
+/* ── الواجهة ── */
+let _anClone=null,_anStats=null;
+
+function anOpen(){
+  const src=$('ach-doc');
+  if(!src||!src.innerHTML.trim()){toast('ولّد ملف الإنجاز أولًا');return}
+  const built=anBuildMap();
+  if(!built.map.size){toast('لا يوجد سجل طلاب في الملف — لا حاجة للتجريد');return}
+  _anClone=src.cloneNode(true);
+  _anStats=anDom(_anClone,built.map,S.name);
+  const suspects=anSuspects(_anClone,built.firsts);
+  $('an-body').innerHTML=
+    '<div class="note"><span class="ni">🛡️</span><div>تُبنى نسخة مُجرَّدة في الذاكرة. '
+    +'<b>ملفك الأصلي لا يتغيّر.</b></div></div>'
+    +'<div class="an-row"><span>أسماء طلاب استُبدلت برموز</span><b>'+anArabicDigits(_anStats.names)+'</b></div>'
+    +'<div class="an-row"><span>أرقام هوية أو جوال أو بريد طُمست</span><b>'+anArabicDigits(_anStats.ids)+'</b></div>'
+    +'<div class="an-row"><span>صور في الملف</span><b>'+anArabicDigits(_anStats.images)+'</b></div>'
+    +(suspects.length
+      ? '<div class="note" style="border-color:#E0CB93;margin-top:10px"><span class="ni">⚠️</span><div>'
+        +'<b>أسماء أولى لم تُستبدل</b> — قد تكون كلمات عادية في الجملة، فراجعها بنفسك:<br>'
+        +suspects.map(function(s){return esc(s.name)+' ('+anArabicDigits(s.hits)+')'}).join(' · ')
+        +'</div></div>'
+      : '')
+    +(_anStats.images
+      ? '<div class="note" style="border-color:#E8C7BE;margin-top:10px"><span class="ni">🖼️</span><div>'
+        +'<b>الصور لم تُجرَّد.</b> إن كان في أوراق طلابك أسماء مكتوبة، اطمسها من '
+        +'«نماذج قبل/بعد» قبل التصدير.</div></div>'
+      : '');
+  $('an-modal').classList.add('on');
+}
+
+function anCancel(){$('an-modal').classList.remove('on');_anClone=null;_anStats=null}
+
+async function anExport(){
+  if(!_anClone){toast('أعد فتح النافذة');return}
+  const host=$('an-stage');
+  host.innerHTML='';
+  host.appendChild(_anClone);
+  /* علامة مائية تُميّز النسخة عن الأصل في يد المحكّم */
+  const mark=document.createElement('div');
+  mark.className='an-mark';
+  mark.textContent='نسخة مُجرَّدة للتحكيم — '+fmtDate(new Date().toISOString().slice(0,10));
+  host.appendChild(mark);
+  host.style.display='block';
+  const btn=$('an-go');const old=btn?btn.innerHTML:'';
+  if(btn)btn.innerHTML='<span class="spinner"></span> يجهّز...';
+  try{
+    await saveAsPdf('an-stage','ملف_الإنجاز_مجرّد');
+    S.anonExports=(S.anonExports||0)+1;
+    S.anonLastAt=new Date().toISOString();
+    saveState();
+    toast('✓ صُدّرت نسخة مُجرَّدة — ملفك الأصلي كما هو');
+  }catch(e){console.error('anExport',e);toast('تعذّر التصدير — حاول مرة أخرى')}
+  finally{
+    if(btn)btn.innerHTML=old;
+    host.style.display='none';host.innerHTML='';
+    anCancel();
+  }
+}
+
+
+
+/* ══════════════ طمس الأسماء داخل الصور ══════════════
+   التجريد النصي لا يبلغ ما كُتب بخط اليد في أوراق الطلاب. والتعرّف الضوئي
+   على الخط العربي اليدوي أضعف ما فيه: لو التقط ستة من عشرة وقالت الواجهة
+   «تُجرّدت»، أرسل المعلّم واثقًا — وذلك أسوأ من ألّا نجرّد. فالطمس يدوي:
+   المعلّم يرى الاسم بعينه ويسحب فوقه، ودقّته تامّة وبلا إنترنت. */
+let rdImg=null,rdRects=[],rdDrag=null,rdTarget=null;
+
+function rdOpen(kind,i,which){
+  let src=null;
+  if(kind==='sw') src=(S.studentWork[i]||{})[which];
+  else if(kind==='ev') src=(S.standards[i]&&S.standards[i].ev[which])?S.standards[i].ev[which].img:null;
+  if(!src){toast('لا توجد صورة');return}
+  rdTarget={kind:kind,i:i,which:which};
+  rdRects=[];rdDrag=null;
+  rdImg=new Image();
+  rdImg.onload=function(){
+    const cv=$('rd-canvas');
+    const maxW=Math.min(window.innerWidth-56,520);
+    const sc=Math.min(1,maxW/rdImg.width);
+    cv.width=Math.round(rdImg.width*sc);
+    cv.height=Math.round(rdImg.height*sc);
+    rdDraw();
+    $('rd-modal').classList.add('on');
+  };
+  rdImg.onerror=function(){toast('تعذّر فتح الصورة')};
+  rdImg.src=src;
+}
+
+function rdDraw(){
+  const cv=$('rd-canvas');if(!cv||!rdImg)return;
+  const c=cv.getContext('2d');
+  c.clearRect(0,0,cv.width,cv.height);
+  c.drawImage(rdImg,0,0,cv.width,cv.height);
+  c.fillStyle='#111';
+  rdRects.forEach(function(r){c.fillRect(r.x,r.y,r.w,r.h)});
+  if(rdDrag){
+    c.fillStyle='rgba(17,17,17,.55)';
+    c.fillRect(rdDrag.x,rdDrag.y,rdDrag.w,rdDrag.h);
+    c.strokeStyle='#fff';c.lineWidth=1.5;
+    c.strokeRect(rdDrag.x,rdDrag.y,rdDrag.w,rdDrag.h);
+  }
+  const n=$('rd-count');
+  if(n)n.textContent=rdRects.length?('مناطق مطموسة: '+rdRects.length):'اسحب إصبعك فوق الاسم';
+}
+
+function rdPos(e){
+  const cv=$('rd-canvas'),b=cv.getBoundingClientRect();
+  const t=(e.touches&&e.touches[0])?e.touches[0]:e;
+  return {x:(t.clientX-b.left)*(cv.width/b.width),y:(t.clientY-b.top)*(cv.height/b.height)};
+}
+function rdStart(e){if(e.preventDefault)e.preventDefault();const p=rdPos(e);rdDrag={x0:p.x,y0:p.y,x:p.x,y:p.y,w:0,h:0}}
+function rdMove(e){
+  if(!rdDrag)return;if(e.preventDefault)e.preventDefault();
+  const p=rdPos(e);
+  rdDrag.x=Math.min(rdDrag.x0,p.x);rdDrag.y=Math.min(rdDrag.y0,p.y);
+  rdDrag.w=Math.abs(p.x-rdDrag.x0);rdDrag.h=Math.abs(p.y-rdDrag.y0);
+  rdDraw();
+}
+function rdEnd(e){
+  if(!rdDrag)return;if(e&&e.preventDefault)e.preventDefault();
+  if(rdDrag.w>6&&rdDrag.h>6)rdRects.push({x:rdDrag.x,y:rdDrag.y,w:rdDrag.w,h:rdDrag.h});
+  rdDrag=null;rdDraw();
+}
+function rdUndo(){rdRects.pop();rdDraw()}
+function rdClear(){rdRects=[];rdDraw()}
+function rdCancel(){$('rd-modal').classList.remove('on');rdRects=[];rdDrag=null;rdImg=null}
+
+function rdSave(){
+  if(!rdRects.length){toast('لم تطمس شيئًا بعد');return}
+  if(!rdImg||!rdTarget)return;
+  /* الطمس على الأبعاد الأصلية لا المعروضة. لو رُسم المستطيل على المصغّرة
+     لبقيت بكسلات الاسم تحت السواد وأمكن استخراجها — فنُنشئ لوحة بأبعاد
+     الصورة الأصلية ونعيد ترميزها: البيانات محذوفة لا مغطّاة. */
+  const cv=$('rd-canvas');
+  const sx=rdImg.width/cv.width, sy=rdImg.height/cv.height;
+  const out=document.createElement('canvas');
+  out.width=rdImg.width;out.height=rdImg.height;
+  const c=out.getContext('2d');
+  c.drawImage(rdImg,0,0);
+  c.fillStyle='#111';
+  rdRects.forEach(function(r){c.fillRect(r.x*sx,r.y*sy,r.w*sx,r.h*sy)});
+  let data;
+  try{data=out.toDataURL('image/jpeg',0.9)}
+  catch(e){toast('تعذّر حفظ الصورة');return}
+  const t=rdTarget,n=rdRects.length;
+  if(t.kind==='sw'){S.studentWork[t.i][t.which]=data;if(typeof renderStudentWork==='function')renderStudentWork()}
+  else{S.standards[t.i].ev[t.which].img=data;if(typeof renderStds==='function')renderStds()}
+  saveState();
+  rdCancel();
+  toast('✓ طُمست '+n+' منطقة — التعديل نهائي');
+}
+
 </script>
 </body>
 </html>
