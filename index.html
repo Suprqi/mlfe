@@ -87,6 +87,10 @@ body.pre-app .bottom-nav{display:none!important}
   .bn-item.active{color:var(--teal-deep);font-weight:700}
   .bn-item.active .bn-ic{transform:scale(1.1)}
   .bn-create{width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--teal-deep));color:#fff;border:none;font-size:26px;font-weight:700;cursor:pointer;box-shadow:0 6px 18px -6px rgba(14,90,82,.5);margin-top:-18px;flex-shrink:0;display:grid;place-items:center;line-height:1}
+  /* الإشعار كان عند bottom:26px بينما يشغل الشريط السفلي ٩٠ بكسل،
+     وz-index أعلى منه — فيغطي أزرار التنقّل حتى يختفي. يُرفع فوقه،
+     وحين يُخفى الشريط قبل الدخول يبقى الإشعار في مكانه الأصلي. */
+  body:not(.pre-app) .toast{bottom:calc(98px + env(safe-area-inset-bottom,0px))}
   .main{padding-bottom:90px!important}
 }
 .brand{display:flex;align-items:center;gap:11px;cursor:pointer}
