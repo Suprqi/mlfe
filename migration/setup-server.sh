@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ═══════════════════════════════════════════════════════════════
-#  تجهيز خادم مَلَفّي — Ubuntu 24.04 على Google Cloud (الدمام me-central2)
+#  تجهيز خادم مَلَفّي — Ubuntu 24.04 (SCCC · الرياض، أو أي مزوّد آخر)
 #
 #  التشغيل على الخادم:  sudo bash setup-server.sh
 #
@@ -51,9 +51,9 @@ ufw allow 80/tcp >/dev/null
 ufw allow 443/tcp >/dev/null
 ufw --force enable >/dev/null
 
-# على Google الجدار الحقيقي في VPC لا داخل الخادم، فلا حاجة لعبث iptables.
-# لكن تأكّد أن قاعدتَي 80 و443 موجودتان في الشبكة، وأن الخادم يحمل
-# الوسمين http-server و https-server — راجع create-vm-gcp.sh.
+# ufw أعلاه هو جدار الخادم. ولمزوّدي السحابة جدار ثانٍ على مستوى الشبكة
+# (مجموعة الأمان في SCCC، وVPC في Google) — تأكّد أن 80 و443 مفتوحان فيه
+# أيضًا، وإلا بقي الموقع محجوبًا رغم أن كل شيء على الخادم سليم.
 
 echo "── nginx ──"
 mkdir -p /var/www/malaffi/public
