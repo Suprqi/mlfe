@@ -55,6 +55,18 @@ input,select,textarea{font-family:inherit;font-size:1rem}
 .an-row b{color:var(--teal-deep);font-size:1rem}
 .an-mark{text-align:center;font-size:.78rem;color:var(--ink-soft);
   border-top:1px solid var(--line);margin-top:14px;padding-top:10px;letter-spacing:.04em}
+.aw-ck{display:flex;align-items:center;gap:9px;padding:8px 0;
+  border-bottom:1px dashed var(--line);font-size:.88rem}
+.aw-ck:last-child{border-bottom:0}
+.aw-ck .m{flex:none;width:20px;font-weight:800;text-align:center}
+.aw-ck .m.y{color:#1F6B4F}
+.aw-ck .m.n{color:#A63A3A}
+.aw-ck .sp{flex:1}
+.aw-ck .nt{color:var(--ink-soft);font-size:.8rem;white-space:nowrap}
+.aw-status{background:#EEF6F2;border:1px solid #CCE3D8;border-radius:12px;
+  padding:12px 14px;margin-bottom:14px;font-size:.85rem;color:#1F6B4F;line-height:1.7}
+.aw-status.warn{background:#FBF6E9;border-color:#E3CE96;color:#8A6420}
+.aw-status .s{color:var(--ink-soft)}
 .legal-foot{min-width:0;overflow-wrap:anywhere;
   padding:26px 18px calc(88px + env(safe-area-inset-bottom,0px));
   text-align:center;font-size:.78rem;line-height:2.2;color:var(--ink-soft);
@@ -776,7 +788,7 @@ body.pre-app .bottom-nav{display:none!important}
 
   <div id="app" class="app" style="display:none">
   <div class="topbar">
-    <div class="brand" onclick="go('dashboard')"><div class="mark"><img src="data:image/png;base64,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" alt="مَلَفّي"></div><div><span class="name">مَلَفّي <span style="font-size:.6rem;color:var(--gold);font-weight:700;vertical-align:super">v2.5</span></span><span class="sub"><a href="https://malafi.sa" target="_blank" rel="noopener" onclick="if(event&&event.stopPropagation)event.stopPropagation()" style="color:inherit;text-decoration:none">malafi.sa</a> — من بجيلة للتقنية</span></div></div>
+    <div class="brand" onclick="go('dashboard')"><div class="mark"><img src="data:image/png;base64,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" alt="مَلَفّي"></div><div><span class="name">مَلَفّي <span style="font-size:.6rem;color:var(--gold);font-weight:700;vertical-align:super" id="app-ver">v2.5</span></span><span class="sub"><a href="https://malafi.sa" target="_blank" rel="noopener" onclick="if(event&&event.stopPropagation)event.stopPropagation()" style="color:inherit;text-decoration:none">malafi.sa</a> — من بجيلة للتقنية</span></div></div>
     <div class="who"><span class="name-tb" id="tb-name"></span><div class="av" id="tb-av">م</div><button class="edit" onclick="openProfileScreen()">👤 الهوية المهنية</button><button class="edit" onclick="openMoreMenu()" title="المزيد" style="padding:5px 10px">⋮</button></div>
   </div>
   <div class="subbar">
@@ -1159,7 +1171,8 @@ body.pre-app .bottom-nav{display:none!important}
     <div id="ach-preview" class="screen">
       <div class="builder-head"><span class="back" onclick="go('achievement')">→ رجوع للتعديل</span><h2>ملف الأداء الوظيفي — جاهز</h2></div>
       <p class="builder-sub">غلاف + فهرس + ترقيم + أقسام مصنّفة — بدون أي تدخل يدوي.</p>
-      <div class="doc-wrap"><div class="doc-toolbar no-print"><span class="dt">معاينة الملف</span><div class="acts"><button class="btn btn-ghost btn-sm" onclick="window.print()">🖨️ طباعة / PDF</button><button class="btn btn-primary btn-sm" onclick="saveAsPdf('ach-doc','ملف_الإنجاز',this)">⬇️ تنزيل PDF</button><button class="btn btn-ghost btn-sm" onclick="exportDocx('ach-doc','ملف_الإنجاز')">⬇️ تصدير Word</button><button class="btn btn-ghost btn-sm" style="border-color:#E3CE96;color:#AE8129;background:#FBF6E9" onclick="anOpen()">🛡️ نسخة للتحكيم</button></div></div><div id="pf-theme-bar"></div><div class="doc" id="ach-doc"></div></div>
+      <div id="aw-status" class="no-print"></div>
+      <div class="doc-wrap"><div class="doc-toolbar no-print"><span class="dt">معاينة الملف</span><div class="acts"><button class="btn btn-ghost btn-sm" onclick="window.print()">🖨️ طباعة / PDF</button><button class="btn btn-primary btn-sm" onclick="saveAsPdf('ach-doc','ملف_الإنجاز',this)">⬇️ تنزيل PDF</button><button class="btn btn-ghost btn-sm" onclick="exportDocx('ach-doc','ملف_الإنجاز')">⬇️ تصدير Word</button><button class="btn btn-ghost btn-sm" style="border-color:#E3CE96;color:#AE8129;background:#FBF6E9" onclick="anOpen()">🛡️ نسخة للتحكيم</button><button class="btn btn-ghost btn-sm" style="border-color:#E3CE96;color:#AE8129;background:#FBF6E9" onclick="awOpen()">🏆 شارك في الجائزة</button></div></div><div id="pf-theme-bar"></div><div class="doc" id="ach-doc"></div></div>
     </div>
 
     <div id="excellence" class="screen">
@@ -2176,6 +2189,21 @@ body.pre-app .bottom-nav{display:none!important}
   </div>
 </div>
 <div id="an-stage" class="doc" style="display:none;position:absolute;right:-99999px;top:0;width:794px"></div>
+<div class="dp-overlay" id="aw-modal">
+  <div class="dp-card" style="max-width:440px">
+    <div class="dp-head"><b>🏆 المشاركة في جائزة أفضل ملف إنجاز</b><button class="btn btn-ghost btn-sm" onclick="awCancel()">إغلاق</button></div>
+    <div id="aw-check"></div>
+    <div id="aw-hint" style="font-size:.82rem;line-height:1.7;margin-top:12px;text-align:center"></div>
+    <div class="dp-actions" style="margin-top:14px">
+      <button class="btn btn-ghost btn-sm" onclick="awCancel()">إلغاء</button>
+      <button class="btn btn-gold btn-sm" id="aw-send" onclick="awSubmit()">إرسال الملف للتحكيم</button>
+    </div>
+    <div style="font-size:.76rem;line-height:1.7;color:var(--ink-soft);margin-top:12px;text-align:center">
+      تُرسل نسخة مُجرَّدة من أسماء الطلاب تلقائيًا — لا يوجد مسار يرسلها كما هي.
+      <a href="/terms" target="_blank" rel="noopener">الشروط والأحكام</a>
+    </div>
+  </div>
+</div>
 <div class="dp-overlay" id="cloud-modal">
   <div class="dp-card" style="max-width:420px">
     <div class="dp-head"><b>☁️ حسابي والمزامنة</b><button class="btn btn-ghost btn-sm" onclick="closeCloudModal()">إغلاق</button></div>
@@ -2495,7 +2523,7 @@ function syncChrome(){
   const hidden=!a||getComputedStyle(a).display==='none';
   document.body.classList.toggle('pre-app',hidden);
 }
-function go(s){if(typeof recording!=='undefined'&&recording)stopMic();document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));$(s).classList.add('active');window.scrollTo(0,0);if(s==='dashboard')renderMetrics();syncBottomNav(s)}
+function go(s){if(typeof recording!=='undefined'&&recording)stopMic();document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));$(s).classList.add('active');window.scrollTo(0,0);if(s==='dashboard')renderMetrics();if(s==='ach-preview'&&typeof awRender==='function')awRender();syncBottomNav(s)}
 function syncBottomNav(s){
   const map={dashboard:'dashboard',records:'records',achievement:'achievement'};
   const key=map[s]||null;
@@ -7347,10 +7375,18 @@ try{
    وتُعرَّف هنا لا لاحقًا: كتلة التهيئة أدناه تقرؤها، والتعريف بعدها
    يوقف تنفيذ بقية السكربت صامتًا. */
 const REWARD_MIN=500, REWARD_MAX=15000;
+/* رقم الإصدار مصدره هنا وحده، وشارة الترويسة تقرؤه — كان مكتوبًا يدويًا
+   في الواجهة، فكانت حمولة الجائزة تُبلّغ اللجنة إصدارًا غير الذي وُلّد به. */
+const APP_VER='v2.5';
+const AW_ENDPOINT='/api/award-submit';
+/* دالة الخادم ترفض ما يتجاوز ٤٫٥ ميجابايت، وصور الشواهد بترميز base64
+   تتجاوزه بسهولة. نقيس قبل الإرسال لنقول للمعلّم الحجم وما يفعله. */
+const AW_MAX_BYTES=4*1024*1024;
 function rewardRange(){return REWARD_MIN.toLocaleString('en-US')+' – '+REWARD_MAX.toLocaleString('en-US')+' ريال'}
 let _sb=null,_sbUser=null,_pushTimer=null,_syncing=false;
 let _sub=null;
 renderRoleOptions();
+(function(){const b=document.getElementById('app-ver');if(b)b.textContent=APP_VER})();
 const _restored=loadState();
 migrateStandards();
 /* المستخدمون السابقون كان لهم صف واحد لكل المواد — ننسبه لكل مادة عندهم */
@@ -7974,6 +8010,178 @@ function rdSave(){
   saveState();
   rdCancel();
   toast('✓ طُمست '+n+' منطقة — التعديل نهائي');
+}
+
+/* ══════════════ المشاركة في جائزة أفضل ملف إنجاز ══════════════
+   مسار داخلي لا بريد ولا واتساب: يجعل التجريد إجباريًا لا اختياريًا،
+   ويوثّق تاريخ التسليم آليًا (أساس قاعدة الإقفال في الشروط)، ويمنع
+   وصول ملفات ناقصة تهدر وقت اللجنة.
+   يعتمد على وحدة التجريد أعلاه — لا يُستدعى قبلها. */
+
+/* ── ١) فحص الجاهزية ──
+   الشرط الحقيقي لا الشكلي: الشاهد بلا عنوان صفٌّ فارغ في الجدول، فلا
+   يُحتسب. وإلا رأى المعلّم «٥ شواهد» ورأت اللجنة ملفًا خاويًا. */
+function awEvidenceCount(){
+  return (S.standards||[]).reduce(function(n,st){
+    return n+((st.ev||[]).filter(function(e){return e&&String(e.title||'').trim()}).length);
+  },0);
+}
+function awWorkPairs(){
+  return (S.studentWork||[]).filter(function(w){return w&&w.beforeImg&&w.afterImg}).length;
+}
+function awStudentCount(){
+  return (S.students||[]).filter(function(s){return s&&String(s.name||'').trim()}).length;
+}
+
+function awReadiness(){
+  const p=S.profile||{};
+  const n=awEvidenceCount(), w=awWorkPairs(), st=awStudentCount();
+  const items=[
+    {label:'الهوية المهنية مكتملة',
+     ok:!!(String(S.name||'').trim()&&String(S.school||'').trim()&&String(S.region||'').trim()),
+     note:'الاسم والمدرسة والإدارة'},
+    {label:'الرؤية والأهداف المهنية مكتوبتان',
+     ok:!!(String(p.vision||'').trim()&&String(p.goals||'').trim())},
+    {label:'٥ شواهد على الأقل',
+     ok:n>=5, note:anArabicDigits(n)+' شاهد'},
+    {label:'سجل طلاب مرتبط',
+     ok:st>0, note:st?anArabicDigits(st)+' طالب':''},
+    {label:'نموذج «قبل/بعد» واحد على الأقل',
+     ok:w>0, note:w?anArabicDigits(w)+' نموذج':''}
+  ];
+  return {items:items,ready:items.every(function(i){return i.ok})};
+}
+
+/* ── ٢) الحمولة: تُبنى مُجرَّدة دائمًا ──
+   لا يوجد مسار يرسل الملف بأسماء طلابه. التجريد ليس خيارًا في نافذة
+   ولا صندوق اختيار — هو الطريق الوحيد. */
+function awBuildPayload(){
+  const src=$('ach-doc');
+  if(!src||!src.innerHTML.trim())return null;
+  const built=anBuildMap();
+  if(!built.map.size)return null;
+  const clone=src.cloneNode(true);
+  const res=anDom(clone,built.map,S.name);
+  const suspects=anSuspects(clone,built.firsts);
+  return {
+    html:        clone.innerHTML,
+    replaced:    res.names,          /* مواضع أسماء استُبدلت — للتدقيق */
+    masked:      res.ids,            /* هوية أو جوال أو بريد طُمس */
+    imageCount:  res.images,
+    suspects:    suspects.map(function(s){return s.name}),
+    stats:{
+      evidence:  awEvidenceCount(),
+      students:  awStudentCount(),
+      workPairs: awWorkPairs()
+    },
+    /* بيانات المشارك: تصل للخادم لأنها ضرورية للصرف، ويفصلها الخادم
+       عن نسخة اللجنة. لا يراها محكّم إطلاقًا. */
+    teacher:{
+      name:   S.name||'',
+      school: S.school||'',
+      region: S.region||'',
+      phone:  S.phone||'',
+      email:  S.email||''
+    },
+    submittedAt: new Date().toISOString(),
+    appVersion:  APP_VER
+  };
+}
+
+function awMB(b){return (b/1048576).toFixed(1)}
+
+/* ── ٣) الإرسال ── */
+async function awSubmit(){
+  const r=awReadiness();
+  if(!r.ready){toast('أكمل متطلبات المشاركة أولًا');return}
+
+  const payload=awBuildPayload();
+  if(!payload){toast('ولّد ملف الإنجاز أولًا');return}
+
+  if(S.awardSubmittedAt&&!confirm('سبق أن أرسلت ملفك. الإرسال الجديد يستبدل السابق ولا يُضاف إليه. متابعة؟'))return;
+
+  /* الحدّ يُفحص هنا لا عند الخادم: الطلب الضخم يفشل بخطأ شبكة مبهم بعد
+     انتظار طويل، فنقول للمعلّم الحجم وما يفعله قبل أن ينتظر. */
+  const body=JSON.stringify(payload);
+  const bytes=new Blob([body]).size;
+  if(bytes>AW_MAX_BYTES){
+    awHint('حجم الملف '+awMB(bytes)+' ميجابايت، والحدّ '+awMB(AW_MAX_BYTES)+'. '
+      +'أكثر الحجم من صور الشواهد — احذف المكرّر منها أو أعد رفعها بجودة أقل ثم أعد التوليد.',true);
+    toast('الملف أكبر من الحدّ المسموح');
+    return;
+  }
+
+  const btn=$('aw-send');const old=btn?btn.textContent:'';
+  if(btn){btn.disabled=true;btn.textContent='جارٍ الإرسال…'}
+  try{
+    const res=await fetch(AW_ENDPOINT,{method:'POST',headers:await aiHeaders(),body:body});
+    let data={};
+    try{data=await res.json()}catch(e){}
+    if(!res.ok)throw new Error(data.message||('HTTP '+res.status));
+
+    S.awardSubmittedAt=payload.submittedAt;
+    S.awardRef=data.ref||'';
+    S.awardStatus=data.status||'received';
+    saveState();
+
+    $('aw-modal').classList.remove('on');
+    toast('✓ وصل ملفك — الرقم المرجعي: '+(data.ref||'—'));
+    awRender();
+  }catch(err){
+    console.error('[award] submit failed:',err);
+    awHint(err.message||'تعذّر الإرسال. تحقّق من اتصالك وحاول مرة أخرى.',true);
+    toast('تعذّر الإرسال');
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent=old||'إرسال الملف للتحكيم'}
+  }
+}
+
+/* ── ٤) الواجهة ── */
+function awHint(msg,bad){
+  const h=$('aw-hint');if(!h)return;
+  h.textContent=msg;
+  h.style.color=bad?'#A63A3A':'var(--ink-soft)';
+}
+
+function awOpen(){
+  const doc=$('ach-doc');
+  if(!doc||!doc.innerHTML.trim()){toast('ولّد ملف الإنجاز أولًا');return}
+  const r=awReadiness();
+  $('aw-check').innerHTML=r.items.map(function(i){
+    return '<div class="aw-ck">'
+      +'<span class="m '+(i.ok?'y':'n')+'">'+(i.ok?'✓':'✕')+'</span>'
+      +'<span class="sp">'+esc(i.label)+'</span>'
+      +(i.note?'<span class="nt">'+esc(i.note)+'</span>':'')
+      +'</div>';
+  }).join('');
+
+  const btn=$('aw-send');
+  btn.disabled=!r.ready;
+  btn.style.opacity=r.ready?'1':'.45';
+  btn.style.cursor=r.ready?'pointer':'not-allowed';
+  awHint(r.ready
+    ? 'ملفك مكتمل. سيُرسَل مُجرَّدًا من أسماء الطلاب تلقائيًا.'
+    : 'أكمل البنود المعلّمة بـ ✕ ثم عد إلى هنا.', false);
+
+  $('aw-modal').classList.add('on');
+}
+function awCancel(){$('aw-modal').classList.remove('on')}
+
+function awRender(){
+  const box=$('aw-status');
+  if(!box)return;
+  if(!S.awardSubmittedAt){box.innerHTML='';return}
+  const when=fmtDate(String(S.awardSubmittedAt).slice(0,10));
+  /* «تحتاج مراجعة» تعني أن الخادم وجد أسماء أولى لم تُستبدل. نقولها
+     للمعلّم كما هي: إخفاؤها يجعله يظن ملفه مقبولًا وهو معلَّق. */
+  const needs=S.awardStatus==='needs_review';
+  box.innerHTML='<div class="aw-status'+(needs?' warn':'')+'">'
+    +(needs?'⚠️ وصل ملفك ويُراجَع':'✓ أُرسل ملفك للتحكيم')+' في '+esc(when)
+    +(S.awardRef?' · المرجع: <b>'+esc(S.awardRef)+'</b>':'')+'<br>'
+    +'<span class="s">'+(needs
+      ? 'وُجدت أسماء أولى لم تُستبدل. تراجعها اللجنة قبل التحكيم، وقد تُطالَب بتعديل الملف.'
+      : 'يمكنك تحديث ملفك وإعادة الإرسال قبل موعد الإقفال.')
+    +'</span></div>';
 }
 
 </script>

@@ -86,3 +86,57 @@ drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
+
+-- ═══════════════════════════════════════════════════════════
+-- ٦) جائزة أفضل ملف إنجاز — التحكيم مُعمّى
+--
+--    جدولان لا جدول واحد، وهذا جوهر الأمر لا تنظيم:
+--    · award_entrants يحمل هوية المعلّم (ضرورية للصرف).
+--    · award_entries  يحمل الملف وإحصاءاته، ولا يحمل user_id إطلاقًا.
+--
+--    الربط بينهما بالرقم المرجعي وحده. فمن يطّلع على نسخة اللجنة لا
+--    يملك طريقًا إلى صاحبها ما لم يملك مفتاح الخدمة. ولو وُضع العمودان
+--    في جدول واحد لصار الإعماء وعدًا في واجهة لا قيدًا في البيانات.
+-- ═══════════════════════════════════════════════════════════
+create table if not exists public.award_entrants (
+  user_id    uuid primary key references auth.users(id) on delete cascade,
+  ref        text unique not null,
+  name       text,
+  school     text,
+  region     text,
+  phone      text,
+  email      text,
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.award_entries (
+  ref          text primary key references public.award_entrants(ref) on delete cascade,
+  html         text not null,
+  replaced     integer not null default 0,   -- مواضع أسماء استُبدلت
+  masked       integer not null default 0,   -- هوية أو جوال أو بريد طُمس
+  image_count  integer not null default 0,
+  suspects     jsonb   not null default '[]'::jsonb,
+  stats        jsonb   not null default '{}'::jsonb,
+  -- «مقبول» ليست الحالة الافتراضية: ما بقي فيه اسم أول أو نمط هوية
+  -- يُعلَّق للمراجعة، فلا يصل إلى محكّم ملفٌ يحمل بيانات قاصر.
+  status       text not null default 'received'
+               check (status in ('received','needs_review','disqualified','judged')),
+  app_version  text,
+  submitted_at timestamptz not null default now()
+);
+
+-- لا سياسة على الجدولين. RLS مفعّل بلا policy يعني: لا يقرأ منهما
+-- ولا يكتب فيهما أحدٌ بمفتاح المتصفح — لا صاحب الملف ولا غيره.
+-- الوصول الوحيد عبر مفتاح الخدمة من /api/award-submit.
+alter table public.award_entrants enable row level security;
+alter table public.award_entries  enable row level security;
+
+-- ما تراه لجنة التحكيم — ولا شيء غيره.
+-- امنح المحكّمين هذا العرض لا الجدول، فهو لا يحمل عمودًا يقود لهوية.
+create or replace view public.award_judging as
+  select ref, html, stats, image_count, replaced, masked,
+         status, submitted_at
+    from public.award_entries;
+
+-- حذف الحساب يمحو المشاركة كذلك: الهوية بالتتالي من auth.users،
+-- ونسخة اللجنة بالتتالي من الهوية. لا يبقى أثر بعد الحذف.

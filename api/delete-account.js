@@ -60,10 +60,14 @@ module.exports = async (req, res) => {
       return;
     }
 
+    // مشاركة الجائزة تُحذف بالتتالي عند حذف حساب الدخول أدناه:
+    // award_entrants مرتبط بـauth.users، وaward_entries مرتبط به.
+    // نتركها للتتالي لا لحذفٍ صريح، لئلا يفشل الحذف كلّه عند من لم
+    // يُطبَّق مخطط الجائزة على قاعدته بعد.
     const user = await admin('/auth/v1/admin/users/' + uid, 'DELETE');
     if (!user.ok) {
       console.error('delete-account: تعذّر حذف الحساب', await user.text());
-      res.status(502).json({ message: 'حُذفت بياناتك، لكن تعذّر حذف الحساب — راسل tech@malaffi.sa' });
+      res.status(502).json({ message: 'حُذفت بياناتك، لكن تعذّر حذف الحساب — راسل tech@malafi.sa' });
       return;
     }
 
