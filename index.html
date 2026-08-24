@@ -53,6 +53,23 @@ input,select,textarea{font-family:inherit;font-size:1rem}
   padding:9px 2px;border-bottom:1px dashed var(--line);font-size:.88rem}
 .an-row:last-of-type{border-bottom:0}
 .an-row b{color:var(--teal-deep);font-size:1rem}
+.lgl-ov{display:none;position:fixed;inset:0;background:rgba(10,30,28,.6);z-index:400}
+.lgl-ov.on{display:flex;align-items:center;justify-content:center;padding:14px}
+.lgl-card{background:#fff;border-radius:18px;width:100%;max-width:820px;height:92vh;
+  display:flex;flex-direction:column;overflow:hidden;box-shadow:0 30px 70px -20px rgba(0,0,0,.45)}
+.lgl-head{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:12px 16px;border-bottom:1px solid var(--line);flex:none}
+.lgl-head b{font-size:.95rem}
+.lgl-tabs{display:flex;gap:6px;overflow-x:auto;padding:9px 12px;border-bottom:1px solid var(--line);flex:none}
+.lgl-tabs button{flex:none;border:1.5px solid var(--line);background:#fff;color:var(--ink);
+  border-radius:999px;padding:5px 13px;font-family:inherit;font-size:.78rem;cursor:pointer;white-space:nowrap}
+.lgl-tabs button.sel{background:var(--teal-deep);border-color:var(--teal-deep);color:#fff}
+.lgl-card iframe{flex:1;width:100%;border:0;background:#fff}
+.an-sus{margin-top:8px;padding-top:7px;border-top:1px dashed var(--line);font-size:.84rem}
+.an-sus:first-of-type{border-top:0}
+.an-sus i{display:block;font-style:normal;color:var(--ink-soft);font-size:.78rem;
+  line-height:1.75;margin-top:3px;padding-right:9px;border-right:2px solid var(--gold-soft,#E0CA8B);
+  overflow-wrap:anywhere}
 .an-mark{text-align:center;font-size:.78rem;color:var(--ink-soft);
   border-top:1px solid var(--line);margin-top:14px;padding-top:10px;letter-spacing:.04em}
 .aw-ck{display:flex;align-items:center;gap:9px;padding:8px 0;
@@ -560,7 +577,7 @@ body.pre-app .bottom-nav{display:none!important}
   .doc.pf-doc{padding:0!important}
   /* بدون هذا السطر يُسقط المتصفح كل خلفية ولون عند الطباعة، فتخرج موجة
      غلاف ملف الإنجاز وترويسات الجداول بيضاء تمامًا — والوثيقة المطبوعة
-     هي ما يصل قائد المدرسة، لا ما يُرى على الشاشة. */
+     هي ما يصل مدير المدرسة، لا ما يُرى على الشاشة. */
   *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
   /* لا يُقطع قسم ولا جدول بين ورقتين، ولا يُترك عنوان وحده في آخر ورقة */
   table,.blk,.sec-h+table,.pf-page{break-inside:avoid}
@@ -718,7 +735,7 @@ body.pre-app .bottom-nav{display:none!important}
       <div class="field"><label>المدرسة <span style="color:var(--danger)">*</span></label><input id="ob-school" placeholder="مثال: ثانوية الطائف"></div>
       <div class="field"><label>إدارة التعليم <span style="color:var(--danger)">*</span></label><select id="ob-region" onchange="regionChanged('ob')"><option value="">— اختر إدارة التعليم —</option><option>الرياض</option><option>جدة</option><option>مكة المكرمة</option><option>المدينة المنورة</option><option>القصيم</option><option>الشرقية</option><option>الأحساء</option><option>عسير</option><option>تبوك</option><option>حائل</option><option>الحدود الشمالية</option><option>جازان</option><option>نجران</option><option>الباحة</option><option>الجوف</option><option>الطائف</option><option>ينبع</option><option>الليث</option><option>القنفذة</option><option>بيشة</option><option>وادي الدواسر</option><option>الأفلاج</option><option>الخرج</option><option>الدوادمي</option><option>شقراء</option><option>المجمعة</option><option>الزلفي</option><option>القويعية</option><option>حفر الباطن</option><option>بقيق</option><option>الخفجي</option><option>النماص</option><option>محايل عسير</option><option>بلقرن</option><option>سراة عبيدة</option><option>تثليث</option><option>ظهران الجنوب</option><option>رجال ألمع</option><option>صبيا</option><option>صامطة</option><option>فيفا</option><option>الدرب</option><option>العارضة</option><option>شرورة</option><option>القريات</option><option>طريف</option><option>رفحاء</option><option>العلا</option><option>خيبر</option><option>المهد</option><option>الحناكية</option><option>عنيزة</option><option>الرس</option><option>البكيرية</option><option>الأسياح</option><option>رياض الخبراء</option><option value="__other__">أخرى (اكتبها)</option></select><input id="ob-region-other" placeholder="اكتب اسم إدارة التعليم" style="display:none;margin-top:6px"></div>
     </div>
-    <div class="field"><label>اسم قائد/ة المدرسة <small style="font-weight:400;color:var(--ink-soft)">(اختياري — يُعبّى تلقائيًا في الشهادات)</small></label><input id="ob-principal" placeholder="مثال: أ. سعد القحطاني"></div>
+    <div class="field"><label>اسم مدير/ة المدرسة <small style="font-weight:400;color:var(--ink-soft)">(اختياري — يُعبّى تلقائيًا في الشهادات)</small></label><input id="ob-principal" placeholder="مثال: أ. سعد القحطاني"></div>
     <div class="field">
       <label>المواد التي تدرّسها <small style="font-weight:400;color:var(--ink-soft)">(حتى ٥ مواد، ولكل مادة صفّها)</small></label>
       <div id="ob-subjects"></div>
@@ -754,12 +771,12 @@ body.pre-app .bottom-nav{display:none!important}
     </div>
     <label class="agree-box">
       <input type="checkbox" id="ob-agree" onchange="obAgreeChanged()">
-      <span>أوافق على <a href="/terms" target="_blank" rel="noopener">الشروط والأحكام</a>
-      و<a href="/privacy" target="_blank" rel="noopener">سياسة الخصوصية</a>،
+      <span>أوافق على <a href="/terms" target="_blank" rel="noopener" onclick="return openLegal('terms',event)">الشروط والأحكام</a>
+      و<a href="/privacy" target="_blank" rel="noopener" onclick="return openLegal('privacy',event)">سياسة الخصوصية</a>،
       وأُقرّ بأن لديّ الصلاحية النظامية لإدخال بيانات طلابي.</span>
     </label>
     <button class="btn btn-primary btn-block btn-lg" id="ob-start" onclick="finishOnboarding()" style="margin-top:10px">يلا نبدأ ✨</button>
-    <div class="legal-foot no-print"><a href="/privacy">سياسة الخصوصية</a><span>·</span><a href="/terms">الشروط والأحكام</a><span>·</span><a href="/refund">الاسترجاع والإلغاء</a><span>·</span><a href="/awards">الجوائز</a><span>·</span><a href="/about">من نحن</a><span>·</span><a href="/contact">اتصل بنا</a><div class="lf-co">مَلَفّي — منتج من مجموعة بجيلة القابضة · سجل تجاري ٧٠٣١٩٢٣٠٢٧</div></div>
+    <div class="legal-foot no-print"><a href="/privacy" onclick="return openLegal('privacy',event)">سياسة الخصوصية</a><span>·</span><a href="/terms" onclick="return openLegal('terms',event)">الشروط والأحكام</a><span>·</span><a href="/refund" onclick="return openLegal('refund',event)">الاسترجاع والإلغاء</a><span>·</span><a href="/awards" onclick="return openLegal('awards',event)">الجوائز</a><span>·</span><a href="/about" onclick="return openLegal('about',event)">من نحن</a><span>·</span><a href="/contact" onclick="return openLegal('contact',event)">اتصل بنا</a><div class="lf-co">مَلَفّي — منتج من مجموعة بجيلة القابضة · سجل تجاري ٧٠٣١٩٢٣٠٢٧</div></div>
   </div>
 </div>
 
@@ -963,7 +980,7 @@ body.pre-app .bottom-nav{display:none!important}
           <div class="field"><label>المدرسة</label><input id="pf-school" placeholder="مثال: ثانوية الطائف"></div>
           <div class="field"><label>إدارة التعليم</label><select id="pf-region" onchange="regionChanged('pf')"><option value="">— اختر إدارة التعليم —</option><option>الرياض</option><option>جدة</option><option>مكة المكرمة</option><option>المدينة المنورة</option><option>القصيم</option><option>الشرقية</option><option>الأحساء</option><option>عسير</option><option>تبوك</option><option>حائل</option><option>الحدود الشمالية</option><option>جازان</option><option>نجران</option><option>الباحة</option><option>الجوف</option><option>الطائف</option><option>ينبع</option><option>الليث</option><option>القنفذة</option><option>بيشة</option><option>وادي الدواسر</option><option>الأفلاج</option><option>الخرج</option><option>الدوادمي</option><option>شقراء</option><option>المجمعة</option><option>الزلفي</option><option>القويعية</option><option>حفر الباطن</option><option>بقيق</option><option>الخفجي</option><option>النماص</option><option>محايل عسير</option><option>بلقرن</option><option>سراة عبيدة</option><option>تثليث</option><option>ظهران الجنوب</option><option>رجال ألمع</option><option>صبيا</option><option>صامطة</option><option>فيفا</option><option>الدرب</option><option>العارضة</option><option>شرورة</option><option>القريات</option><option>طريف</option><option>رفحاء</option><option>العلا</option><option>خيبر</option><option>المهد</option><option>الحناكية</option><option>عنيزة</option><option>الرس</option><option>البكيرية</option><option>الأسياح</option><option>رياض الخبراء</option><option value="__other__">أخرى (اكتبها)</option></select><input id="pf-region-other" placeholder="اكتب اسم إدارة التعليم" style="display:none;margin-top:6px"></div>
         </div>
-        <div class="field"><label>اسم قائد/ة المدرسة <small style="font-weight:400;color:var(--ink-soft)">(اختياري)</small></label><input id="pf-principal" placeholder="مثال: أ. سعد القحطاني"></div>
+        <div class="field"><label>اسم مدير/ة المدرسة <small style="font-weight:400;color:var(--ink-soft)">(اختياري)</small></label><input id="pf-principal" placeholder="مثال: أ. سعد القحطاني"></div>
         <div class="field">
           <label>شعار الوثائق (اختياري)</label>
           <div style="display:flex;align-items:center;gap:12px">
@@ -1154,7 +1171,7 @@ body.pre-app .bottom-nav{display:none!important}
         </div>
 
         <div class="panel">
-          <div class="panel-title">👔 تقييم قائد/ة المدرسة والمشرفة التربوية</div>
+          <div class="panel-title">👔 تقييم مدير/ة المدرسة والمشرفة التربوية</div>
           <textarea id="cd-principalEval" oninput="S.classicDoc.principalEval=this.value" placeholder="مساحة لتدوين تقييم الإدارة والمشرفة (اختياري)"></textarea>
         </div>
 
@@ -1480,7 +1497,7 @@ body.pre-app .bottom-nav{display:none!important}
               <option>يوم المعلم</option>
               <option>اليوم الوطني</option>
               <option>يوم التأسيس</option>
-              <option>تكريم قائد/ة المدرسة</option>
+              <option>تكريم مدير/ة المدرسة</option>
               <option>حفل ختام العام / التخرج</option>
               <option>استقبال العام الدراسي</option>
               <option>أسبوع البيئة والنظافة</option>
@@ -1588,7 +1605,7 @@ body.pre-app .bottom-nav{display:none!important}
 
     <div id="teacher-evals" class="screen">
       <div class="builder-head"><span class="back" onclick="go('dashboard')">→ رجوع</span><h2>⭐ تقييم الأداء الوظيفي</h2></div>
-      <p class="builder-sub">أضف معلمي/معلمات مدرستك، وقيّم كلًّا منهم على بنود الأداء الوظيفي الرسمية — تقييم أول وثانٍ للقائد/ة + تقييم للمشرف/ة.</p>
+      <p class="builder-sub">أضف معلمي/معلمات مدرستك، وقيّم كلًّا منهم على بنود الأداء الوظيفي الرسمية — تقييم أول وثانٍ للمدير/ة + تقييم للمشرف/ة.</p>
 
       <div class="panel">
         <div class="panel-title">👥 <span id="teval-panel-lbl">المعلمون</span> (<span id="teval-count">0</span>)</div>
@@ -1898,7 +1915,7 @@ body.pre-app .bottom-nav{display:none!important}
         <div class="field"><label>سبب المنح</label><textarea id="cert-reason" placeholder="مثال: تقديرًا لتفوقه المتميز في مادة الرياضيات للفصل الدراسي الثاني" style="min-height:70px"></textarea><div style="display:flex;gap:6px;margin-top:6px"><button type="button" class="btn btn-ghost btn-sm" onclick="startVoiceInput('cert-reason',this)" title="أملِ بصوتك">🎙️</button><button type="button" class="btn btn-ghost btn-sm" onclick="useAiCleanup('cert-reason',this)" title="رتّب النص بالذكاء الاصطناعي">✨</button></div></div>
         <div class="grid2">
           <div class="field"><label>اسم معلم/ة المادة (الموقّع)</label><input id="cert-signer" placeholder="اسمك"></div>
-          <div class="field"><label>اسم قائد/ة المدرسة (المدير)</label><input id="cert-principal" placeholder="اسم المدير/ة"></div>
+          <div class="field"><label>اسم مدير/ة المدرسة (المدير)</label><input id="cert-principal" placeholder="اسم المدير/ة"></div>
         </div>
       </div>
 
@@ -2144,7 +2161,7 @@ body.pre-app .bottom-nav{display:none!important}
     <div class="dp-actions"><button class="btn btn-ghost btn-sm" onclick="closeDP()">إلغاء</button><button class="btn btn-gold btn-sm" onclick="confirmDP()">تعيين</button></div>
   </div>
 </div>
-<div class="legal-foot no-print"><a href="/privacy">سياسة الخصوصية</a><span>·</span><a href="/terms">الشروط والأحكام</a><span>·</span><a href="/refund">الاسترجاع والإلغاء</a><span>·</span><a href="/awards">الجوائز</a><span>·</span><a href="/about">من نحن</a><span>·</span><a href="/contact">اتصل بنا</a><div class="lf-co">مَلَفّي — منتج من مجموعة بجيلة القابضة · سجل تجاري ٧٠٣١٩٢٣٠٢٧</div></div>
+<div class="legal-foot no-print"><a href="/privacy" onclick="return openLegal('privacy',event)">سياسة الخصوصية</a><span>·</span><a href="/terms" onclick="return openLegal('terms',event)">الشروط والأحكام</a><span>·</span><a href="/refund" onclick="return openLegal('refund',event)">الاسترجاع والإلغاء</a><span>·</span><a href="/awards" onclick="return openLegal('awards',event)">الجوائز</a><span>·</span><a href="/about" onclick="return openLegal('about',event)">من نحن</a><span>·</span><a href="/contact" onclick="return openLegal('contact',event)">اتصل بنا</a><div class="lf-co">مَلَفّي — منتج من مجموعة بجيلة القابضة · سجل تجاري ٧٠٣١٩٢٣٠٢٧</div></div>
 <div class="bottom-nav no-print" id="bottom-nav">
   <button class="bn-item active" data-bn="dashboard" onclick="bnGo('dashboard')"><span class="bn-ic">🏠</span><span>الرئيسية</span></button>
   <button class="bn-item" data-bn="records" onclick="bnGo('records')"><span class="bn-ic">👥</span><span>الطلاب</span></button>
@@ -2193,6 +2210,18 @@ body.pre-app .bottom-nav{display:none!important}
   </div>
 </div>
 <div id="an-stage" class="doc" style="display:none;position:absolute;right:-99999px;top:0;width:794px"></div>
+<div class="lgl-ov" id="lgl-overlay" onclick="if(event.target===this)closeLegal()">
+  <div class="lgl-card">
+    <div class="lgl-head"><b id="lgl-title">الوثائق النظامية</b>
+      <div style="display:flex;gap:6px">
+        <a class="btn btn-ghost btn-sm" id="lgl-open" href="#" target="_blank" rel="noopener">↗ فتح في صفحة</a>
+        <button class="btn btn-ghost btn-sm" onclick="closeLegal()">إغلاق</button>
+      </div>
+    </div>
+    <div class="lgl-tabs" id="lgl-tabs"></div>
+    <iframe id="lgl-frame" title="الوثائق النظامية"></iframe>
+  </div>
+</div>
 <div class="dp-overlay" id="aw-modal">
   <div class="dp-card" style="max-width:440px">
     <div class="dp-head"><b>🏆 المشاركة في جائزة أفضل ملف إنجاز</b><button class="btn btn-ghost btn-sm" onclick="awCancel()">إغلاق</button></div>
@@ -2204,7 +2233,7 @@ body.pre-app .bottom-nav{display:none!important}
     </div>
     <div style="font-size:.76rem;line-height:1.7;color:var(--ink-soft);margin-top:12px;text-align:center">
       تُرسل نسخة مُجرَّدة من أسماء الطلاب تلقائيًا — لا يوجد مسار يرسلها كما هي.
-      <a href="/terms" target="_blank" rel="noopener">الشروط والأحكام</a>
+      <a href="/terms" target="_blank" rel="noopener" onclick="return openLegal('terms',event)">الشروط والأحكام</a>
     </div>
   </div>
 </div>
@@ -2439,7 +2468,7 @@ const formTemplates={
   meeting:{title:'محضر اجتماع',icon:'🗒️',desc:'محضر اجتماع بالحضور وجدول الأعمال والقرارات.',fields:[{key:'subj',label:'موضوع الاجتماع',type:'text',ph:'مثال: اجتماع قسم الرياضيات لمناقشة نتائج الفترة الأولى'},{key:'date',label:'تاريخ الاجتماع',type:'date'},{key:'place',label:'مكان الانعقاد',type:'text',ph:'مثال: قاعة الاجتماعات بالمدرسة'},{key:'attendees',label:'الحضور',type:'list',ph:'اكتب اسمًا بكل سطر:\nأ. محمد العتيبي - رئيس القسم\nأ. خالد الزهراني\nأ. سعد القحطاني'},{key:'agenda',label:'جدول الأعمال',type:'list',ph:'بند بكل سطر:\nمراجعة نتائج الاختبارات\nخطة علاج المتعثرين\nتوزيع المهام القادمة'},{key:'decisions',label:'القرارات والتوصيات',type:'list',ph:'قرار بكل سطر:\nتنفيذ حصص تقوية أسبوعية\nإعداد بنك أسئلة موحّد'}]},
   remedial:{title:'خطة علاجية',icon:'🩹',desc:'خطة علاجية للطلاب ذوي المستوى الضعيف.',fields:[{key:'target',label:'الفئة المستهدفة',type:'text',default:'الطلاب ذوو المستوى دون المتوقع',ph:'مثال: طلاب الصف الأول الثانوي المتعثرون في الكسور'},{key:'period',label:'المدة الزمنية',type:'text',ph:'مثال: 4 أسابيع — من 1/5 إلى 28/5'},{key:'weak',label:'نقاط الضعف',type:'list',ph:'نقطة بكل سطر:\nضعف في جمع الكسور غير المتشابهة\nصعوبة في توحيد المقامات'},{key:'proc',label:'الإجراءات العلاجية',type:'list',ph:'إجراء بكل سطر:\nحصص تقوية فردية\nأوراق عمل متدرّجة\nإشراك ولي الأمر'},{key:'assess',label:'أساليب المتابعة',type:'list',ph:'أسلوب بكل سطر:\nاختبار قصير أسبوعي\nمتابعة الواجبات يوميًا'}]},
   enrichment:{title:'خطة إثرائية',icon:'🌟',desc:'خطة إثرائية للطلاب المتفوقين.',fields:[{key:'target',label:'الفئة المستهدفة',type:'text',default:'الطلاب المتفوقون والموهوبون',ph:'مثال: الطلاب المتفوقون في مادة العلوم'},{key:'goals',label:'الأهداف الإثرائية',type:'list',ph:'هدف بكل سطر:\nتنمية مهارات البحث العلمي\nتعزيز التفكير الإبداعي'},{key:'acts',label:'الأنشطة الإثرائية',type:'list',ph:'نشاط بكل سطر:\nمشروع بحثي قصير\nقيادة مجموعات التعلم\nتحديات إضافية'},{key:'res',label:'المصادر',type:'list',ph:'مصدر بكل سطر:\nمنصة عين الإثرائية\nمراجع ومقالات علمية'}]},
-  visit:{title:'استمارة زيارة صفية',icon:'🔍',desc:'رصد زيارة صفية بتقييم رقمي تلقائي يحسب التقدير العام من بنود الأداء.',fields:[{key:'visitor',label:'القائم بالزيارة',type:'text',ph:'مثال: المشرف التربوي / قائد المدرسة'},{key:'date',label:'تاريخ الزيارة',type:'date'},{key:'lesson',label:'عنوان الدرس',type:'text',ph:'مثال: جمع الكسور المتشابهة'},{key:'rubric',label:'بنود التقييم (كل بند من 1 إلى 5)',type:'rubric',items:['التمكن من المادة العلمية','التخطيط والتحضير للدرس','تنويع استراتيجيات التدريس','إدارة الصف والوقت','التقويم المستمر وتفاعل الطلاب']},{key:'strong',label:'نقاط القوة',type:'list',ph:'نقطة بكل سطر:\nالتمكن من المادة العلمية\nالتنويع في الاستراتيجيات\nإدارة صفية متميزة'},{key:'notes',label:'الملاحظات والتوصيات',type:'list',ph:'ملاحظة بكل سطر:\nزيادة أنشطة الطلاب\nتفعيل التقويم الختامي'}]},
+  visit:{title:'استمارة زيارة صفية',icon:'🔍',desc:'رصد زيارة صفية بتقييم رقمي تلقائي يحسب التقدير العام من بنود الأداء.',fields:[{key:'visitor',label:'القائم بالزيارة',type:'text',ph:'مثال: المشرف التربوي / مدير المدرسة'},{key:'date',label:'تاريخ الزيارة',type:'date'},{key:'lesson',label:'عنوان الدرس',type:'text',ph:'مثال: جمع الكسور المتشابهة'},{key:'rubric',label:'بنود التقييم (كل بند من 1 إلى 5)',type:'rubric',items:['التمكن من المادة العلمية','التخطيط والتحضير للدرس','تنويع استراتيجيات التدريس','إدارة الصف والوقت','التقويم المستمر وتفاعل الطلاب']},{key:'strong',label:'نقاط القوة',type:'list',ph:'نقطة بكل سطر:\nالتمكن من المادة العلمية\nالتنويع في الاستراتيجيات\nإدارة صفية متميزة'},{key:'notes',label:'الملاحظات والتوصيات',type:'list',ph:'ملاحظة بكل سطر:\nزيادة أنشطة الطلاب\nتفعيل التقويم الختامي'}]},
   report:{title:'تقرير دوري',icon:'📈',desc:'تقرير دوري عن سير العملية التعليمية.',fields:[{key:'period',label:'الفترة',type:'text',ph:'مثال: الفترة الأولى — الفصل الدراسي الثاني'},{key:'summary',label:'ملخص عام',type:'textarea',ph:'مثال: سارت العملية التعليمية وفق الخطة، وأُنجز 80% من المنهج المقرر مع تفاعل جيد من الطلاب...'},{key:'ach',label:'أبرز الإنجازات',type:'list',ph:'إنجاز بكل سطر:\nإنهاء الوحدة الأولى في موعدها\nارتفاع متوسط الدرجات 15%'},{key:'chal',label:'الصعوبات',type:'list',ph:'صعوبة بكل سطر:\nتفاوت مستويات الطلاب\nقلة الحصص لكثافة المنهج'},{key:'rec',label:'التوصيات',type:'list',ph:'توصية بكل سطر:\nحصص تقوية إضافية\nاستخدام وسائل تفاعلية'}]},
   parentMeeting:{title:'محضر اجتماع ولي أمر',icon:'👨‍👩‍👦',desc:'محضر موثّق لاجتماع مع ولي أمر — المشكلة والعلاج المتفق عليه، موقّع من الوكيل.',
     signers:[[V('الوكيل','الوكيلة'),'التوقيع'],['ولي الأمر','التوقيع']],
@@ -2728,7 +2757,7 @@ function openThemeModal(){document.querySelectorAll('#theme-modal .theme-sw').fo
 function openMoreMenu(){renderMoreExtraTools();$('more-menu-modal').classList.add('on')}
 
 /* ===== 🧭 تشكيل الواجهة حسب الدور ===== */
-/* teach: أدوات تدريسية — تختفي عن قائد المدرسة. lead: قيادية — للقائد فقط. radio: للرائد والقائد. الباقي للجميع. */
+/* teach: أدوات تدريسية — تختفي عن مدير المدرسة. lead: قيادية — للمدير فقط. radio: للرائد والمدير. الباقي للجميع. */
 const TOOL_ACCESS={
   prep:'teach',extra:'teach',exam:'teach',records:'teach',analysis:'teach',
   budget:'lead',plan:'lead',tevals:'lead',
@@ -3525,7 +3554,7 @@ const RADIO_OCCASIONS={
   'يوم التأسيس':{intro:'في ذكرى يوم التأسيس نستحضر ثلاثة قرون من التاريخ العريق، منذ تأسيس الدولة السعودية الأولى عام 1727م.',
     segs:[['كلمة تاريخية','يوم التأسيس يذكّرنا بجذور هذه الدولة المباركة وعمقها التاريخي، وما قدّمه الأئمة المؤسسون من وحدة واستقرار.'],
     ['عز وفخر','نفخر بماضٍ تليد وحاضرٍ مجيد ومستقبلٍ واعد بإذن الله.']]},
-  'تكريم قائد/ة المدرسة':{intro:'نقف اليوم وقفة وفاء وتقدير لقيادتنا المدرسية التي كانت وما زالت عونًا وسندًا لنا جميعًا.',
+  'تكريم مدير/ة المدرسة':{intro:'نقف اليوم وقفة وفاء وتقدير لقيادتنا المدرسية التي كانت وما زالت عونًا وسندًا لنا جميعًا.',
     segs:[['كلمة شكر','لقيادتنا الحكيمة: شكرًا لجهودكم المخلصة، ولإدارتكم التي جعلت من مدرستنا بيئة محفزة للنجاح والإبداع.'],
     ['دعاء','نسأل الله أن يبارك في جهودكم، وأن يجعل ما تقدمونه في ميزان حسناتكم.']]},
   'حفل ختام العام / التخرج':{intro:'ها نحن نصل معًا إلى ختام عامٍ دراسيٍّ مليء بالجد والاجتهاد، لنقطف اليوم ثمار التعب والمثابرة.',
@@ -3665,7 +3694,7 @@ function buildCircularsDoc(){
   <table><tr><th style="width:6%">م</th><th style="width:12%">الرقم</th><th style="width:14%">التاريخ</th><th style="width:18%">الجهة</th><th>الموضوع</th><th style="width:14%">التصنيف</th></tr>
   ${S.circulars.map((c,i)=>`<tr><td style="text-align:center">${i+1}</td><td style="text-align:center">${esc(c.num)||'—'}</td><td>${esc(c.date)||'—'}</td><td>${esc(c.from)||'—'}</td><td>${esc(c.subject)}</td><td>${esc(c.cat||'عام')}</td></tr>`).join('')}
   </table>
-  <div class="sig"><div><b>${roleName()}</b>${S.name}</div><div><b>${V('قائد المدرسة','قائدة المدرسة')}</b>التوقيع</div></div>`;
+  <div class="sig"><div><b>${roleName()}</b>${S.name}</div><div><b>${V('مدير المدرسة','مديرة المدرسة')}</b>التوقيع</div></div>`;
   $('circ-doc').innerHTML=html;go('circulars-preview');
   toast('✓ سجل التعاميم جاهز — '+S.circulars.length+' تعميم');
 }
@@ -3787,7 +3816,7 @@ function buildBudgetDoc(){
       </div>`;
     }
   }
-  html+=`<div class="sig"><div><b>${V('قائد المدرسة','قائدة المدرسة')}</b>${S.name}</div><div><b>المراجعة المالية</b>التوقيع</div></div>`;
+  html+=`<div class="sig"><div><b>${V('مدير المدرسة','مديرة المدرسة')}</b>${S.name}</div><div><b>المراجعة المالية</b>التوقيع</div></div>`;
   $('budget-doc').innerHTML=html;go('budget-preview');
   toast('✓ تقرير الميزانية جاهز');
 }
@@ -3874,7 +3903,7 @@ function buildTeacherEvalDoc(i){
   <tr style="font-weight:bold;background:#F6F1E3"><td colspan="2">النسبة النهائية (موزونة)</td>${rounds.map(([k])=>{const p=evalPct(t.evals[k].scores);return `<td style="text-align:center">${p}% — ${evalRating(p)}</td>`}).join('')}</tr>
   </table>
   ${rounds.filter(([k])=>t.evals[k].notes).map(([k])=>`<div class="sec-h">ملاحظات ${roundLabel(k)}</div><p>${esc(t.evals[k].notes)}</p>`).join('')}
-  <div class="sig"><div><b>${V('قائد المدرسة','قائدة المدرسة')}</b>${S.name}</div><div><b>${V('المشرف التربوي','المشرفة التربوية')}</b>التوقيع</div><div><b>${V('المعلم','المعلمة')}</b>${esc(t.name)}</div></div>`;
+  <div class="sig"><div><b>${V('مدير المدرسة','مديرة المدرسة')}</b>${S.name}</div><div><b>${V('المشرف التربوي','المشرفة التربوية')}</b>التوقيع</div><div><b>${V('المعلم','المعلمة')}</b>${esc(t.name)}</div></div>`;
   $('teval-doc').innerHTML=html;go('teacher-eval-preview');
   toast('✓ تقرير التقييم جاهز');
 }
@@ -3890,7 +3919,7 @@ function buildEvalsSummaryDoc(){
     return `<tr><td style="text-align:center">${i+1}</td><td>${esc(t.name)}</td><td>${esc(t.subject)||'—'}</td>${ps.map(p=>`<td style="text-align:center">${p===null?'—':p+'%'}</td>`).join('')}<td style="text-align:center;font-weight:bold">${avg}% — ${evalRating(avg)}</td></tr>`;
   }).join('')}
   </table>
-  <div class="sig"><div><b>${V('قائد المدرسة','قائدة المدرسة')}</b>${S.name}</div><div><b>${V('المشرف التربوي','المشرفة التربوية')}</b>التوقيع</div></div>`;
+  <div class="sig"><div><b>${V('مدير المدرسة','مديرة المدرسة')}</b>${S.name}</div><div><b>${V('المشرف التربوي','المشرفة التربوية')}</b>التوقيع</div></div>`;
   $('teval-doc').innerHTML=html;go('teacher-eval-preview');
   toast('✓ ملخص التقييمات جاهز — '+withEvals.length+' '+V('معلم','معلمة'));
 }
@@ -3943,7 +3972,7 @@ function buildPlanDoc(){
     ${g.tasks.length?g.tasks.map(t=>`<tr><td style="text-align:center">${t.done?'✅':'⬜'}</td><td style="${t.done?'text-decoration:line-through;color:var(--ink-soft)':''}">${esc(t.name)||'—'}</td><td>${esc(t.due)||'—'}</td><td style="text-align:center">${t.done?'منجزة':'قيد التنفيذ'}</td></tr>`).join(''):'<tr><td colspan="4" style="text-align:center;color:var(--ink-soft)">لا مهام</td></tr>'}
     </table>`;
   });
-  html+=`<div class="sig"><div><b>${V('قائد المدرسة','قائدة المدرسة')}</b>${S.name}</div><div><b>الاعتماد</b>التوقيع</div></div>`;
+  html+=`<div class="sig"><div><b>${V('مدير المدرسة','مديرة المدرسة')}</b>${S.name}</div><div><b>الاعتماد</b>التوقيع</div></div>`;
   $('plan-doc').innerHTML=html;go('annual-plan-preview');
   toast('✓ تقرير الخطة جاهز — التنفيذ '+st.pct+'%');
 }
@@ -3987,7 +4016,7 @@ function buildRadio(){
   }
   const title=kind==='daily'?'برنامج الإذاعة الصباحية':'فقرات إذاعية — '+esc(typeof _radioOccName!=='undefined'?_radioOccName:$('radio-occasion').value);
   $('radio-doc').innerHTML=`${moeHeader()}<h3 class="doc-title">${title}</h3><div class="doc-meta">${S.school} — ${date}</div>${body}
-    <div class="sig"><div><b>الإعداد والإشراف</b>${S.name}</div><div><b>${V('قائد المدرسة','قائدة المدرسة')}</b>التوقيع</div></div>`;
+    <div class="sig"><div><b>الإعداد والإشراف</b>${S.name}</div><div><b>${V('مدير المدرسة','مديرة المدرسة')}</b>التوقيع</div></div>`;
   $('radio-result-wrap').style.display='block';
   $('radio-result-wrap').scrollIntoView({behavior:'smooth'});
   toast('✓ برنامج الإذاعة جاهز — تقدر تولّد نسخة مختلفة بضغطة');
@@ -4029,7 +4058,7 @@ function buildActivitiesDoc(){
   let html=`${moeHeader()}<h3 class="doc-title">تقرير الأنشطة المدرسية</h3><div class="doc-meta">${S.school} — ${termValue()} — ${yearLabel()}</div>
     <div class="doc-meta">📊 إجمالي الأنشطة: ${S.activities.length} — إجمالي المشاركين: ${S.activities.reduce((a,r)=>a+(parseInt(r.participants)||0),0)}</div>
     ${sections}
-    <div class="sig"><div><b>${roleName()}</b>${S.name}</div><div><b>${V('قائد المدرسة','قائدة المدرسة')}</b>التوقيع</div></div>`;
+    <div class="sig"><div><b>${roleName()}</b>${S.name}</div><div><b>${V('مدير المدرسة','مديرة المدرسة')}</b>التوقيع</div></div>`;
   $('act-doc').innerHTML=html;go('activities-preview');
   toast('✓ تقرير الأنشطة جاهز — '+S.activities.length+' نشاط');
 }
@@ -4109,7 +4138,7 @@ function buildCommitteesTasksDoc(){
   let html=`${moeHeader()}<h3 class="doc-title">اللجان المدرسية والمهام</h3><div class="doc-meta">${S.school} — ${termValue()} — ${yearLabel()}</div>`;
   html+=`<div class="sec-h">اللجان المدرسية</div><table><tr><th style="width:10%">م</th><th style="width:38%">اللجنة</th><th style="width:26%">الدور/المهمة بها</th><th>تاريخ التكليف</th></tr>${S.committees.length?S.committees.map((r,i)=>`<tr><td style="text-align:center">${i+1}</td><td>${esc(r.name)||'—'}</td><td>${esc(r.source)||'—'}</td><td>${esc(r.date)||'—'}</td></tr>`).join(''):'<tr><td colspan="4" style="text-align:center;color:var(--ink-soft)">لا يوجد</td></tr>'}</table>`;
   html+=`<div class="sec-h">المهام المكلف بها</div><table><tr><th style="width:10%">م</th><th style="width:38%">المهمة</th><th style="width:26%">الجهة المكلِّفة</th><th>تاريخ التكليف</th></tr>${S.tasks.length?S.tasks.map((r,i)=>`<tr><td style="text-align:center">${i+1}</td><td>${esc(r.name)||'—'}</td><td>${esc(r.source)||'—'}</td><td>${esc(r.date)||'—'}</td></tr>`).join(''):'<tr><td colspan="4" style="text-align:center;color:var(--ink-soft)">لا يوجد</td></tr>'}</table>`;
-  html+=`<div class="sig"><div><b>${roleName()}</b>${S.name}</div><div><b>${V('قائد المدرسة','قائدة المدرسة')}</b>التوقيع</div></div>`;
+  html+=`<div class="sig"><div><b>${roleName()}</b>${S.name}</div><div><b>${V('مدير المدرسة','مديرة المدرسة')}</b>التوقيع</div></div>`;
   $('ct-doc').innerHTML=html;go('committees-tasks-preview');
   toast('✓ الملف جاهز — '+S.committees.length+' لجنة، '+S.tasks.length+' مهمة');
 }
@@ -4150,7 +4179,7 @@ function buildMeetingsDoc(){
     <table><tr><th style="width:8%">م</th><th style="width:14%">النوع</th><th style="width:10%">التاريخ</th><th style="width:8%">الحضور</th><th style="width:22%">الموضوع</th><th>القرار/الخلاصة</th></tr>
     ${S.meetingsLog.map((r,i)=>`<tr><td style="text-align:center">${i+1}</td><td>${esc(r.type||'عام')}</td><td>${esc(r.date)||'—'}</td><td style="text-align:center">${esc(r.attendance)||'—'}</td><td>${esc(r.subject)||'—'}</td><td>${esc(r.decision)||'—'}</td></tr>`).join('')}
     </table>
-    <div class="sig"><div><b>${roleName()}</b>${S.name}</div><div><b>${V('قائد المدرسة','قائدة المدرسة')}</b>التوقيع</div></div>`;
+    <div class="sig"><div><b>${roleName()}</b>${S.name}</div><div><b>${V('مدير المدرسة','مديرة المدرسة')}</b>التوقيع</div></div>`;
   $('meet-doc').innerHTML=html;go('meetings-preview');
   toast('✓ ملف الاجتماعات جاهز — '+S.meetingsLog.length+' اجتماع مسجّل');
 }
@@ -4780,7 +4809,7 @@ function generateAchievement(){
     </table>
     <div class="pf-sig">
       <div><b>${roleName()}</b>${esc(T(S.name))}</div>
-      <div><b>${V('قائد المدرسة','قائدة المدرسة')}</b>${esc(T(S.principal))}</div>
+      <div><b>${V('مدير المدرسة','مديرة المدرسة')}</b>${esc(T(S.principal))}</div>
       <div><b>${V('المشرف التربوي','المشرفة التربوية')}</b>................</div>
     </div>
   </div>`;
@@ -4933,7 +4962,7 @@ function generateClassicAchievement(){
     <div class="cover-box"><div class="field-row"><span class="k">${roleName()}:</span><span>${S.name}</span></div><div class="field-row"><span class="k">المادة:</span><span>${S.subject}</span></div><div class="field-row"><span class="k">الصف:</span><span>${S.grade}</span></div></div></div><div class="page-break"></div>`;
 
   html+=`<h3 class="doc-title">الفهرس</h3><ul class="toc">
-    ${['المقدمة','السيرة الذاتية','أهداف الملف','ميثاق أخلاقيات مهنة التعليم','الأهداف العامة للتعليم','الأهداف العامة للمادة','جدول الحصص','الدورات التدريبية','كشف أسماء الطلاب','شهادات الشكر','الخطة العلاجية','توزيع المنهج','تقييم قائد المدرسة والمشرفة','أوراق العمل والاختبارات','مشاركات منهجية وإنتاج معرفي','نماذج من أعمال '+V('المعلم','المعلمة'),'نماذج من أعمال الطلاب','التقارير','الورش','الحلقات التنشيطية','الخاتمة'].map((t,i)=>`<li><span><b>${i+1}.</b> ${t}</span></li>`).join('')}
+    ${['المقدمة','السيرة الذاتية','أهداف الملف','ميثاق أخلاقيات مهنة التعليم','الأهداف العامة للتعليم','الأهداف العامة للمادة','جدول الحصص','الدورات التدريبية','كشف أسماء الطلاب','شهادات الشكر','الخطة العلاجية','توزيع المنهج','تقييم مدير المدرسة والمشرفة','أوراق العمل والاختبارات','مشاركات منهجية وإنتاج معرفي','نماذج من أعمال '+V('المعلم','المعلمة'),'نماذج من أعمال الطلاب','التقارير','الورش','الحلقات التنشيطية','الخاتمة'].map((t,i)=>`<li><span><b>${i+1}.</b> ${t}</span></li>`).join('')}
   </ul><div class="page-break"></div>`;
 
   html+=`<div class="sec-h">المقدمة</div><table><tr><td>${esc(intro)}</td></tr></table><div class="page-break"></div>`;
@@ -4973,7 +5002,7 @@ function generateClassicAchievement(){
 
   html+=`<div class="sec-h">توزيع المنهج</div><table><tr><th style="width:10%">م</th><th>الدرس / الوحدة</th></tr>${lessons.length?lessons.map((l,i)=>`<tr><td style="text-align:center">${i+1}</td><td>${esc(l.title)}</td></tr>`).join(''):'<tr><td colspan="2" style="text-align:center;color:var(--ink-soft)">لا يوجد منهج محفوظ — احفظه من شاشة «تحضير الدروس»</td></tr>'}</table><div class="page-break"></div>`;
 
-  html+=`<div class="sec-h">تقييم قائد/ة المدرسة والمشرفة التربوية</div><table><tr><td>${esc(cd.principalEval)||'—'}</td></tr></table><div class="page-break"></div>`;
+  html+=`<div class="sec-h">تقييم مدير/ة المدرسة والمشرفة التربوية</div><table><tr><td>${esc(cd.principalEval)||'—'}</td></tr></table><div class="page-break"></div>`;
 
   html+=`<div class="sec-h">أوراق العمل والاختبارات</div><table><tr><td>بنك الأسئلة الحالي يضم <b>${S.examQuestions.length}</b> سؤال متنوع (اختيار من متعدد، صح وخطأ، أكمل الفراغ، مزاوجة، مقالي). راجع النسخة الكاملة من شاشة «إنشاء الاختبارات».</td></tr></table><div class="page-break"></div>`;
 
@@ -4997,7 +5026,7 @@ function generateClassicAchievement(){
   html+=trainRows('الحلقات التنشيطية',S.circles)+'<div class="page-break"></div>';
 
   html+=`<div class="sec-h">الخاتمة</div><table><tr><td>${esc(conclusion)}</td></tr></table>`;
-  html+=`<div class="sig"><div><b>${roleName()}</b>${S.name}</div><div><b>${V('قائد المدرسة','قائدة المدرسة')}</b>الاسم / التوقيع</div><div><b>${V('المشرف التربوي','المشرفة التربوية')}</b>الاسم / التوقيع</div></div>`;
+  html+=`<div class="sig"><div><b>${roleName()}</b>${S.name}</div><div><b>${V('مدير المدرسة','مديرة المدرسة')}</b>الاسم / التوقيع</div><div><b>${V('المشرف التربوي','المشرفة التربوية')}</b>الاسم / التوقيع</div></div>`;
 
   $('ach-doc').classList.remove('pf-doc');$('ach-doc').innerHTML=html;go('ach-preview');
   toast('✓ ملف الإنجاز (النمط الكلاسيكي) جاهز');
@@ -5420,7 +5449,7 @@ async function aiGenerateLesson(){
   const prompt=`أنت خبير مناهج سعودي. للدرس التالي أعد JSON فقط بدون أي نص آخر، بهذه المفاتيح وكل قيمة مصفوفة نصوص عربية قصيرة:\n{"objectives":[],"outcomes":[],"strategies":[],"assessment":[],"homework":[],"enrichment":[],"remediation":[],"skills21":[],"values":[],"higherOrder":[],"differentiation":[],"realLife":[]}\nالدرس: "${title}" | المادة: ${S.subject} | الصف: ${S.grade}`;
   const raw=await aiCall(prompt);const data=parseJSON(raw);
   btn.innerHTML='ولّد التحضير 🤖';
-  /* لا نُضيف درسًا بأهداف مُلفّقة. المعلّم يطبع هذا ويسلّمه لقائد مدرسته،
+  /* لا نُضيف درسًا بأهداف مُلفّقة. المعلّم يطبع هذا ويسلّمه لمدير مدرسته،
      وقالبٌ ثابت مركّب فيه اسم الدرس يُكشف من النظرة الأولى. */
   if(!data){toast('⚠️ تعذّر توليد التحضير — تحقّق من اتصالك ثم أعد المحاولة');return}
   const l=newLesson(title);l.ai=data;l.obj=(data.objectives||[]).join('\n');
@@ -5469,7 +5498,7 @@ function buildPrepDocs(){
   const per=Math.max(1,Math.ceil(S.lessons.length/S.weeks));const wk=S.lessons.slice(0,per);
   prepData.weekly=`${moeHeader()}<h3 class="doc-title">الخطة الأسبوعية</h3><div class="doc-meta">الأسبوع الأول${weekDate(1)?' — '+weekDate(1):''} — ${S.subject} — ${prepGradeVal()}</div>
     <table><tr><th style="width:14%">اليوم</th><th>الدرس</th><th style="width:24%">الاستراتيجية</th><th style="width:20%">التقويم</th></tr>${['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس'].map((d,k)=>{const ls=wk[k];return `<tr><td><b>${d}</b></td><td>${ls?esc(ls.title):'حصة نشاط / مراجعة'}</td><td>${ls?ls.strat:'—'}</td><td>${ls?ls.assess:'—'}</td></tr>`}).join('')}</table>
-    <div class="sig"><div><b>${roleName()}</b>${S.name}</div><div><b>${V('قائد المدرسة','قائدة المدرسة')}</b>التوقيع</div></div>`;
+    <div class="sig"><div><b>${roleName()}</b>${S.name}</div><div><b>${V('مدير المدرسة','مديرة المدرسة')}</b>التوقيع</div></div>`;
   let r='',idx=0;for(let w=1;w<=S.weeks&&idx<S.lessons.length;w++){const sl=S.lessons.slice(idx,idx+per);idx+=per;r+=`<tr><td><b>الأسبوع ${w}</b></td><td>${weekDate(w)||'—'}</td><td>${sl.map(x=>esc(x.title)).join(' — ')}</td></tr>`}
   prepData.dist=`${moeHeader()}<h3 class="doc-title">توزيع المنهج على أسابيع الفصل</h3><div class="doc-meta">${S.subject} — ${prepGradeVal()} — ${termValue()} (${S.weeks} أسبوع)</div><table><tr><th style="width:16%">الأسبوع</th><th style="width:18%">التاريخ</th><th>الدروس</th></tr>${r}</table><div class="sig"><div><b>${roleName()}</b>${S.name}</div><div><b>${V('المشرف','المشرفة')}</b>التوقيع</div></div>`;
 }
@@ -5736,7 +5765,7 @@ function renderCustomCertPreview(){
         <div class="cert-date-block">٥ صفر ١٤٤٨هـ</div>
         <div class="cert-signs">
           <div class="cert-sign-col"><div class="rl">معلم المادة</div><div class="nm">— — —</div></div>
-          <div class="cert-sign-col"><div class="rl">قائد المدرسة</div><div class="nm">— — —</div></div>
+          <div class="cert-sign-col"><div class="rl">مدير المدرسة</div><div class="nm">— — —</div></div>
         </div>
         <div style="width:60px"></div>
       </div>
@@ -5799,7 +5828,7 @@ function certHTML(name){
   const isF=S.gender==='f';
   const studentWord=isF?'الطالبة':'الطالب';
   const teacherLabel=isF?'معلمة المادة':'معلم المادة';
-  const principalLabel=isF?'قائدة المدرسة':'قائد المدرسة';
+  const principalLabel=isF?'مديرة المدرسة':'مدير المدرسة';
   return `<div class="cert"><div class="cert-frame" style="padding-bottom:${tpl.ratio}%">
     <img class="cert-bg-img" src="${CERT_BG[tpl.k]||tpl.img}" alt="">
     <div class="cert-inner" style="--cert-ink:${tpl.ink};--cert-font:'${certFontFamily()}'">
@@ -6592,7 +6621,7 @@ function generateRecords(){const list=curStudents().map(o=>o.s);if(list.length==
   <table><tr><th style="width:22%">${roleName()}</th><td>${S.name}</td><th style="width:18%">الشعبة</th><td>${S.grade} / ${S.curClass}</td></tr><tr><th>الفترة</th><td>${S.curPeriod}</td><th>عدد الطلاب</th><td>${list.length}</td></tr><tr><th>المادة</th><td>${S.subject}</td><th>متوسط الشعبة</th><td>${avg} / ${m}</td></tr></table>
   <table><tr><th style="width:6%">م</th><th>الاسم</th>${S.criteria.map(c=>`<th>${esc(c.label)} (${c.max})</th>`).join('')}<th>الغياب</th><th>المجموع (${m})</th><th>التقدير</th></tr>
   ${list.map((s,i)=>`<tr><td style="text-align:center">${i+1}</td><td>${esc(s.name)}</td>${S.criteria.map(c=>`<td style="text-align:center">${getScore(s,c.key)||0}</td>`).join('')}<td style="text-align:center">${getAbs(s)||0}</td><td style="text-align:center"><b>${studTotal(s)}</b></td><td style="text-align:center">${grade(studTotal(s))}</td></tr>`).join('')}</table>
-  <div class="sig"><div><b>${roleName()}</b>${S.name}</div><div><b>${V('قائد المدرسة','قائدة المدرسة')}</b>التوقيع</div></div>`;
+  <div class="sig"><div><b>${roleName()}</b>${S.name}</div><div><b>${V('مدير المدرسة','مديرة المدرسة')}</b>التوقيع</div></div>`;
   go('rec-preview');}
 
 /* ===== Forms + AI ===== */
@@ -6648,7 +6677,7 @@ function generateForm(){const t=formTemplates[curForm];if(!t)return;const vals={
     const grade=pct>=90?'ممتاز':pct>=80?'جيد جدًا':pct>=70?'جيد':'يحتاج تطوير';
     body+=`<div class="sec-h">${rubricField.label}</div><table><tr><th>البند</th><th style="width:15%">التقييم</th></tr>${rows}</table><table><tr><th style="width:32%">الدرجة الكلية</th><td>${total} من ${max} (${pct}%)</td></tr><tr><th>التقدير العام (تلقائي)</th><td><b>${grade}</b></td></tr></table>`;
   }
-  t.fields.filter(f=>f.type==='list').forEach(f=>{const items=(vals[f.key]||'').split('\n').map(x=>x.trim()).filter(x=>x);body+=`<div class="sec-h">${f.label}</div>`+(items.length?`<table><tr><th style="width:10%">م</th><th>${f.label}</th></tr>${items.map((it,i)=>`<tr><td style="text-align:center">${i+1}</td><td>${esc(it)}</td></tr>`).join('')}</table>`:`<table><tr><td>—</td></tr></table>`)});const signers=t.signers||[[roleName(),S.name],[V('قائد المدرسة','قائدة المدرسة'),'التوقيع']];body+=`<div class="sig">${signers.map(s=>`<div><b>${esc(s[0])}</b>${esc(s[1])}</div>`).join('')}</div>`;$('form-doc').innerHTML=body;S.formsGenerated++;renderMetrics();go('form-preview')}
+  t.fields.filter(f=>f.type==='list').forEach(f=>{const items=(vals[f.key]||'').split('\n').map(x=>x.trim()).filter(x=>x);body+=`<div class="sec-h">${f.label}</div>`+(items.length?`<table><tr><th style="width:10%">م</th><th>${f.label}</th></tr>${items.map((it,i)=>`<tr><td style="text-align:center">${i+1}</td><td>${esc(it)}</td></tr>`).join('')}</table>`:`<table><tr><td>—</td></tr></table>`)});const signers=t.signers||[[roleName(),S.name],[V('مدير المدرسة','مديرة المدرسة'),'التوقيع']];body+=`<div class="sig">${signers.map(s=>`<div><b>${esc(s[0])}</b>${esc(s[1])}</div>`).join('')}</div>`;$('form-doc').innerHTML=body;S.formsGenerated++;renderMetrics();go('form-preview')}
 
 /* ===== Student analysis (AI) ===== */
 let voiceKind='prep';
@@ -6821,7 +6850,7 @@ async function voiceConvert(){
   btn.innerHTML='🤖 حوّل إلى ملف';
   let body=`${moeHeader()}<h3 class="doc-title">${esc(data.title||kindLabel)}</h3><div class="doc-meta">${kindLabel} — ${S.subject} — ${S.grade} — ${fmtDate(new Date().toISOString().slice(0,10))}</div>`;
   (data.sections||[]).forEach(s=>{body+=`<div class="sec-h">${esc(s.h)}</div><table><tr><td>${esc(s.body).replace(/\n/g,'<br>')}</td></tr></table>`});
-  body+=`<div class="sig"><div><b>${roleName()}</b>${S.name}</div><div><b>${V('قائد المدرسة','قائدة المدرسة')}</b>التوقيع</div></div>`;
+  body+=`<div class="sig"><div><b>${roleName()}</b>${S.name}</div><div><b>${V('مدير المدرسة','مديرة المدرسة')}</b>التوقيع</div></div>`;
   $('voice-result').innerHTML=`${usedAI?'':'<div class="note"><span class="ni">ℹ️</span><div>تحويل تجريبي بدون اتصال.</div></div>'}<div class="doc-wrap"><div class="doc-toolbar no-print"><span class="dt">الملف الناتج</span><div class="acts"><button class="btn btn-ghost btn-sm" onclick="window.print()">🖨️ طباعة / PDF</button><button class="btn btn-primary btn-sm" onclick="exportDocx('voice-doc','ملف')">⬇️ تصدير Word</button>${voiceKind==='evidence'?'<button class="btn btn-primary btn-sm" onclick="saveVoiceEvidence()">➕ أضِفه لملف الإنجاز</button>':''}</div></div><div class="doc" id="voice-doc">${body}</div></div>`;
   window._lastVoiceTitle=data.title||kindLabel;
   toast(usedAI?'✓ تم تحويل كلامك إلى ملف':'⚠️ تعذر الاتصال بالذكاء الاصطناعي، عُرض تحويل مبدئي بدلاً منه');
@@ -7210,13 +7239,13 @@ async function shareViaWhatsapp(containerId,filename,btn){
 /* القائمة تخزّن «الفصل الدراسي الأول» قيمةً، والترويسة تسبقها بـ«الفصل
    الدراسي:» فتخرج مكرّرة. نجرّد التسمية عند العرض، فتصحّ الوثائق القديمة
    والجديدة معًا بلا ترحيل بيانات. */
-/* التحضير يعتمده قائد المدرسة، وسجل الزيارة يوقّعه المشرف التربوي —
+/* التحضير يعتمده مدير المدرسة، وسجل الزيارة يوقّعه المشرف التربوي —
    جهتان مختلفتان، وكان التحضير يحمل «المشرف» خطأً. يبقى الافتراضي
-   قائد المدرسة، ويستطيع المعلّم تغييره من إعدادات الوثيقة. */
+   مدير المدرسة، ويستطيع المعلّم تغييره من إعدادات الوثيقة. */
 function signPartner(){
   return S.signPartner==='supervisor'
     ? V('المشرف التربوي','المشرفة التربوية')
-    : V('قائد المدرسة','قائدة المدرسة');
+    : V('مدير المدرسة','مديرة المدرسة');
 }
 function setSignPartner(v){
   S.signPartner=(v==='supervisor')?'supervisor':'principal';saveState();
@@ -7386,6 +7415,11 @@ const AW_ENDPOINT='/api/award-submit';
 /* دالة الخادم ترفض ما يتجاوز ٤٫٥ ميجابايت، وصور الشواهد بترميز base64
    تتجاوزه بسهولة. نقيس قبل الإرسال لنقول للمعلّم الحجم وما يفعله. */
 const AW_MAX_BYTES=4*1024*1024;
+/* موعدا الباب للعرض وحده. الخادم هو المرجع ويرفض ما بعد الإقفال مهما
+   قال المتصفح — لكن ترك المعلّم يبني حمولته ثم يردّه الخادم بـ٤٠٣ عقوبةٌ
+   بلا سبب. يُضبطان بنفس قيمتَي AWARD_OPEN_AT وAWARD_CLOSES_AT. */
+const AW_OPEN_AT='';
+const AW_CLOSE_AT='';
 function rewardRange(){return REWARD_MIN.toLocaleString('en-US')+' – '+REWARD_MAX.toLocaleString('en-US')+' ريال'}
 let _sb=null,_sbUser=null,_pushTimer=null,_syncing=false;
 let _sub=null;
@@ -7813,6 +7847,11 @@ function anBuildMap(){
        يُعرض في «المشتبه بها» ليقرّر المعلّم بنفسه. */
     if(parts[0])firsts.push(parts[0]);
     forms.forEach(function(f){if(f&&!map.has(f))map.set(f,alias)});
+    /* اسم وليّ الأمر يدلّ على ابنه دلالةً مباشرة في مجتمع صغير، فتجريد
+       الطالب وحده لا يُخفيه. يأخذ رمزًا مرتبطًا برمز ابنه لا رمزًا مستقلًا،
+       ليبقى أثر التواصل مع الأسرة مقروءًا للمحكّم. */
+    const par=String(st.parentName||'').trim();
+    if(par&&!map.has(par))map.set(par,'ولي أمر '+alias);
   });
   return {map:map,firsts:firsts.filter(function(v,i,a){return a.indexOf(v)===i})};
 }
@@ -7855,9 +7894,19 @@ function anSuspects(root,firsts){
     let re;
     try{re=new RegExp('(^|[^ء-ي])('+AN_PREFIX+')('+anBody(f)+')(?!'+AN_LETTER+')','g')}
     catch(e){return}
-    let m,hits=0;
-    while((m=re.exec(text))!==null){hits++;if(hits>50)break}
-    if(hits)out.push({name:f,hits:hits});
+    /* العدد وحده لا يُقرّر: «سعد» قد تكون اسمًا وقد تكون فعلًا في جملة.
+       نعرض موضع كل ورود ليحكم المعلّم بعينه لا بالعدد. */
+    let m,hits=0;const ctx=[];
+    while((m=re.exec(text))!==null){
+      hits++;
+      if(ctx.length<4){
+        const at=m.index;
+        ctx.push(text.slice(Math.max(0,at-30),at+40).replace(/\s+/g,' ').trim());
+      }
+      if(m.index===re.lastIndex)re.lastIndex++;
+      if(hits>50)break;
+    }
+    if(hits)out.push({name:f,hits:hits,ctx:ctx});
   });
   return out;
 }
@@ -7881,8 +7930,14 @@ function anOpen(){
     +'<div class="an-row"><span>صور في الملف</span><b>'+anArabicDigits(_anStats.images)+'</b></div>'
     +(suspects.length
       ? '<div class="note" style="border-color:#E0CB93;margin-top:10px"><span class="ni">⚠️</span><div>'
-        +'<b>أسماء أولى لم تُستبدل</b> — قد تكون كلمات عادية في الجملة، فراجعها بنفسك:<br>'
-        +suspects.map(function(s){return esc(s.name)+' ('+anArabicDigits(s.hits)+')'}).join(' · ')
+        +'<b>أسماء أولى لم تُستبدل</b> — قد تكون كلمات عادية في الجملة، فاقرأ موضعها واحكم بنفسك:'
+        +suspects.map(function(s){
+            return '<div class="an-sus"><b>'+esc(s.name)+'</b> · '+anArabicDigits(s.hits)+' موضع'
+              +(s.ctx&&s.ctx.length
+                ? s.ctx.map(function(c){return '<i>…'+esc(c)+'…</i>'}).join('')
+                : '')
+              +'</div>';
+          }).join('')
         +'</div></div>'
       : '')
     +(_anStats.images
@@ -8092,10 +8147,73 @@ function awBuildPayload(){
   };
 }
 
+/* ══════════ الوثائق النظامية داخل التطبيق ══════════
+   تُعرض من صفحاتها المنشورة نفسها لا من نسخة مضمَّنة. نصٌّ نظامي مكتوب
+   مرتين يفترقان عند أول تعديل، فيقرأ المعلّم شرطًا غير الذي نلتزم به.
+   مصدر واحد يمنع ذلك، وزر «فتح في صفحة» يبقى لمن أراد الأصل. */
+const LEGAL_PAGES=[
+  {k:'privacy',t:'سياسة الخصوصية'},
+  {k:'terms',  t:'الشروط والأحكام'},
+  {k:'refund', t:'الاسترجاع والإلغاء'},
+  {k:'awards', t:'الجوائز والمكافآت'},
+  {k:'about',  t:'من نحن'},
+  {k:'contact',t:'اتصل بنا'}
+];
+function openLegal(key,ev){
+  if(ev&&ev.preventDefault)ev.preventDefault();
+  const d=LEGAL_PAGES.filter(function(x){return x.k===key})[0];
+  if(!d)return;
+  /* من file:// لا يُحمَّل الإطار، فنفتح صفحة بدل نافذة فارغة */
+  if(location.protocol==='file:'){window.open('/'+key,'_blank');return}
+  const f=$('lgl-frame'); if(f)f.src='/'+key;
+  const t=$('lgl-title'); if(t)t.textContent=d.t;
+  const o=$('lgl-open'); if(o)o.href='/'+key;
+  const tabs=$('lgl-tabs');
+  if(tabs){
+    /* المعالج يُسنَد برمجيًا لا داخل السمة: الاقتباس المتداخل في نصٍّ
+       مبنيّ ينكسر بصمت وتصير التبويبات معطّلة بلا خطأ ظاهر. */
+    tabs.innerHTML=LEGAL_PAGES.map(function(x){
+      return '<button class="'+(x.k===key?'sel':'')+'" data-k="'+x.k+'">'+esc(x.t)+'</button>';
+    }).join('');
+    Array.prototype.forEach.call(tabs.querySelectorAll('button'),function(b){
+      b.onclick=function(){openLegal(b.getAttribute('data-k'))};
+    });
+  }
+  $('lgl-overlay').classList.add('on');
+  document.body.style.overflow='hidden';
+  return false;
+}
+function closeLegal(){
+  const o=$('lgl-overlay'); if(o)o.classList.remove('on');
+  const f=$('lgl-frame'); if(f)f.src='about:blank';
+  document.body.style.overflow='';
+}
+document.addEventListener('keydown',function(e){
+  if(e.key!=='Escape')return;
+  const o=$('lgl-overlay');
+  if(o&&o.classList.contains('on'))closeLegal();
+});
+
 function awMB(b){return (b/1048576).toFixed(1)}
+
+function awWindow(){
+  if(!AW_OPEN_AT||!AW_CLOSE_AT)return {state:'unset'};
+  const today=new Date().toISOString().slice(0,10);
+  if(today<AW_OPEN_AT) return {state:'soon',  at:AW_OPEN_AT};
+  if(today>AW_CLOSE_AT)return {state:'closed',at:AW_CLOSE_AT};
+  return {state:'open',at:AW_CLOSE_AT};
+}
+function awWindowNote(w){
+  if(w.state==='unset') return 'لم يُعلن عن موعد التسليم بعد — تابع صفحة الجوائز.';
+  if(w.state==='soon')  return 'يُفتح باب التسليم في '+fmtDate(w.at)+'.';
+  if(w.state==='closed')return 'أُقفل باب التسليم في '+fmtDate(w.at)+'.';
+  return 'آخر موعد للتسليم: '+fmtDate(w.at)+'.';
+}
 
 /* ── ٣) الإرسال ── */
 async function awSubmit(){
+  const w=awWindow();
+  if(w.state!=='open'){awHint(awWindowNote(w),true);toast('باب التسليم مغلق');return}
   const r=awReadiness();
   if(!r.ready){toast('أكمل متطلبات المشاركة أولًا');return}
 
@@ -8159,13 +8277,16 @@ function awOpen(){
       +'</div>';
   }).join('');
 
+  const w=awWindow();
+  const open=w.state==='open';
   const btn=$('aw-send');
-  btn.disabled=!r.ready;
-  btn.style.opacity=r.ready?'1':'.45';
-  btn.style.cursor=r.ready?'pointer':'not-allowed';
-  awHint(r.ready
-    ? 'ملفك مكتمل. سيُرسَل مُجرَّدًا من أسماء الطلاب تلقائيًا.'
-    : 'أكمل البنود المعلّمة بـ ✕ ثم عد إلى هنا.', false);
+  btn.disabled=!r.ready||!open;
+  btn.style.opacity=(r.ready&&open)?'1':'.45';
+  btn.style.cursor=(r.ready&&open)?'pointer':'not-allowed';
+  /* حال الباب أولًا: ملفٌ مكتمل وبابٌ مغلق ليس نقصًا في الملف. */
+  awHint(!open ? awWindowNote(w)
+       : r.ready ? 'ملفك مكتمل. سيُرسَل مُجرَّدًا من أسماء الطلاب تلقائيًا. '+awWindowNote(w)
+       : 'أكمل البنود المعلّمة بـ ✕ ثم عد إلى هنا.', !open);
 
   $('aw-modal').classList.add('on');
 }
