@@ -3,5 +3,13 @@
   "functions": {
     "api/chat.js": { "maxDuration": 60 },
     "api/vision.js": { "maxDuration": 60 }
-  }
+  },
+  "headers": [
+    {
+      "source": "/v43",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow" }
+      ]
+    }
+  ]
 }
