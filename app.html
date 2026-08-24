@@ -53,6 +53,31 @@ input,select,textarea{font-family:inherit;font-size:1rem}
   padding:9px 2px;border-bottom:1px dashed var(--line);font-size:.88rem}
 .an-row:last-of-type{border-bottom:0}
 .an-row b{color:var(--teal-deep);font-size:1rem}
+.rd-panel{margin:14px 0 4px}
+.rd-legend{text-align:center;font-size:.82rem;color:var(--ink-soft);margin-bottom:10px}
+.rd-rows{border:1px solid var(--line);border-radius:12px;padding:4px 12px;background:#fff}
+.rd-row{display:flex;align-items:center;gap:9px;padding:9px 0;
+  border-bottom:1px dashed var(--line);font-size:.86rem}
+.rd-row:last-child{border-bottom:0}
+.rd-row .d{flex:none}
+.rd-row .n{flex:1;min-width:0;overflow-wrap:anywhere}
+.rd-row .n b{color:var(--ink-soft);font-weight:600;font-size:.76rem}
+.rd-row .s{flex:none;font-size:.76rem;font-weight:700;white-space:nowrap}
+.rd-row .c{flex:none;color:var(--ink-soft);font-size:.75rem}
+.rd-tasks{background:var(--teal-050,#EFF7F3);border-radius:14px;padding:15px;margin-top:14px}
+.rd-tasks h5{margin:0 0 3px;font-weight:800;color:var(--teal-deep,#0C3830);font-size:.98rem}
+.rd-tasks .sub{font-size:.79rem;color:var(--ink-soft);margin-bottom:11px}
+.rd-tk{display:flex;gap:10px;padding:9px 0;border-bottom:1px dashed var(--line)}
+.rd-tk:last-child{border-bottom:0}
+.rd-tk .k{flex:none;width:22px;height:22px;border-radius:7px;background:var(--teal-deep,#0F4239);
+  color:#fff;display:grid;place-items:center;font-size:.72rem;font-weight:800;margin-top:2px}
+.rd-tk .tx{font-size:.87rem;line-height:1.6}
+.rd-tk .mt{font-size:.74rem;color:var(--ink-soft);margin-top:2px}
+.rd-tk .mt b{color:#1F6B4F}
+.rd-done{background:#EEF6F2;border:1px solid #CCE3D8;border-radius:14px;padding:15px;
+  margin-top:14px;text-align:center;font-size:.9rem;color:#1F6B4F}
+.rd-foot{font-size:.73rem;color:var(--ink-soft);margin-top:11px;text-align:center;line-height:1.8}
+.rd-foot a{color:var(--gold,#AE8129)}
 .lgl-ov{display:none;position:fixed;inset:0;background:rgba(10,30,28,.6);z-index:400}
 .lgl-ov.on{display:flex;align-items:center;justify-content:center;padding:14px}
 .lgl-card{background:#fff;border-radius:18px;width:100%;max-width:820px;height:92vh;
@@ -1215,6 +1240,7 @@ body.pre-app .bottom-nav{display:none!important}
         </div>
       </div>
 
+      <div id="rd-panel" class="rd-panel"></div>
       <div id="excel-body"></div>
     </div>
 
@@ -4185,10 +4211,14 @@ function buildMeetingsDoc(){
 }
 
 /* ===== Excellence score (ملف الإنجاز) ===== */
-function computeExcellence(){
+/* bump: فهرس معيار نفترض أن شاهدًا أُضيف إليه. تُستعمل لحساب أثر المهمة
+   بالمحاكاة، فلا تُكتب صيغة ثانية تفترق عن هذه. */
+function computeExcellence(bump){
   const p=S.profile;
   const profileScore=(p.bio.trim()?1:0)+(p.vision.trim()?1:0)+(p.goals.trim()?1:0);
-  const stds=S.standards.map(s=>({t:s.t,count:s.ev.length,w:stdWeight(s)}));
+  /* الشاهد بلا عنوان أو بلا محتوى صفٌّ فارغ في الجدول، فلا يُحتسب —
+     وإلا رأى المعلّم نسبة تطمئنه ورأى المشرف ملفًا خاويًا. */
+  const stds=S.standards.map((s,i)=>({t:s.t,count:rdCount(s)+(bump===i?1:0),w:stdWeight(s)}));
   const stdFilled=stds.filter(s=>s.count>0).length;
   const evTotal=stds.reduce((a,s)=>a+s.count,0);
   const wOf=s=>(s.w!=null?s.w:1);
@@ -4248,7 +4278,20 @@ function renderExcellence(ex,data){
   $('excel-sub')&&($('excel-sub').textContent=`${ex.stdFilled}/${ex.stdTotal} معايير موثّقة — ${ex.evTotal} شاهد إجمالًا`);
   if(!data){$('excel-body').innerHTML='';return}
   const li=arr=>(arr||[]).map(x=>`<li>${esc(x)}</li>`).join('');
-  $('excel-body').innerHTML=`
+  /* التحليل المبدئي قالبٌ لا تحليل. كان يُعلَن عنه بإشعار يزول بعد ثوانٍ،
+     فيبقى في الشاشة نصٌّ عامّ لا يميّزه المعلّم عن تحليل مخصّص ويطبعه.
+     العلامة تلازم الوثيقة ما دامت معروضة، وتُطبع معها. */
+  const draft=!data._ai
+    ? `<div class="panel no-print" style="border-right:4px solid #AE8129;background:#FBF6E9">
+         <div class="panel-title">⚠️ هذا تحليل مبدئي لا مخصّص</div>
+         <div style="font-size:.85rem;line-height:1.85;color:#6B5518">
+           تعذّر الاتصال بالذكاء الاصطناعي، فعُرضت خطة عامة مبنية على أعداد شواهدك
+           لا على محتواها. <b>راجعها قبل الاعتماد عليها</b>، أو اضغط «تحديث التحليل»
+           بعد عودة الاتصال لتحصل على تحليل مبني على ملفك.
+         </div>
+       </div>`
+    : '';
+  $('excel-body').innerHTML=draft+`
     <div class="panel" style="border-right:4px solid #3E8E63"><div class="panel-title">💪 نقاط القوة</div><ul class="excel-list">${li(data.strengths)}</ul></div>
     <div class="panel" style="border-right:4px solid #B84A3B"><div class="panel-title">⚠️ النواقص</div><ul class="excel-list">${li(data.gaps)}</ul></div>
     <div class="panel" style="border-right:4px solid var(--gold)"><div class="panel-title">🤖 اقتراحات لرفع التقييم</div><ul class="excel-list">${li(data.suggestions)}</ul></div>
@@ -4263,6 +4306,7 @@ function openExcellence(){
   renderExcellence(ex,null);
   $('excel-body').innerHTML='<div class="empty">اضغط «حلّل ملفي واقترح خطة» فوق للحصول على نقاط القوة والنواقص وخطة أسبوعية.</div>';
   go('excellence');
+  if(typeof rdRender==='function')rdRender();
 }
 const STD_KEYWORDS=[
   ['دوام,حصص حسب الجدول,مناوبة,انتظار,تحضير الدروس,الالتزام بالدوام,واجبات وظيفية',0],
@@ -8145,6 +8189,130 @@ function awBuildPayload(){
     submittedAt: new Date().toISOString(),
     appVersion:  APP_VER
   };
+}
+
+/* ══════════════ مساعد الجاهزية ══════════════
+   يستبدل رقمًا وحيدًا غامضًا بثلاثة أشياء: أين أنت، وما الناقص، وما تفعله
+   هذا الأسبوع. منطق شرطي بحت — لا مولّد ولا شبكة ولا مكتبة، فيعمل دائمًا.
+
+   الأثر المعروض لكل مهمة يُحسب بالمحاكاة لا بالتقدير: نعيد حساب النسبة
+   وكأن الشاهد أُضيف، ونطرح. صيغةٌ ثانية مكتوبة بيدٍ ثانية تفترق عن الأولى
+   عند أول تعديل، فيقرأ المعلّم «+٤٪» ثم يضيف الشاهد فترتفع ٢٪. */
+
+/* الشاهد المعتبر: عنوان ومحتوى. الفارغ لا يُحتسب — وإلا صار المؤشر
+   يُرضي المعلّم ويخذله أمام المشرف، وهذا أسوأ من غياب المؤشر. */
+function rdValidEv(e){
+  if(!e)return false;
+  if(!String(e.title||'').trim())return false;
+  return !!(e.img||e.file||e.link||String(e.note||'').trim()||String(e.result||'').trim());
+}
+function rdCount(s){return ((s&&s.ev)||[]).filter(rdValidEv).length}
+
+/* حالة المعيار مطابقة لما تحتسبه النسبة فعلًا: بلا شاهد صفر، وشاهد واحد
+   نصف، وشاهدان فأكثر كامل. لو قالت الخريطة «تحتاج ثلاثة» والنسبة تكتفي
+   باثنين، تناقضت الشاشة مع نفسها أمام المعلّم. */
+const RD_FULL=2;
+function rdState(n){return n===0?'none':(n<RD_FULL?'weak':'ok')}
+
+function rdCompute(){
+  const rows=(S.standards||[]).map(function(s){
+    const n=rdCount(s), w=stdWeight(s);
+    return {name:s.t,count:n,weight:(w!=null?w:null),state:rdState(n),
+            need:Math.max(0,RD_FULL-n),ex:(s.ex||[])};
+  });
+  const base=computeExcellence();
+  return {
+    pct:base.pct, rows:rows,
+    ok:  rows.filter(function(r){return r.state==='ok'}).length,
+    weak:rows.filter(function(r){return r.state==='weak'}).length,
+    none:rows.filter(function(r){return r.state==='none'}).length
+  };
+}
+
+/* الأثر الحقيقي: أعِد الحساب وكأن الشاهد أُضيف هنا، واطرح. */
+function rdGain(i){
+  const now=computeExcellence().pct;
+  const after=computeExcellence(i).pct;
+  return Math.max(0,after-now);
+}
+
+/* ثلاث مهام فقط: القائمة الطويلة تُقرأ ولا تُنفَّذ.
+   الفارغ تمامًا أولًا لأنه يضيّع وزنًا كاملًا، ثم الأثقل وزنًا. */
+function rdTasks(limit){
+  const out=[];
+  (S.standards||[]).forEach(function(s,i){
+    const n=rdCount(s);
+    if(n>=RD_FULL)return;
+    const w=stdWeight(s);
+    out.push({i:i,std:s.t,count:n,state:rdState(n),weight:(w!=null?w:0),
+              action:rdAction(s,n),gain:rdGain(i)});
+  });
+  out.sort(function(a,b){
+    if(a.state!==b.state)return a.state==='none'?-1:1;
+    return (b.gain-a.gain)||(b.weight-a.weight);
+  });
+  return out.slice(0,limit||3);
+}
+
+/* الصيغة تُبنى من أمثلة الشواهد المكتوبة في المعيار نفسه، فتأتي المهمة
+   بلغة الميدان لا بعبارة عامة. */
+function rdAction(s,n){
+  const ex=(s.ex||[]).filter(Boolean);
+  if(ex.length)return 'وثّق: '+ex[Math.min(n,ex.length-1)];
+  return 'أضف شاهدًا في «'+s.t+'»';
+}
+
+function rdRender(){
+  const box=$('rd-panel');
+  if(!box)return;
+  if(!(S.standards||[]).length){box.innerHTML='';return}
+  const d=rdCompute(), tasks=rdTasks(3);
+  const DOT={ok:'🟢',weak:'🟡',none:'🔴'};
+  const LBL={ok:'مكتمل',weak:'يحتاج تعزيز',none:'لا يوجد شاهد'};
+  const COL={ok:'#1F6B4F',weak:'#AE8129',none:'#A63A3A'};
+
+  box.innerHTML=
+    '<div class="rd-legend">🟢 '+anArabicDigits(d.ok)+' مكتمل · 🟡 '+anArabicDigits(d.weak)
+      +' يحتاج تعزيز · 🔴 '+anArabicDigits(d.none)+' بلا شاهد</div>'
+    +'<div class="rd-rows">'
+    +d.rows.map(function(r){
+      return '<div class="rd-row"><span class="d">'+DOT[r.state]+'</span>'
+        +'<span class="n">'+esc(r.name)+(r.weight!=null?' <b>'+anArabicDigits(r.weight)+'٪</b>':'')+'</span>'
+        +'<span class="s" style="color:'+COL[r.state]+'">'+LBL[r.state]+'</span>'
+        +'<span class="c">'+anArabicDigits(r.count)+'/'+anArabicDigits(RD_FULL)+'</span></div>';
+    }).join('')
+    +'</div>'
+    +(tasks.length
+      ? '<div class="rd-tasks"><h5>وش أسوي هذا الأسبوع؟</h5>'
+        +'<div class="sub">ثلاث مهام فقط — أعلى أثر على جاهزية ملفك.</div>'
+        +tasks.map(function(t,i){
+          return '<div class="rd-tk"><span class="k">'+anArabicDigits(i+1)+'</span><div>'
+            +'<div class="tx">'+esc(t.action)+'</div>'
+            +'<div class="mt">'+esc(t.std)+(t.gain>0?' · <b>+'+anArabicDigits(t.gain)+'٪</b>':'')+'</div>'
+            +'</div></div>';
+        }).join('')
+        +'</div>'
+      : '<div class="rd-done">✓ كل المعايير موثّقة — ملفك جاهز للعرض.</div>')
+    +'<div class="rd-foot">النسبة محسوبة بأوزان معايير الأداء الرسمية، ويُعدّ المعيار '
+      +'مكتملًا بـ'+anArabicDigits(RD_FULL)+' شاهدين معتبرين. '
+      +'<a href="#" onclick="rdWeights();return false">تفاصيل الحساب</a></div>';
+}
+
+/* نسبة لا يُعرف أصلها لا تُبنى عليها ثقة. نعرض الصيغة كما هي في الكود
+   لا وصفًا مبسّطًا لها. */
+function rdWeights(){
+  const rows=(S.standards||[]).map(function(s){
+    const w=stdWeight(s);
+    return '• '+s.t+' — '+(w!=null?w+'٪':'بلا وزن')+'  ('+rdCount(s)+' شاهد)';
+  }).join('\n');
+  alert('كيف تُحسب النسبة:\n\n'
+    +'١٥٪ تعبئة الهوية المهنية (نبذة، رؤية، أهداف)\n'
+    +'٦٥٪ تغطية المعايير موزونة بأوزانها الرسمية\n'
+    +'      بلا شاهد = صفر · شاهد واحد = نصف · شاهدان فأكثر = كامل\n'
+    +'٢٠٪ عمق التوثيق حتى سقف ٢٢ شاهدًا\n\n'
+    +'الشاهد المعتبر له عنوان ومعه صورة أو ملف أو رابط أو وصف.\n'
+    +'الشاهد الفارغ لا يُحتسب.\n\n'
+    +'أوزان معاييرك:\n'+rows);
 }
 
 /* ══════════ الوثائق النظامية داخل التطبيق ══════════
