@@ -1,14 +1,21 @@
 {
   "cleanUrls": true,
   "functions": {
-    "api/chat.js": { "maxDuration": 60 },
-    "api/vision.js": { "maxDuration": 60 }
+    "api/chat.js": {
+      "maxDuration": 60
+    },
+    "api/vision.js": {
+      "maxDuration": 60
+    }
   },
   "headers": [
     {
-      "source": "/v43",
+      "source": "/app-v25",
       "headers": [
-        { "key": "X-Robots-Tag", "value": "noindex, nofollow" }
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
       ]
     }
   ]
