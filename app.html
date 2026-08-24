@@ -232,7 +232,11 @@ input,select,textarea{font-family:inherit;font-size:1rem}
 .lesson-card .lb label{font-size:.8rem}
 .lesson-card .lh .chev{transition:.2s;color:var(--teal)}
 .lesson-card.open .lh .chev{transform:rotate(180deg)}
-.add-line{display:flex;gap:10px;margin-top:14px}
+.add-line{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+/* على شاشة ٣٢٠ بكسل لا يتّسع الحقل وزرّه في سطر واحد، وبلا التفاف
+   تُدفع الصفحة كلها فتُمرَّر أفقيًا. الحقل يتقلّص أولًا ثم ينزل الزر. */
+.add-line>input,.add-line>select{flex:1 1 150px;min-width:0}
+.add-line>.btn{flex:0 0 auto}
 .add-line input{flex:1;padding:11px 14px;border:1.5px solid var(--line);border-radius:12px;background:#fff}
 .tbl-edit{width:100%;border-collapse:collapse;margin-top:8px;font-size:.85rem}
 .tbl-edit th{background:var(--teal);color:#fff;padding:8px;font-weight:600}
@@ -1724,7 +1728,13 @@ body.anon-printing #anon-wrap{display:block!important}
     <button class="subbar-btn" id="cal-btn" onclick="toggleCal()">📅 هجري</button>
     <button class="subbar-btn" onclick="openThemeModal()"><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:var(--teal);vertical-align:middle;margin-left:4px"></span> اللون</button>
   </div>
-  <div class="dp-overlay" id="more-menu-modal">
+  <div class="dp-overlay" id="cloud-modal">
+  <div class="dp-card" style="max-width:420px">
+    <div class="dp-head"><b>☁️ حسابي والمزامنة</b><button class="btn btn-ghost btn-sm" onclick="closeCloudModal()">إغلاق</button></div>
+    <div id="cloud-body"></div>
+  </div>
+</div>
+<div class="dp-overlay" id="more-menu-modal">
     <div class="dp-card" style="max-width:320px">
       <div class="dp-head"><b>المزيد</b><button class="btn btn-ghost btn-sm" onclick="closeMoreMenu()">إغلاق</button></div>
       <div id="more-extra-tools"></div>
@@ -2392,7 +2402,7 @@ body.anon-printing #anon-wrap{display:block!important}
             <option>أول متوسط</option><option>ثاني متوسط</option><option>ثالث متوسط</option>
             <option>أول ثانوي</option><option>ثاني ثانوي</option><option>ثالث ثانوي</option>
           </select>
-          <input id="new-class" placeholder="الشعبة... أ / ب / د" style="flex:1;min-width:90px">
+          <input id="new-class" placeholder="الشعبة... أ / ب / د" style="flex:1 1 110px;min-width:0">
           <button class="btn btn-ghost" onclick="addClass()">+ إضافة</button>
         </div>
       </div>
@@ -3970,12 +3980,12 @@ function renderLockPanel(){
   }
 }
 function toggleChangePass(){const w=$('pf-change-pass-wrap');w.style.display=w.style.display==='none'?'block':'none'}
-function changeLockPassword(){
+async function changeLockPassword(){
   const old=$('pf-cp-old').value;const n1=$('pf-cp-new').value;const n2=$('pf-cp-new2').value;
-  if(simpleHash(old)!==S.authPass){toast('كلمة المرور الحالية غير صحيحة');return}
+  if(!(await verifyPass(old))){toast('كلمة المرور الحالية غير صحيحة');return}
   if(!n1||n1.length<4){toast('كلمة المرور الجديدة 4 أحرف على الأقل');return}
   if(n1!==n2){toast('كلمتا المرور الجديدتان غير متطابقتين');return}
-  S.authPass=simpleHash(n1);saveState();
+  S.authPass=await hashPass(n1);saveState();
   $('pf-cp-old').value='';$('pf-cp-new').value='';$('pf-cp-new2').value='';
   $('pf-change-pass-wrap').style.display='none';
   toast('✓ تم تغيير كلمة المرور');
@@ -4085,23 +4095,23 @@ function showAuthScreen(mode){
   if(mode==='login'){$('auth-li-email').value='';$('auth-li-pass').value='';$('auth-li-error').style.display='none';checkBiometricLoginUI()}
   else{$('auth-su-email').value='';$('auth-su-pass').value='';$('auth-su-pass2').value=''}
 }
-function doSignup(){
+async function doSignup(){
   const email=$('auth-su-email').value.trim();
   const pass=$('auth-su-pass').value;
   const pass2=$('auth-su-pass2').value;
   if(!email||!email.includes('@')){toast('اكتب بريدًا صحيحًا');return}
   if(!pass||pass.length<4){toast('كلمة المرور 4 أحرف على الأقل');return}
   if(pass!==pass2){toast('كلمتا المرور غير متطابقتين');return}
-  S.authEmail=email;S.authPass=simpleHash(pass);
+  S.authEmail=email;S.authPass=await hashPass(pass);
   saveState();
   $('auth-wrap').style.display='none';$('app').style.display='flex';
   go('dashboard');toast('✓ تم تفعيل القفل المحلي');
 }
 function skipAuthSetup(){$('auth-wrap').style.display='none';$('app').style.display='flex';go('dashboard')}
-function doLogin(){
+async function doLogin(){
   const email=$('auth-li-email').value.trim();
   const pass=$('auth-li-pass').value;
-  if(email===S.authEmail&&simpleHash(pass)===S.authPass){
+  if(email===S.authEmail&&(await verifyPass(pass))){
     $('auth-wrap').style.display='none';$('app').style.display='flex';go('dashboard');
   }else{$('auth-li-error').style.display='block'}
 }
@@ -4115,7 +4125,7 @@ function forgotPassword(){
    الشاشتان من بناء الخادم (موسى). هذان موجّهان: يستدعيان دالته إن وُجدت،
    وإلا يخبران المستخدم بوضوح بدل الفشل الصامت. */
 function openAccountSync(){
-  for(const fn of ['openAccount','openSync','openCloud','openCloudSync']){
+  for(const fn of ['openCloudModal','openAccount','openSync','openCloud','openCloudSync']){
     if(typeof window[fn]==='function'){ window[fn](); return; }
   }
   const linked=!!(S.authEmail&&String(S.authEmail).trim());
@@ -10991,7 +11001,11 @@ function moeHeader(){
 const STORAGE_KEY='malaffi_state_v1';
 let _quotaWarned=false;
 function saveState(){
-  try{localStorage.setItem(STORAGE_KEY,JSON.stringify(S));_quotaWarned=false;return true}
+  /* الدفع مجدول لا فوري: الحفظ يقع كل أربع ثوانٍ ومع كل تغيير، ورفعٌ
+     بهذا التواتر يستنزف الشبكة ويُغرق الخادم. schedulePush يجمعها. */
+  try{localStorage.setItem(STORAGE_KEY,JSON.stringify(S));_quotaWarned=false;
+    if(typeof schedulePush==='function'&&_sbUser)schedulePush();
+    return true}
   catch(e){
     if(!_quotaWarned){_quotaWarned=true;
       try{toast('⚠️ مساحة التخزين ممتلئة — آخر تغيير لم يُحفظ. صدّر الملف الآن، ثم احذف شواهد قديمة لتحرير مساحة.')}catch(_){}}
@@ -11040,6 +11054,14 @@ try{
     localStorage.removeItem(_bk);
   }
 }catch(e){}
+const SUPA_URL='https://athqvuwpqellyqoyhdwx.supabase.co';
+const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF0aHF2dXdwcWVsbHlxb3loZHd4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU5NTUwNDEsImV4cCI6MjEwMTUzMTA0MX0.0OalkU0rCoX1RHGJpbWC_k4tdatNF_e9QCvREmIs5eM';
+const SB_CDNS=['https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js',
+               'https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js'];
+/* حالة الجلسة تُعرَّف هنا لا لاحقًا: كتلة التهيئة أدناه تقرؤها،
+   والتعريف بعدها يوقف تنفيذ بقية السكربت بلا خطأ ظاهر. */
+let _sb=null,_sbUser=null,_pushTimer=null,_syncing=false,_sub=null;
+
 renderRoleOptions();
 const _restored=loadState();
 migrateStandards();
@@ -12141,6 +12163,337 @@ function emptyLessonAI(){
 function emptyExtraAI(){
   return {goal:'',target:'',steps:[],quickCheck:[],followup:[],_ai:false,_empty:true};
 }
+
+/* ══════════ ☁️ الحسابات والمزامنة ══════════
+   منقولة من البناء السابق: الحساب والمزامنة وحذفه، وتجزئة كلمة السر
+   بـSHA-256 بدل الدالة الضعيفة، واستبعاد ما لا يغادر الجهاز. */
+function toHex(buf){return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('')}
+
+
+async function hashPass(str){
+  if(!S.authSalt)S.authSalt=toHex(crypto.getRandomValues(new Uint8Array(16)));
+  /* crypto.subtle يحتاج سياقًا آمنًا؛ على http لا نُسقط القفل بل نُبقي القديم */
+  if(!(window.crypto&&crypto.subtle&&crypto.subtle.digest))return simpleHash(str);
+  const d=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(S.authSalt+':'+str));
+  return toHex(d);
+}
+
+async function verifyPass(str){
+  if(!S.authPass)return false;
+  if(S.authPass.length<40){          /* قفل من النسخة القديمة */
+    if(simpleHash(str)!==S.authPass)return false;
+    S.authPass=await hashPass(str);saveState();return true;
+  }
+  return (await hashPass(str))===S.authPass;
+}
+
+function ensureSb(){return new Promise((res,rej)=>{
+  if(_sb)return res(_sb);
+  const make=()=>{_sb=window.supabase.createClient(SUPA_URL,SUPA_KEY,{auth:{persistSession:true,autoRefreshToken:true}});res(_sb)};
+  if(window.supabase&&window.supabase.createClient)return make();
+  let i=0;
+  const tryNext=()=>{
+    if(i>=SB_CDNS.length)return rej(new Error('تعذّر تحميل مكتبة الحساب — قد يحجبها مانع الإعلانات أو الشبكة'));
+    const s=document.createElement('script');
+    s.src=SB_CDNS[i++];
+    s.onload=()=>{(window.supabase&&window.supabase.createClient)?make():tryNext()};
+    s.onerror=tryNext;
+    document.head.appendChild(s);
+  };
+  tryNext();
+});}
+
+async function sbToken(){
+  try{
+    if(typeof ensureSb!=='function')return '';
+    const sb=await ensureSb();
+    const {data}=await sb.auth.getSession();
+    return (data&&data.session&&data.session.access_token)||'';
+  }catch(e){return ''}
+}
+
+function cloudErr(e){
+  const m=(e&&e.message||'').toLowerCase();
+  if(m.includes('invalid login'))return 'البريد أو كلمة المرور غير صحيحة';
+  if(m.includes('already registered'))return 'هذا البريد مسجّل — سجّل الدخول';
+  if(m.includes('not confirmed'))return 'فعّل حسابك من رابط البريد أولًا';
+  if(m.includes('rate limit')||m.includes('too many'))return 'محاولات كثيرة — انتظر قليلًا';
+  return (e&&e.message)||'تعذّرت العملية';
+}
+
+function cloudSafeState(){
+  const c=Object.assign({},S);
+  delete c.authPass;delete c.authSalt;
+  /* بريد القفل بلا فائدة بعد استبعاد التجزئة، وبريد الحساب محفوظ أصلًا في
+     نظام الدخول، فرفعه تكرارٌ لبيانٍ شخصي بلا مقابل.
+     ومعرّف البصمة مرتبط بمُصادِق هذا الجهاز وحده: نقله لجهاز آخر يجعله
+     يظنّ البصمة مفعّلة وهي غير موجودة عنده. */
+  delete c.authEmail;delete c.biometricCredId;
+  /* الجوال بيان شخصي لا يحتاجه الخادم لشيء، فبقاؤه على الجهاز أسلم */
+  if(c.cv){c.cv=Object.assign({},c.cv);delete c.cv.civilId;delete c.cv.mobile}
+  return c;
+}
+
+function applyRemote(remote){
+  try{
+    /* السحابة لا تحمل رقم الهوية، فلو نسخنا cv كما هو محونا المحلي */
+    const keepCivil=(S.cv&&S.cv.civilId)||'', keepMob=(S.cv&&S.cv.mobile)||'';
+    Object.keys(remote.state).forEach(k=>{S[k]=remote.state[k]});
+    if(keepCivil||keepMob){if(!S.cv)S.cv={};
+      if(keepCivil&&!S.cv.civilId)S.cv.civilId=keepCivil;
+      if(keepMob&&!S.cv.mobile)S.cv.mobile=keepMob}
+    saveState();
+    if(typeof migrateStandards==='function')migrateStandards();
+    applyTheme(S.theme);paintCalBtn();paintProfile();renderMetrics();
+    if(typeof renderStds==='function')renderStds();
+    renderSubjectSwitcher();go('dashboard');
+  }catch(e){toast('تعذّر تطبيق البيانات السحابية')}
+}
+
+async function cloudPush(){
+  if(!_sbUser)return false;
+  const sb=await ensureSb();
+  const {error}=await sb.from('app_state')
+    .upsert({user_id:_sbUser.id,state:cloudSafeState(),device:(navigator.userAgent||'').slice(0,80)},{onConflict:'user_id'});
+  if(error){console.error(error);return false}
+  return true;
+}
+
+async function cloudPull(){
+  const sb=await ensureSb();
+  const {data,error}=await sb.from('app_state').select('state,version,updated_at').maybeSingle();
+  if(error)throw error;
+  return data;
+}
+
+async function cloudReconcile(){
+  let remote=null;
+  try{remote=await cloudPull()}catch(e){toast('تعذّر جلب بياناتك السحابية');return}
+  const remoteHas=remote&&remote.state&&Object.keys(remote.state).length>3;
+  if(!remoteHas){
+    if(localHasData()){await cloudPush();toast('✓ رُفعت بيانات جهازك للسحابة')}
+    else await cloudPush();
+    return;
+  }
+  if(!localHasData()){applyRemote(remote);toast('✓ نُزّلت بياناتك من السحابة');return}
+  const when=remote.updated_at?fmtDate(remote.updated_at):'—';
+  customConfirm(`عندك بيانات على هذا الجهاز وبيانات في السحابة (آخر تحديث ${when}).\nاضغط «تأكيد» لاعتماد نسخة السحابة، أو «إلغاء» لإبقاء نسخة الجهاز ورفعها.`,
+    ()=>{applyRemote(remote);toast('✓ اعتُمدت نسخة السحابة')},
+    ()=>{cloudPush().then(()=>toast('✓ اعتُمدت نسخة الجهاز ورُفعت'))});
+}
+
+function schedulePush(){
+  if(!_sbUser)return;
+  if(_pushTimer)clearTimeout(_pushTimer);
+  _pushTimer=setTimeout(()=>{cloudPush().then(ok=>{if(ok)renderCloudUI()})},4000);
+}
+
+async function cloudSignUp(){
+  const em=($('cl-email').value||'').trim(),pw=$('cl-pass').value||'';
+  const pw2=($('cl-pass2')&&$('cl-pass2').value)||'';
+  if(!em||pw.length<6){toast('اكتب بريدًا وكلمة مرور لا تقل عن ٦ أحرف');return}
+  /* بلا تأكيد، خطأٌ مطبعي واحد يحبس المعلّم خارج حسابه بلا وسيلة اكتشاف */
+  if(pw!==pw2){toast('كلمتا المرور غير متطابقتين');return}
+  try{
+    const sb=await ensureSb();
+    const {data,error}=await sb.auth.signUp({email:em,password:pw});
+    if(error)throw error;
+    if(data.session){_sbUser=data.user;await cloudReconcile();renderCloudUI();toast('✓ أُنشئ حسابك')}
+    else{$('cloud-body').innerHTML=`<div class="note"><span class="ni">📧</span><div>أرسلنا رابط تفعيل إلى <b>${esc(em)}</b>. افتح بريدك واضغط الرابط ثم عُد وسجّل الدخول.</div></div>`;}
+  }catch(e){toast(cloudErr(e))}
+}
+
+async function cloudSignIn(){
+  const em=($('cl-email').value||'').trim(),pw=$('cl-pass').value||'';
+  if(!em||!pw){toast('اكتب البريد وكلمة المرور');return}
+  try{
+    const sb=await ensureSb();
+    const {data,error}=await sb.auth.signInWithPassword({email:em,password:pw});
+    if(error)throw error;
+    _sbUser=data.user;renderCloudUI();
+    await loadSubscription();
+    await cloudReconcile();renderCloudUI();
+  }catch(e){toast(cloudErr(e))}
+}
+
+async function cloudSignOut(){
+  try{const sb=await ensureSb();await sb.auth.signOut()}catch(e){}
+  _sbUser=null;_sub=null;renderCloudUI();toast('خرجت من الحساب — بياناتك تبقى على هذا الجهاز');
+}
+
+async function cloudResetPass(){
+  const em=($('cl-email').value||'').trim();
+  if(!em){toast('اكتب بريدك أولًا');return}
+  try{
+    const sb=await ensureSb();
+    const {error}=await sb.auth.resetPasswordForEmail(em,{redirectTo:location.origin});
+    if(error)throw error;
+    toast('✓ أرسلنا رابط استعادة كلمة المرور لبريدك');
+  }catch(e){toast(cloudErr(e))}
+}
+
+async function cloudSyncNow(){
+  if(!_sbUser){toast('سجّل دخولك أولًا');return}
+  _syncing=true;renderCloudUI();
+  const ok=await cloudPush();
+  _syncing=false;renderCloudUI();
+  toast(ok?'✓ رُفعت نسختك للسحابة':'تعذّرت المزامنة — حاول لاحقًا');
+}
+
+function openCloudModal(){renderCloudUI();$('cloud-modal').classList.add('on')}
+
+function closeCloudModal(){$('cloud-modal').classList.remove('on')}
+
+function subState(){
+  if(_sub&&_sub.status==='active'){
+    const ok=!_sub.expires_at||new Date(_sub.expires_at)>new Date();
+    if(ok)return {kind:'active',until:_sub.expires_at};
+  }
+  const left=trialDaysLeft();
+  if(left>0)return {kind:'trial',left:left};
+  return {kind:'expired'};
+}
+
+function subBadge(){
+  if(!_sbUser)return '';
+  const st=subState();
+  if(st.kind==='active')return `<div class="note" style="border-color:#BFE3D0"><span class="ni">⭐</span><div>اشتراكك <b>فعّال</b>${st.until?` حتى ${fmtDate(st.until)}`:''}.</div></div>`;
+  if(st.kind==='trial')return `<div class="note"><span class="ni">🎁</span><div>الفترة التجريبية — باقٍ <b>${st.left}</b> يومًا.</div></div>`;
+  return `<div class="note" style="border-color:#E8C7BE"><span class="ni">⏳</span><div>انتهت فترتك التجريبية. اشترك لمواصلة مزايا الذكاء الاصطناعي.</div></div>`;
+}
+
+async function checkPaidReturn(){
+  if(!/[?&]paid=1/.test(location.search))return;
+  history.replaceState({},'',location.pathname);
+  if(!_sbUser)return;
+  toast('⏳ نتحقق من دفعتك...');
+  for(let i=0;i<6;i++){
+    await new Promise(r=>setTimeout(r,2500));
+    await loadSubscription();
+    if(_sub&&_sub.status==='active'){renderCloudUI();toast('✓ تم تفعيل اشتراكك — شكرًا لك');return}
+  }
+  toast('استلمنا دفعتك ويجري تفعيلها — حدّث الصفحة بعد قليل');
+}
+
+function deleteAccount(){
+  if(!_sbUser){toast('سجّل دخولك أولًا');return}
+  const b=$('cloud-body');if(!b)return;
+  b.innerHTML=`
+    <div class="note" style="border-color:#E8C7BE"><span class="ni">🚫</span><div>
+      حذف حساب <b>${esc(_sbUser.email||'')}</b> نهائيًا.<br>
+      سيُحذف من السحابة: بياناتك واشتراكك وحساب الدخول نفسه. <b>لا يمكن التراجع.</b>
+    </div></div>
+    <div style="margin:10px 0"><button class="btn btn-gold btn-sm" onclick="downloadBackup()">⬇️ نزّل نسخة احتياطية أولًا</button></div>
+    <div class="field"><label>للتأكيد، اكتب كلمة <b style="color:var(--danger)">حذف</b>:</label>
+      <input id="del-acc-confirm" placeholder="اكتب: حذف" oninput="delAccCheck()"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-ghost btn-sm" onclick="renderCloudUI()">إلغاء</button>
+      <button class="btn btn-sm" id="del-acc-btn" disabled style="background:var(--danger);color:#fff;opacity:.5" onclick="deleteAccountConfirmed()">احذف حسابي نهائيًا</button>
+    </div>`;
+}
+
+async function deleteAccountConfirmed(){
+  if(!_sbUser)return;
+  if(((($('del-acc-confirm')||{}).value)||'').trim()!=='حذف')return;
+  await (async function(){
+    toast('⏳ يحذف حسابك...');
+    try{
+      const res=await fetch('/api/delete-account',{method:'POST',headers:await aiHeaders()});
+      const d=await res.json().catch(function(){return {}});
+      if(!res.ok){toast(d.message||'تعذّر حذف الحساب، حاول مرة أخرى');return}
+      try{const sb=await ensureSb();await sb.auth.signOut()}catch(e){}
+      _sbUser=null;_sub=null;renderCloudUI();
+      toast('✓ حُذف حسابك نهائيًا — بيانات هذا الجهاز ما زالت عندك');
+    }catch(e){toast('تعذّر الاتصال بالخادم، حاول مرة أخرى')}
+  })();
+}
+
+function renderCloudUI(){
+  const b=$('cloud-body');if(!b)return;
+  if(_sbUser){
+    b.innerHTML=`
+      <div class="note"><span class="ni">✅</span><div>مسجّل الدخول باسم <b>${esc(_sbUser.email||'')}</b><br>
+      <small>بياناتك تُرفع تلقائيًا بعد كل تعديل، وتنزل على أي جهاز تسجّل دخولك فيه.</small></div></div>
+      ${subBadge()}
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+        <button class="btn btn-gold btn-sm" onclick="cloudSyncNow()">${_syncing?'<span class="spinner"></span> يرفع...':'⬆️ زامن الآن'}</button>
+        <button class="btn btn-primary btn-sm" onclick="openSubscribe()">⭐ الاشتراك</button>
+        <button class="btn btn-ghost btn-sm" onclick="cloudSignOut()">تسجيل خروج</button>
+      </div>
+      <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--line)">
+        <button class="btn btn-ghost btn-sm" onclick="downloadBackup()">⬇️ صدّر كل بياناتي</button>
+        <div style="font-size:.76rem;color:var(--ink-soft);margin:6px 0 12px;line-height:1.7">
+          ملف واحد فيه كل ما أدخلته: هويتك المهنية، والشواهد، والطلاب، والدرجات، والوثائق. حقّك في الوصول لبياناتك.
+        </div>
+        <button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="deleteAccount()">🚫 احذف حسابي نهائيًا</button>
+        <div style="font-size:.76rem;color:var(--ink-soft);margin-top:6px;line-height:1.7">
+          يحذف بياناتك من السحابة وحسابك معها. بيانات هذا الجهاز تبقى — امسحها من «حذف جميع البيانات».
+        </div>
+      </div>`;
+  }else{
+    b.innerHTML=`
+      <div class="note"><span class="ni">☁️</span><div>سجّل حسابًا لتُحفظ بياناتك في السحابة وتتزامن بين جوالك وحاسبك — ولا تضيع لو تغيّر جهازك.</div></div>
+      <div class="field" style="margin-top:12px"><label>البريد الإلكتروني</label><input id="cl-email" type="email" placeholder="you@example.com" autocomplete="email"></div>
+      <div class="field"><label>كلمة المرور</label><input id="cl-pass" type="password" placeholder="٦ أحرف فأكثر" autocomplete="current-password"></div>
+      <div class="field"><label>تأكيد كلمة المرور <small style="font-weight:400;color:var(--ink-soft)">— للحساب الجديد فقط</small></label><input id="cl-pass2" type="password" placeholder="أعد كتابتها" autocomplete="new-password"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
+        <button class="btn btn-gold btn-sm" onclick="cloudSignIn()">دخول</button>
+        <button class="btn btn-primary btn-sm" onclick="cloudSignUp()">حساب جديد</button>
+        <button class="btn btn-ghost btn-sm" onclick="cloudResetPass()">نسيت كلمة المرور</button>
+      </div>`;
+  }
+}
+
+function trialDaysLeft(){
+  const created=(_sbUser&&_sbUser.created_at)||S.registeredAt;
+  if(!created)return 0;
+  const used=Math.floor((Date.now()-new Date(created).getTime())/86400000);
+  return Math.max(0,SUB_TRIAL_DAYS-used);
+}
+
+function localHasData(){
+  return !!(S.name||S.school||(S.students&&S.students.length)||(S.lessons&&S.lessons.length)
+    ||S.standards.reduce((a,s)=>a+s.ev.length,0));
+}
+
+async function loadSubscription(){
+  if(!_sbUser){_sub=null;return null}
+  try{
+    const sb=await ensureSb();
+    const {data}=await sb.from('subscriptions').select('status,plan,expires_at').maybeSingle();
+    _sub=data||{status:'free'};
+  }catch(e){_sub={status:'free'}}
+  return _sub;
+}
+
+function delAccCheck(){
+  const v=(($('del-acc-confirm')||{}).value||'').trim();
+  const b=$('del-acc-btn');if(!b)return;
+  b.disabled=(v!=='حذف');
+  b.style.opacity=b.disabled?'.5':'1';
+}
+
+/* استعادة الجلسة عند فتح التطبيق: المعلّم الذي سجّل دخوله مرة لا
+   يُطالَب به كل مرة، ونسخته السحابية تُسحب إن كان الجهاز فارغًا. */
+(async function restoreCloudSession(){
+  try{
+    const sb=await ensureSb();
+    const {data}=await sb.auth.getSession();
+    if(data&&data.session){
+      _sbUser=data.session.user;
+      if(typeof renderCloudUI==='function')renderCloudUI();
+      if(typeof loadSubscription==='function')
+        loadSubscription().then(function(){
+          if(typeof renderCloudUI==='function')renderCloudUI();
+          if(typeof checkPaidReturn==='function')checkPaidReturn();
+        });
+      try{
+        const r=await cloudPull();
+        if(r&&r.state&&Object.keys(r.state).length>3&&!localHasData())applyRemote(r);
+      }catch(e){}
+    }
+  }catch(e){}
+})();
 
 /* ══════════ 🎙️ محرّك الإدخال الصوتي المشترك ══════════
    مصدر واحد لكل مواضع الميكروفون في التطبيق.
