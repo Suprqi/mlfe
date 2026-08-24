@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>مَلَفّي — معرض لقطات الواجهة</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#191325;
+  --plum:#3B2A5C;
+  --plum-deep:#241A3A;
+  --sand:#E7D7B0;
+  --sand-dim:#CBB98A;
+  --seal:#12A05F;
+  --paper:#EFECE4;
+  --rule:#CFC7B6;
+  --muted:#6E6880;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{animation:none!important;transition:none!important}}
+body{
+  font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;
+  background:var(--paper);color:var(--ink);line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1120px;margin:0 auto;padding:0 20px}
+
+/* ── رأس القسم ── */
+.gal{padding:72px 0 88px}
+.eyebrow{
+  font-family:'IBM Plex Mono',monospace;font-size:.72rem;letter-spacing:.18em;
+  color:var(--seal);text-transform:uppercase;margin-bottom:14px;display:block;
+}
+.gal h2{
+  font-family:'IBM Plex Sans Arabic',serif;font-weight:600;
+  font-size:clamp(1.75rem,4.6vw,2.9rem);line-height:1.35;letter-spacing:-.01em;
+  max-width:20ch;margin-bottom:14px;
+}
+.gal h2 em{font-style:normal;color:var(--plum);position:relative;white-space:nowrap}
+.gal h2 em::after{
+  content:"";position:absolute;right:0;left:0;bottom:.12em;height:.34em;
+  background:var(--sand);z-index:-1;border-radius:2px;
+}
+.gal .dek{max-width:56ch;color:var(--muted);font-size:1.02rem;margin-bottom:34px}
+
+/* ── شريط التصفية ── */
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:30px;border-top:1px solid var(--rule);padding-top:22px}
+.chip{
+  font:inherit;font-size:.86rem;font-weight:600;cursor:pointer;
+  background:transparent;color:var(--muted);
+  border:1px solid var(--rule);border-radius:100px;padding:7px 17px;
+  transition:background .18s,color .18s,border-color .18s;
+}
+.chip:hover{border-color:var(--plum);color:var(--plum)}
+.chip[aria-pressed="true"]{background:var(--plum);border-color:var(--plum);color:#fff}
+.chip:focus-visible{outline:2px solid var(--seal);outline-offset:2px}
+
+/* ── الشبكة ── */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(232px,1fr));gap:26px 22px}
+figure.shot{margin:0;display:flex;flex-direction:column;gap:12px}
+figure.shot[hidden]{display:none}
+
+/* إطار الجوال */
+.phone{
+  position:relative;border-radius:26px;padding:8px;
+  background:linear-gradient(160deg,var(--plum-deep),#0F0B18);
+  box-shadow:0 18px 40px -22px rgba(25,19,37,.75), 0 2px 0 rgba(255,255,255,.06) inset;
+  aspect-ratio:9/19.5;overflow:hidden;
+}
+.phone::before{
+  content:"";position:absolute;top:11px;left:50%;transform:translateX(-50%);
+  width:52px;height:5px;border-radius:100px;background:rgba(255,255,255,.22);z-index:3;
+}
+.screen{
+  position:relative;width:100%;height:100%;border-radius:19px;overflow:hidden;
+  background:#fff;display:flex;align-items:center;justify-content:center;
+}
+.screen img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block}
+
+/* حالة الفراغ داخل الإطار */
+.empty{
+  width:100%;height:100%;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:9px;text-align:center;padding:20px;
+  background:
+    repeating-linear-gradient(45deg,#F4F2EC 0 9px,#EDEAE1 9px 18px);
+  color:#8A8397;
+}
+.empty .fname{
+  font-family:'IBM Plex Mono',monospace;font-size:.68rem;
+  background:#fff;border:1px solid var(--rule);border-radius:6px;
+  padding:5px 9px;color:var(--plum);direction:ltr;
+}
+.empty .hint{font-size:.72rem;line-height:1.6;max-width:22ch}
+
+/* بطاقة الوصف */
+figcaption .num{
+  font-family:'IBM Plex Mono',monospace;font-size:.7rem;color:var(--seal);
+  letter-spacing:.1em;display:block;margin-bottom:3px;
+}
+figcaption .ttl{font-family:'IBM Plex Sans Arabic',serif;font-size:1.02rem;font-weight:600;line-height:1.5;margin-bottom:4px}
+figcaption .txt{font-size:.85rem;color:var(--muted);line-height:1.7}
+
+/* زر استبدال محلي */
+.swap{
+  margin-top:8px;font:inherit;font-size:.76rem;font-weight:600;cursor:pointer;
+  background:#fff;border:1px dashed var(--rule);border-radius:8px;
+  padding:6px 12px;color:var(--plum);width:100%;
+  transition:border-color .18s,color .18s;
+}
+.swap:hover{border-color:var(--seal);color:var(--seal)}
+.swap:focus-visible{outline:2px solid var(--seal);outline-offset:2px}
+input[type=file]{display:none}
+
+/* ── إرشاد الرفع ── */
+.howto{
+  margin-top:44px;border:1px solid var(--rule);border-radius:16px;
+  background:#fff;padding:26px 26px 22px;
+}
+.howto h3{font-family:'IBM Plex Sans Arabic',serif;font-size:1.08rem;font-weight:600;margin-bottom:12px}
+.howto ol{margin:0;padding-right:20px;font-size:.9rem;color:var(--muted);line-height:2}
+.howto code{
+  font-family:'IBM Plex Mono',monospace;font-size:.82rem;direction:ltr;display:inline-block;
+  background:var(--paper);border:1px solid var(--rule);border-radius:5px;padding:1px 7px;color:var(--plum);
+}
+.howto .note{
+  margin-top:14px;padding-top:14px;border-top:1px solid var(--rule);
+  font-size:.84rem;color:var(--muted);
+}
+
+@media(max-width:640px){
+  .gal{padding:52px 0 64px}
+  .grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:22px 14px}
+  figcaption .txt{display:none}
+}
+</style>
+</head>
+<body>
+
+<section class="gal" id="gallery">
+  <div class="wrap">
+    <span class="eyebrow">معرض الواجهة</span>
+    <h2>الشاشات التي يقضي فيها المعلّم <em>خمس دقائق</em> يوميًا</h2>
+    <p class="dek">لقطات فعلية من التطبيق أثناء الاستخدام — لا رسوم تخيّلية. كل شاشة تؤدي مهمة واحدة، والملف يتراكم منها تلقائيًا.</p>
+
+    <div class="filters" role="group" aria-label="تصفية اللقطات">
+      <button class="chip" aria-pressed="true" data-f="all">الكل</button>
+      <button class="chip" aria-pressed="false" data-f="build">بناء الملف</button>
+      <button class="chip" aria-pressed="false" data-f="output">المخرَج</button>
+      <button class="chip" aria-pressed="false" data-f="lead">القيادة المدرسية</button>
+    </div>
+
+    <div class="grid" id="grid"></div>
+
+    <div class="howto">
+      <h3>كيف تضع لقطاتك</h3>
+      <ol>
+        <li>أنشئ مجلدًا باسم <code>shots</code> بجانب هذا الملف.</li>
+        <li>سمِّ كل لقطة بالاسم المكتوب داخل إطارها، مثل <code>shots/01-home.png</code>.</li>
+        <li>حدِّث الصفحة — تظهر اللقطات مكان الإطارات الفارغة.</li>
+      </ol>
+      <p class="note">للمعاينة السريعة على الجوال قبل الرفع: اضغط «اختر لقطة» تحت أي إطار. المعاينة مؤقتة في المتصفح ولا تُحفظ.</p>
+    </div>
+  </div>
+</section>
+
+<script>
+const SHOTS=[
+  {f:'01-home.png',      cat:'build',  t:'الرئيسية',                d:'مؤشر الجاهزية وأقرب المهام، بلا تنقّل.'},
+  {f:'02-standards.png', cat:'build',  t:'عناصر الأداء الوظيفي',    d:'الـ١١ عنصرًا بأوزانها الرسمية وعدد شواهد كل عنصر.'},
+  {f:'03-evidence.png',  cat:'build',  t:'إضافة شاهد',              d:'صوّر الورقة، واختر السجل، واكتب الوصف — انتهى.'},
+  {f:'04-record.png',    cat:'build',  t:'ربط الشاهد بسجله',        d:'٤٥ سجلًا مرجعيًا جاهزًا تحت العناصر الأحد عشر.'},
+  {f:'05-excellence.png',cat:'build',  t:'مؤشر التميز',             d:'تغطية موزونة تُظهر النواقص مرتّبة بالوزن لا بالعدد.'},
+  {f:'06-preview.png',   cat:'output', t:'معاينة الملف',            d:'الملف كاملًا قبل الطباعة، بغلافه وفهرسه وترقيمه.'},
+  {f:'07-themes.png',    cat:'output', t:'هويات الملف',             d:'ست هويات لونية بنفس التخطيط الرسمي.'},
+  {f:'08-page.png',      cat:'output', t:'صفحة شاهد',               d:'اسم السجل ونص المتطلب في الرأس، والشاهد في الجسم.'},
+  {f:'09-eval.png',      cat:'lead',   t:'تقييم المعلّم',           d:'لمدير المدرسة: تقييم موزون على العناصر نفسها.'},
+  {f:'10-report.png',    cat:'lead',   t:'تقرير التقييم',           d:'جدول الفترات والأوزان والنسبة النهائية، جاهز للطباعة.'}
+];
+
+const grid=document.getElementById('grid');
+grid.innerHTML=SHOTS.map((s,i)=>{
+  const n=String(i+1).padStart(2,'0');
+  return `<figure class="shot" data-cat="${s.cat}">
+    <div class="phone"><div class="screen" id="scr-${i}">
+      <div class="empty">
+        <span class="fname">shots/${s.f}</span>
+        <span class="hint">ضع اللقطة بهذا الاسم</span>
+      </div>
+    </div></div>
+    <figcaption>
+      <span class="num">${n}</span>
+      <span class="ttl">${s.t}</span>
+      <span class="txt">${s.d}</span>
+    </figcaption>
+    <button class="swap" type="button" data-i="${i}">اختر لقطة للمعاينة</button>
+    <input type="file" accept="image/*" id="file-${i}">
+  </figure>`;
+}).join('');
+
+/* تحميل اللقطات إن وُجدت في مجلد shots */
+SHOTS.forEach((s,i)=>{
+  const img=new Image();
+  img.onload=()=>{document.getElementById('scr-'+i).innerHTML='';document.getElementById('scr-'+i).appendChild(img);img.alt=s.t};
+  img.onerror=()=>{};
+  img.src='shots/'+s.f;
+});
+
+/* معاينة محلية */
+grid.addEventListener('click',e=>{
+  const b=e.target.closest('.swap');if(!b)return;
+  document.getElementById('file-'+b.dataset.i).click();
+});
+grid.addEventListener('change',e=>{
+  const inp=e.target;if(inp.type!=='file'||!inp.files[0])return;
+  const i=inp.id.split('-')[1];
+  const r=new FileReader();
+  r.onload=ev=>{
+    const scr=document.getElementById('scr-'+i);
+    scr.innerHTML='';
+    const im=new Image();im.src=ev.target.result;im.alt=SHOTS[i].t;
+    scr.appendChild(im);
+  };
+  r.readAsDataURL(inp.files[0]);
+});
+
+/* التصفية */
+document.querySelector('.filters').addEventListener('click',e=>{
+  const b=e.target.closest('.chip');if(!b)return;
+  document.querySelectorAll('.chip').forEach(c=>c.setAttribute('aria-pressed',String(c===b)));
+  const f=b.dataset.f;
+  document.querySelectorAll('figure.shot').forEach(fig=>{
+    fig.hidden=(f!=='all'&&fig.dataset.cat!==f);
+  });
+});
+</script>
+</body>
+</html>

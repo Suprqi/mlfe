@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>مَلَفّي — الرحلة الحيّة</title>
+<meta name="description" content="جرّب بنفسك كيف يتراكم ملف الإنجاز: أضف شواهد، وشاهد التغطية الموزونة ترتفع، ثم ولّد الملف بترقيمه وفهرسه.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#191325;--plum:#3B2A5C;--plum-deep:#241A3A;--night:#120E1E;
+  --sand:#E7D7B0;--seal:#12A05F;--seal-deep:#0B6B41;
+  --paper:#EFECE4;--rule:#CFC7B6;--rule-dim:#E2DCCF;--muted:#6E6880;--muted-d:#B3A9C6;
+  --warn:#B0472F;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{animation:none!important;transition:none!important}}
+body{font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;background:var(--paper);color:var(--ink);line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:960px;margin:0 auto;padding:0 20px}
+.mono{font-family:'IBM Plex Mono',monospace}
+a{color:inherit}
+
+/* شريط */
+.nav{position:sticky;top:0;z-index:60;background:rgba(239,236,228,.9);backdrop-filter:blur(12px);border-bottom:1px solid var(--rule-dim)}
+.nav .wrap{display:flex;align-items:center;gap:14px;height:60px}
+.brand{font-family:'IBM Plex Sans Arabic',serif;font-weight:700;font-size:1.18rem;display:flex;align-items:center;gap:9px;text-decoration:none}
+.brand .mark{width:27px;height:27px;border-radius:8px;background:var(--plum);color:var(--sand);display:grid;place-items:center;font-size:.82rem}
+.nav .back{margin-inline-start:auto;font-size:.88rem;font-weight:600;color:var(--muted);text-decoration:none}
+.nav .back:hover{color:var(--plum)}
+
+/* رأس */
+.head{padding:56px 0 34px;text-align:center}
+.head .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:.72rem;letter-spacing:.18em;color:var(--seal);margin-bottom:12px;display:block}
+.head h1{font-family:'IBM Plex Sans Arabic',serif;font-weight:700;font-size:clamp(1.8rem,5.2vw,3rem);line-height:1.3;letter-spacing:-.015em;margin-bottom:12px}
+.head p{color:var(--muted);max-width:52ch;margin:0 auto;font-size:1rem}
+
+/* شريط التقدّم */
+.rail{position:sticky;top:60px;z-index:50;background:var(--paper);border-bottom:1px solid var(--rule-dim);padding:12px 0}
+.rail ol{list-style:none;display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+.rail li{font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--muted);border:1px solid var(--rule);border-radius:100px;padding:4px 13px;transition:.2s}
+.rail li.on{background:var(--plum);border-color:var(--plum);color:#fff}
+.rail li.done{border-color:var(--seal);color:var(--seal-deep)}
+
+/* أفعال */
+.act{padding:52px 0;border-bottom:1px solid var(--rule-dim)}
+.act .n{font-family:'IBM Plex Mono',monospace;font-size:.74rem;letter-spacing:.16em;color:var(--seal);display:block;margin-bottom:10px}
+.act h2{font-family:'IBM Plex Sans Arabic',serif;font-weight:600;font-size:clamp(1.4rem,3.6vw,2rem);line-height:1.4;margin-bottom:10px}
+.act .say{color:var(--muted);max-width:58ch;margin-bottom:26px}
+
+/* لوحة العناصر */
+.panel{background:#fff;border:1px solid var(--rule-dim);border-radius:18px;overflow:hidden}
+.panel .ph{display:flex;align-items:center;gap:12px;padding:15px 18px;border-bottom:1px solid var(--rule-dim);background:#FBFAF7}
+.panel .ph b{font-family:'IBM Plex Sans Arabic',serif;font-size:1rem}
+.panel .ph .hint{margin-inline-start:auto;font-size:.78rem;color:var(--muted)}
+.el{display:grid;grid-template-columns:32px 1fr auto auto;gap:11px;align-items:center;padding:11px 18px;border-bottom:1px solid var(--rule-dim);font-size:.92rem}
+.el:last-child{border-bottom:0}
+.el .i{font-family:'IBM Plex Mono',monospace;font-size:.74rem;color:var(--muted)}
+.el .t{line-height:1.5}
+.el .wt{font-family:'IBM Plex Mono',monospace;font-size:.74rem;color:#fff;background:var(--seal);border-radius:100px;padding:1px 9px;white-space:nowrap}
+.el .wt.low{background:var(--muted)}
+.el .dots{display:flex;gap:4px;align-items:center}
+.dot{width:11px;height:11px;border-radius:50%;border:1.5px solid var(--rule);background:#fff}
+.dot.on{background:var(--seal);border-color:var(--seal)}
+.add{font:inherit;font-size:.8rem;font-weight:700;cursor:pointer;background:var(--paper);border:1px solid var(--rule);border-radius:9px;width:30px;height:30px;color:var(--plum);transition:.16s}
+.add:hover{background:var(--plum);border-color:var(--plum);color:#fff}
+.add:focus-visible{outline:2px solid var(--seal);outline-offset:2px}
+.el.full{background:#F6FBF8}
+
+/* عدّاد */
+.meter{display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:center;background:var(--night);color:#fff;border-radius:18px;padding:22px 24px;margin-top:18px}
+.gauge{position:relative;width:96px;height:96px;flex:0 0 auto}
+.gauge svg{transform:rotate(-90deg)}
+.gauge .val{position:absolute;inset:0;display:grid;place-items:center;font-family:'IBM Plex Mono',monospace;font-size:1.3rem;color:var(--sand)}
+.meter .lines b{display:block;font-family:'IBM Plex Sans Arabic',serif;font-size:1.02rem;margin-bottom:5px}
+.meter .lines span{font-size:.88rem;color:var(--muted-d);display:block}
+.meter .lines .hot{color:var(--sand)}
+@media(max-width:560px){.meter{grid-template-columns:1fr;justify-items:center;text-align:center}}
+
+/* مقارنة الوزن */
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px}
+.cbox{background:#fff;border:1px solid var(--rule-dim);border-radius:14px;padding:18px}
+.cbox .lbl{font-size:.82rem;color:var(--muted);margin-bottom:6px}
+.cbox .big{font-family:'IBM Plex Mono',monospace;font-size:1.6rem;color:var(--plum)}
+.cbox.bad .big{color:var(--warn)}
+@media(max-width:560px){.compare{grid-template-columns:1fr}}
+
+/* تنبيه الوصف */
+.gate{background:#fff;border:1px solid var(--rule-dim);border-radius:16px;padding:22px}
+.gate .msg{display:flex;gap:12px;align-items:flex-start;background:#FBF1EE;border:1px solid #EBCFC7;border-radius:12px;padding:14px 16px;font-size:.9rem;color:#7A3223;margin-bottom:16px}
+.gate .msg b{flex:0 0 auto}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:.84rem;font-weight:600;margin-bottom:5px}
+.field input,.field select{width:100%;font:inherit;font-size:.9rem;padding:10px 13px;border:1.5px solid var(--rule);border-radius:10px;background:#fff}
+.field input:focus,.field select:focus{outline:2px solid var(--seal);outline-offset:1px;border-color:var(--seal)}
+.mini{font-size:.78rem;color:var(--muted);margin-top:5px}
+
+/* شرائح الملف */
+.filmstrip{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:12px;margin-top:20px}
+.pg{aspect-ratio:1/1.414;background:#fff;border:1px solid var(--rule-dim);border-radius:6px;position:relative;overflow:hidden;box-shadow:0 8px 18px -14px rgba(0,0,0,.5);font-size:.5rem}
+.pg .lab{position:absolute;inset:auto 0 0 0;background:#fff;border-top:2px solid var(--seal);padding:4px 6px;display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:.52rem;color:#5A5A5A}
+.pg .lab b{font-family:'IBM Plex Sans Arabic',serif;color:#123A3C;font-size:.5rem}
+.pg .ttl{position:absolute;top:0;inset-inline:0;padding:9px 8px;font-family:'IBM Plex Sans Arabic',serif;font-size:.56rem;line-height:1.5;color:#123A3C}
+.pg.cover{background:linear-gradient(115deg,#DCF0E7 0 26%,#7FCBAB 26% 34%,#fff 34%)}
+.pg.div{background:linear-gradient(115deg,#DCF0E7 0 22%,#7FCBAB 22% 29%,#fff 29%)}
+.pg.ev .bandm{height:15%;background:#123A3C;border-top:3px solid var(--seal)}
+.pg.ev .docm{margin:14% 12% 0;height:34%;border:1px dashed #C7D8D3;background:#F7FBF9;border-radius:3px}
+.pg.toc .rowm{height:3px;background:var(--rule-dim);margin:0 12% 5px;border-radius:2px}
+.pg.toc .rowm:first-of-type{margin-top:34%}
+
+/* أزرار */
+.btn{display:inline-flex;align-items:center;gap:9px;font:inherit;font-weight:600;font-size:.95rem;text-decoration:none;border-radius:11px;padding:13px 24px;cursor:pointer;border:1px solid transparent;transition:transform .16s,background .16s}
+.btn:focus-visible{outline:2px solid var(--seal);outline-offset:3px}
+.btn-main{background:var(--plum);color:#fff}
+.btn-main:hover{transform:translateY(-2px)}
+.btn-main[disabled]{opacity:.4;cursor:not-allowed;transform:none}
+.btn-ghost{background:transparent;color:var(--ink);border-color:var(--rule)}
+.btn-ghost:hover{border-color:var(--plum);color:var(--plum)}
+.rowbtn{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
+
+/* الخاتمة */
+.end{padding:64px 0;background:var(--plum);color:#fff;text-align:center}
+.end h2{font-family:'IBM Plex Sans Arabic',serif;font-weight:600;font-size:clamp(1.5rem,4.2vw,2.3rem);max-width:22ch;margin:0 auto 12px;line-height:1.4}
+.end p{color:#D8CDEA;max-width:48ch;margin:0 auto 26px}
+.end .btn-onDark{background:var(--sand);color:var(--plum-deep)}
+footer{background:var(--night);color:var(--muted-d);padding:28px 0;font-size:.84rem;text-align:center}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="/"><span class="mark">مَ</span>مَلَفّي</a>
+    <a class="back" href="/">→ عودة للصفحة الرئيسية</a>
+  </div>
+</header>
+
+<div class="head wrap">
+  <span class="eyebrow">الرحلة الحيّة</span>
+  <h1>جرّبها بنفسك، لا تقرأ عنها</h1>
+  <p>هذه ليست صورًا. الأرقام أدناه تُحسب بالمعادلة نفسها المستخدمة داخل البرنامج. اضغط، وراقب ما يتغيّر.</p>
+</div>
+
+<div class="rail">
+  <div class="wrap"><ol id="rail">
+    <li class="on">٠١ الملف الفارغ</li>
+    <li>٠٢ أضف شواهد</li>
+    <li>٠٣ الوزن يفرق</li>
+    <li>٠٤ الوصف شرط</li>
+    <li>٠٥ الملف يتولّد</li>
+  </ol></div>
+</div>
+
+<!-- ٠١ + ٠٢ -->
+<section class="act wrap" id="a1">
+  <span class="n">٠١ — ٠٢</span>
+  <h2>ابدأ من ملف فارغ، وأضف شاهدًا</h2>
+  <p class="say">أمامك عناصر الأداء الوظيفي الأحد عشر بأوزانها الرسمية. اضغط <b>+</b> بجانب أي عنصر لتضيف شاهدًا. النقاط تُظهر التوثيق: نقطة واحدة = نصف تغطية، نقطتان = تغطية كاملة.</p>
+
+  <div class="panel">
+    <div class="ph"><b>عناصر الأداء الوظيفي</b><span class="hint">اضغط + لإضافة شاهد</span></div>
+    <div id="els"></div>
+  </div>
+
+  <div class="meter">
+    <div class="gauge">
+      <svg width="96" height="96" viewBox="0 0 96 96" aria-hidden="true">
+        <circle cx="48" cy="48" r="40" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="9"/>
+        <circle id="arc" cx="48" cy="48" r="40" fill="none" stroke="#12A05F" stroke-width="9"
+                stroke-linecap="round" stroke-dasharray="251.3" stroke-dashoffset="251.3" style="transition:stroke-dashoffset .5s"/>
+      </svg>
+      <span class="val" id="pct">٠٪</span>
+    </div>
+    <div class="lines">
+      <b>التغطية الموزونة</b>
+      <span id="line1">لا شواهد بعد. كل عنصر يزن بحسب وزنه الرسمي، لا بالتساوي.</span>
+      <span class="hot" id="line2"></span>
+    </div>
+  </div>
+
+  <div class="rowbtn">
+    <button class="btn btn-ghost" id="fill">املأ نموذجًا واقعيًا</button>
+    <button class="btn btn-ghost" id="reset">تفريغ</button>
+  </div>
+</section>
+
+<!-- ٠٣ -->
+<section class="act wrap" id="a3">
+  <span class="n">٠٣</span>
+  <h2>لماذا الوزن يغيّر القرار</h2>
+  <p class="say">لو كان الحساب بالتساوي، لاستوى نقصُ عنصرين وزنهما ٥٪ مع نقصِ عنصرين وزنهما ١٠٪. جرّب الحالتين وقارن.</p>
+  <div class="compare">
+    <div class="cbox"><div class="lbl">ينقصك عنصران بوزن ٥٪ (تهيئة البيئة + الإدارة الصفية)</div><div class="big" id="c5">٩٠٪</div></div>
+    <div class="cbox bad"><div class="lbl">ينقصك عنصران بوزن ١٠٪ (الواجبات الوظيفية + المجتمع المهني)</div><div class="big" id="c10">٨٠٪</div></div>
+  </div>
+  <p class="mini">فرق عشر نقاط كاملة — يقرر أيّهما تعالج أولًا. في مَلَفّي تظهر النواقص مرتّبة بالوزن تنازليًا، فتبدأ بالأثقل.</p>
+</section>
+
+<!-- ٠٤ -->
+<section class="act wrap" id="a4">
+  <span class="n">٠٤</span>
+  <h2>الوصف ليس اختياريًا</h2>
+  <p class="say">وصف الشاهد ليس حقلًا تكميليًا — هو النص الذي يظهر في رأس الصفحة ويشرح للمراجع ما الذي يثبته هذا الشاهد. البرنامج يوقف التوليد حتى يكتمل.</p>
+  <div class="gate">
+    <div class="msg" id="gmsg"><b>⚠️</b><span>شاهد واحد بلا وصف — لن يُولَّد الملف قبل إكماله.</span></div>
+    <div class="field">
+      <label for="g-rec">السجل</label>
+      <select id="g-rec">
+        <option>سجل الدوام الرسمي (حضوري / المدرسة الرقمية)</option>
+        <option>سجل المناوبة والإشراف اليومي</option>
+        <option selected>سجل جدول الانتظار</option>
+        <option>خطة توزيع المنهج</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="g-note">وصف الشاهد</label>
+      <input id="g-note" placeholder="مثال: توثيق تغطية حصص الاحتياط وحصص الغياب" autocomplete="off">
+      <p class="mini">هذا النص يظهر حرفيًا في رأس صفحة الشاهد.</p>
+    </div>
+    <div id="gprev" style="margin-top:16px"></div>
+  </div>
+</section>
+
+<!-- ٠٥ -->
+<section class="act wrap" id="a5">
+  <span class="n">٠٥</span>
+  <h2>الملف يتولّد بترقيمه وفهرسه</h2>
+  <p class="say">لا لصق ولا ترتيب. الغلاف والفهرس والأقسام والترقيم تُبنى من الشواهد التي أضفتها للتو — والفهرس يحسب أرقامه قبل بناء الصفحات فيطابقها دائمًا.</p>
+  <div class="rowbtn" style="margin-top:0">
+    <button class="btn btn-main" id="gen">ولّد الملف الآن</button>
+    <span class="mini" id="genhint" style="align-self:center">أضف شاهدين على الأقل أولًا.</span>
+  </div>
+  <div class="filmstrip" id="film" aria-live="polite"></div>
+</section>
+
+<section class="end">
+  <div class="wrap">
+    <h2>هذه الرحلة تتكرر خمس دقائق أسبوعيًا</h2>
+    <p>الفرق بين ملف يُبنى ليلة التقييم وملف يتراكم طوال العام.</p>
+    <a class="btn btn-onDark" href="/#gallery">شاهد الواجهة الفعلية</a>
+  </div>
+</section>
+
+<footer>مَلَفّي — من بجيلة للتقنية</footer>
+
+<script>
+const ELS=[
+ ['أداء الواجبات الوظيفية',10],['التفاعل مع المجتمع المهني',10],['التفاعل مع أولياء الأمور',10],
+ ['التنويع في استراتيجيات التدريس',10],['تحسين نتائج المتعلمين',10],['إعداد وتنفيذ خطة التعلم',10],
+ ['توظيف تقنيات ووسائل التعلم المناسبة',10],['تهيئة البيئة التعليمية',5],['الإدارة الصفية',5],
+ ['تحليل نتائج المتعلمين وتشخيص مستوياتهم',10],['تنويع أساليب التقويم',10]
+];
+const ar=n=>String(n).replace(/\d/g,d=>'٠١٢٣٤٥٦٧٨٩'[d]);
+let counts=ELS.map(()=>0);
+
+/* المعادلة نفسها المستخدمة في البرنامج */
+function coverage(c){
+  const wT=ELS.reduce((a,e)=>a+e[1],0);
+  const cov=ELS.reduce((a,e,i)=>a+e[1]*(c[i]===0?0:(c[i]===1?.5:1)),0);
+  return Math.round(cov/wT*100);
+}
+function gaps(c){
+  return ELS.map((e,i)=>({t:e[0],w:e[1],n:c[i]}))
+            .filter(x=>x.n===0).sort((a,b)=>b.w-a.w);
+}
+
+const elsBox=document.getElementById('els');
+function renderEls(){
+  elsBox.innerHTML=ELS.map(([t,w],i)=>{
+    const n=counts[i];
+    return `<div class="el ${n>=2?'full':''}">
+      <span class="i">${ar(String(i+1).padStart(2,'0'))}</span>
+      <span class="t">${t}</span>
+      <span class="wt ${w===5?'low':''}">${ar(w)}٪</span>
+      <span class="dots">
+        <span class="dot ${n>=1?'on':''}"></span><span class="dot ${n>=2?'on':''}"></span>
+        <button class="add" data-i="${i}" aria-label="أضف شاهدًا إلى ${t}">${n>=2?'−':'+'}</button>
+      </span>
+    </div>`;
+  }).join('');
+}
+function renderMeter(){
+  const p=coverage(counts);
+  document.getElementById('pct').textContent=ar(p)+'٪';
+  document.getElementById('arc').style.strokeDashoffset=String(251.3*(1-p/100));
+  const g=gaps(counts), total=counts.reduce((a,b)=>a+b,0);
+  document.getElementById('line1').textContent =
+    total===0 ? 'لا شواهد بعد. كل عنصر يزن بحسب وزنه الرسمي، لا بالتساوي.'
+              : `${ar(total)} شاهدًا موثّقًا — الضائع ${ar(100-p)}٪ من الأوزان.`;
+  document.getElementById('line2').textContent =
+    g.length ? `ابدأ بـ «${g[0].t}» — وزنه ${ar(g[0].w)}٪، وهو الأثقل بين النواقص.` :
+    (total? 'كل العناصر مغطّاة. الملف جاهز للطباعة.' : '');
+  document.getElementById('genhint').style.display = total>=2?'none':'inline';
+  document.getElementById('gen').disabled = total<2;
+}
+elsBox.addEventListener('click',e=>{
+  const b=e.target.closest('.add');if(!b)return;
+  const i=+b.dataset.i;
+  counts[i]= counts[i]>=2 ? 0 : counts[i]+1;
+  renderEls();renderMeter();markRail();
+});
+document.getElementById('fill').onclick=()=>{
+  counts=[2,2,1,2,2,2,1,0,0,2,1];renderEls();renderMeter();markRail();
+};
+document.getElementById('reset').onclick=()=>{
+  counts=ELS.map(()=>0);renderEls();renderMeter();markRail();
+  document.getElementById('film').innerHTML='';
+};
+
+/* ٠٣ — المقارنة محسوبة لا مكتوبة */
+(function(){
+  const a=ELS.map(()=>2); a[7]=0; a[8]=0;
+  const b=ELS.map(()=>2); b[0]=0; b[1]=0;
+  document.getElementById('c5').textContent=ar(coverage(a))+'٪';
+  document.getElementById('c10').textContent=ar(coverage(b))+'٪';
+})();
+
+/* ٠٤ — بوابة الوصف مع معاينة الرأس */
+const gn=document.getElementById('g-note'),gr=document.getElementById('g-rec'),
+      gp=document.getElementById('gprev'),gm=document.getElementById('gmsg');
+function gateRender(){
+  const note=gn.value.trim();
+  gm.style.display=note?'none':'flex';
+  gp.innerHTML=`<div style="border-radius:10px;overflow:hidden;border:1px solid var(--rule-dim)">
+    <div style="display:flex;background:#123A3C;border-top:4px solid var(--seal);min-height:62px">
+      <div style="flex:0 0 34%;display:flex;align-items:center;padding:10px 16px;font-family:'IBM Plex Sans Arabic',serif;font-size:.86rem;color:#fff">${gr.value}</div>
+      <div style="flex:0 0 12px;background:var(--seal);transform:skewX(-13deg)"></div>
+      <div style="flex:1;display:flex;align-items:center;padding:10px 16px;font-size:.8rem;color:${note?'#EAF3F0':'#8FA6A2'}">${note||'— هنا يظهر وصفك —'}</div>
+    </div>
+    <div style="background:#fff;padding:18px;text-align:center;font-size:.8rem;color:var(--muted)">صورة الشاهد</div>
+  </div>`;
+}
+gn.addEventListener('input',gateRender);gr.addEventListener('change',gateRender);gateRender();
+
+/* ٠٥ — توليد الملف بترقيم صحيح */
+document.getElementById('gen').onclick=()=>{
+  const active=ELS.map((e,i)=>({t:e[0],n:counts[i]})).filter(x=>x.n>0);
+  const secPages=active.map(a=>Math.ceil(a.n/2));
+  let n=1;const pages=[];
+  pages.push({k:'cover',t:'ملف إنجاز',p:n++});
+  const tocNo=n++;
+  pages.push({k:'toc',t:'فهرس الملف',p:tocNo});
+  pages.push({k:'div',t:'عناصر تقييم الأداء الوظيفي',p:n++});
+  pages.push({k:'crit',t:'العناصر وأوزانها',p:n++});
+  active.forEach((a,i)=>{
+    pages.push({k:'div',t:a.t,p:n++});
+    for(let j=0;j<secPages[i];j++)pages.push({k:'ev',t:a.t,p:n++});
+  });
+  document.getElementById('film').innerHTML=pages.map(pg=>{
+    const inner =
+      pg.k==='ev' ? `<div class="bandm"></div><div class="docm"></div>` :
+      pg.k==='toc'? `<div class="ttl">${pg.t}</div><div class="rowm"></div><div class="rowm"></div><div class="rowm"></div><div class="rowm"></div>` :
+      `<div class="ttl">${pg.t}</div>`;
+    return `<div class="pg ${pg.k}">${inner}<div class="lab"><b>ملف إنجاز</b><span>${ar(pg.p)}</span></div></div>`;
+  }).join('');
+  document.getElementById('film').scrollIntoView({behavior:'smooth',block:'nearest'});
+  markRail(true);
+};
+
+/* شريط التقدّم */
+function markRail(done){
+  const items=[...document.querySelectorAll('#rail li')];
+  const total=counts.reduce((a,b)=>a+b,0);
+  items.forEach(li=>li.classList.remove('on','done'));
+  let idx = total===0?0 : (total<2?1 : (done?4:2));
+  for(let i=0;i<idx;i++)items[i].classList.add('done');
+  items[idx].classList.add('on');
+  if(gn.value.trim()&&idx>=2)items[3].classList.add('done');
+}
+
+renderEls();renderMeter();markRail();
+</script>
+</body>
+</html>
