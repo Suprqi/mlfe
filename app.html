@@ -8751,10 +8751,12 @@ function generateAchievement(){
   const jobLine=[T(S.specialization)||T(S.subject),T(S.grade)].filter(Boolean).join(' — ');
   html+=pfPage(`<div class="pf-cover-in">
       <div class="pf-cover-badge"><b class="l1">ملف</b><b class="l2">إنجاز</b></div>
-      <div class="pf-cover-f"><span>${roleName()}</span><b>${esc(T(S.name)||'—')}</b></div>
+      ${T(S.name)?`<div class="pf-cover-f"><span>${roleName()}</span><b>${esc(T(S.name))}</b></div>`:''}
       ${jobLine?`<div class="pf-cover-f"><span>التخصص</span><b>${esc(jobLine)}</b></div>`:''}
       ${(S.role!=='principal'&&T(S.principal)&&T(S.principal)!==T(S.name))?`<div class="pf-cover-f"><span>${V('المدير','المديرة')}</span><b>${esc(T(S.principal))}</b></div>`:''}
-      <div class="pf-cover-f"><span>المدرسة</span><b>${esc(T(S.school)||'—')}</b></div>
+      ${/* الحقل الفارغ يسقط سطره: شرطة تحت «المدرسة» على غلاف وثيقة رسمية
+            تُقرأ خطأً في الطباعة لا حقلًا اختياريًا لم يُملأ. */''}
+      ${T(S.school)?`<div class="pf-cover-f"><span>المدرسة</span><b>${esc(T(S.school))}</b></div>`:''}
       ${S.pfStamp?`<div class="pf-cover-stamp">نسخة ${fmtDate(new Date().toISOString().slice(0,10))} · ${totalEv} ${totalEv===1?'شاهد':'شاهدًا'}</div>`:''}
     </div>`,{wave:true});
 
