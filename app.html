@@ -367,11 +367,11 @@ input,select,textarea{font-family:inherit;font-size:1rem}
 .cert-frame{position:relative;width:100%;overflow:hidden;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,.08)}
 .cert-bg-img{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;z-index:0}
 .cert-inner{position:absolute;inset:0;z-index:1;padding:12% 8% 4%;text-align:center;display:flex;flex-direction:column;align-items:center;line-height:1.3;overflow:hidden;box-sizing:border-box}
-.cert-bism{font-size:.62rem;color:var(--ink-soft);letter-spacing:.2px;margin-top:1%;flex-shrink:0}
+.cert-bism{font-size:.62rem;color:var(--ink-soft);margin-top:1%;flex-shrink:0}
 .cert-title-row{display:flex;align-items:center;gap:6px;margin:1.5% 0 0;width:100%;justify-content:center;flex-shrink:0}
 .cert-title-row .ln{flex:0 0 20px;height:1px;background:var(--cert-ink);opacity:.5}
 .cert-orn{color:var(--cert-ink);font-size:.5rem;transform:rotate(45deg);display:inline-block;opacity:.75}
-.cert-title{font-family:var(--cert-font,'IBM Plex Sans Arabic'),sans-serif;font-weight:700;font-size:1.25rem;color:var(--cert-ink);letter-spacing:.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:80%}
+.cert-title{font-family:var(--cert-font,'IBM Plex Sans Arabic'),sans-serif;font-weight:700;font-size:1.25rem;color:var(--cert-ink);;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:80%}
 .cert-lead{font-size:.56rem;color:var(--ink-soft);max-width:82%;margin-top:1.2%;line-height:1.5;flex-shrink:0}
 .cert-name-wrap{margin:1.5% 0 0;max-width:88%;flex-shrink:0}
 .cert-name{font-family:var(--cert-font,'IBM Plex Sans Arabic'),sans-serif;font-weight:700;font-size:1.05rem;color:var(--ink);padding:0 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;max-width:100%}
@@ -1235,7 +1235,7 @@ input,select,textarea{font-family:inherit;font-size:1rem}
 .pf-stamp-opt{display:flex;align-items:center;gap:8px;margin-top:9px;padding-top:9px;
   border-top:1px dashed var(--line);font-size:.82rem;color:var(--ink-soft);cursor:pointer}
 .pf-stamp-opt input{width:17px;height:17px;accent-color:var(--teal);cursor:pointer}
-.pf-cover-stamp{margin-top:5cqw;font-size:2.1cqw;color:rgba(255,255,255,.72);letter-spacing:.02em}
+.pf-cover-stamp{margin-top:5cqw;font-size:2.1cqw;color:rgba(255,255,255,.72)}
 
 /* تذييل التطبيق — روابط نظامية */
 /* تذييل التطبيق — روابط نظامية */
@@ -1321,7 +1321,7 @@ input,select,textarea{font-family:inherit;font-size:1rem}
 .anon-ctx{font-size:.78rem;color:var(--ink-soft);background:var(--paper);border-radius:9px;padding:7px 10px;margin-top:8px;line-height:1.7}
 .anon-acts{display:flex;flex-direction:column;gap:10px;margin-top:28px}
 .anon-acts .btn{width:100%;justify-content:center}
-.anon-mark{text-align:center;font-size:.8rem;letter-spacing:.14em;color:#9AA5A0;border:1px dashed #C9D2CE;border-radius:9px;padding:7px;margin-bottom:16px}
+.anon-mark{text-align:center;font-size:.8rem;color:#9AA5A0;border:1px dashed #C9D2CE;border-radius:9px;padding:7px;margin-bottom:16px}
 .anon-foot{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);font-size:.72rem;color:#8A9499;text-align:center}
 #anon-wrap{display:none}
 body.anon-printing .main,body.anon-printing .bottom-nav,body.anon-printing .anon-overlay{display:none!important}
@@ -1336,13 +1336,13 @@ body.anon-printing #anon-wrap{display:block!important}
 /* جدول التقرير — على نمط النماذج الرسمية */
 .rpt-tbl{width:100%;border-collapse:collapse;margin-top:8px}
 .rpt-tbl th{background:#EFEFEF;color:#111;font-weight:700;text-align:center;
-  border:1px solid #999;padding:8px 10px;vertical-align:middle;letter-spacing:.02em}
+  border:1px solid #999;padding:8px 10px;vertical-align:middle}
 .rpt-tbl td{border:1px solid #999;padding:8px 12px;vertical-align:middle;line-height:1.9}
 .rpt-sub{width:100%;border-collapse:collapse}
 .rpt-sub td{border:1px solid #BBB;padding:5px 9px;font-size:.92em}
 .rpt-signs{display:flex;justify-content:space-between;gap:14px;margin-top:22px;flex-wrap:wrap;font-size:.86rem}
 .rpt-signs>div{flex:1;min-width:170px;text-align:center}
-.rpt-tbl th.rpt-head{background:#E4E4E4;font-size:1.05rem;letter-spacing:.06em;padding:11px}
+.rpt-tbl th.rpt-head{background:#E4E4E4;font-size:1.05rem;padding:11px}
 
 .moe-logos{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:nowrap}
 .moe-logos img{max-width:62px;max-height:52px;object-fit:contain;display:block}
@@ -1394,7 +1394,7 @@ body.anon-printing #anon-wrap{display:block!important}
 .doc[data-lay="cards"] .rpt-tbl tr{display:block;border:1px solid var(--doc-c);border-radius:12px;
   padding:11px 14px;margin-bottom:9px;page-break-inside:avoid}
 .doc[data-lay="cards"] .rpt-tbl th{display:block;background:none!important;border:none;padding:0 0 5px;
-  text-align:right;font-size:.82rem;color:var(--doc-c);letter-spacing:.02em}
+  text-align:right;font-size:.82rem;color:var(--doc-c)}
 .doc[data-lay="cards"] .rpt-tbl td{display:block;border:none;padding:0;line-height:1.9}
 .doc[data-lay="cards"] .rpt-tbl th.rpt-head{background:var(--doc-c)!important;color:#fff;
   border-radius:10px;padding:9px 14px;text-align:center;font-size:1rem;margin-bottom:4px}
@@ -1428,7 +1428,7 @@ body.anon-printing #anon-wrap{display:block!important}
 
 /* ٦ ترويسة */
 .doc[data-lay="banner"] .rpt-tbl th.rpt-head{background:var(--doc-c)!important;color:#fff!important;
-  font-size:1.15rem;padding:14px;letter-spacing:.05em;border-color:var(--doc-c)}
+  font-size:1.15rem;padding:14px;border-color:var(--doc-c)}
 .doc[data-lay="banner"] .rpt-tbl th{border-color:var(--doc-c)}
 .doc[data-lay="banner"] .rpt-tbl td{border-color:var(--doc-c)}
 .doc[data-lay="banner"] .moe{border-bottom-width:4px}
@@ -1636,6 +1636,11 @@ body.anon-printing #anon-wrap{display:block!important}
   background:#fff;border:1px solid var(--line);border-radius:12px;overflow-wrap:anywhere}
 .meta.ctx-grid>span:empty{display:none}
 @media(min-width:560px){.meta.ctx-grid{grid-template-columns:repeat(4,1fr)}}
+/* لا تباعد بين الحروف في أي وثيقة مطبوعة.
+   العربية تُوصَل حروفها، والتباعد يفكّها. وأسوأ منه أن html2canvas —
+   وهو ما يبني PDF المُنزَّل — يرسم كل حرف وحده متى وجد تباعدًا، فتخرج
+   «اسم النشاط» هكذا: «لس م لنش اط». القاعدة تمنع عودته من أي إضافة. */
+.doc,.doc *,.pf-doc,.pf-doc *,.cert,.cert *,#rpt-doc *,#lv-doc *{letter-spacing:normal!important}
 </style>
 </head>
 <body>
