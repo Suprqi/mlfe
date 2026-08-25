@@ -361,7 +361,11 @@ input,select,textarea{font-family:inherit;font-size:1rem}
 .brain-input input::placeholder{color:rgba(255,255,255,.45)}
 .brain-input input:focus{outline:none;border-color:var(--gold);background:rgba(255,255,255,.12)}
 @keyframes spin{to{transform:rotate(360deg)}}
-@media print{.topbar,.doc-toolbar,.no-print{display:none!important}body{background:#fff}.main{padding:0;max-width:100%}.doc-wrap{border:none;box-shadow:none}.doc .page-break{page-break-after:always;border:none}.doc .page-break::after{display:none}.cert{page-break-after:always}}
+/* شريط الأدوات وعنوان الشاشة كانا يُطبعان مع الوثيقة، فيدفعان الصفحة
+   الأولى ١٠٤ بكسل ثم تتدحرج كل صفحة إلى ورقة ثانية — الملف كله يخرج
+   مقسومًا. تُخفى كلها: الورقة للوثيقة وحدها. */
+@media print{.topbar,.doc-toolbar,.no-print,.subbar,.builder-head,.builder-sub,
+  .bottom-nav,#pf-theme-bar,.pf-swatches,.tabs,.seg{display:none!important}body{background:#fff}.main{padding:0;max-width:100%}.doc-wrap{border:none;box-shadow:none}.doc .page-break{page-break-after:always;border:none}.doc .page-break::after{display:none}.cert{page-break-after:always}}
 .cert{width:100%;box-sizing:border-box;padding:14px 0 28px}
 .cert:last-child{page-break-after:auto}
 .cert-frame{position:relative;width:100%;overflow:hidden;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,.08)}
@@ -454,8 +458,19 @@ input,select,textarea{font-family:inherit;font-size:1rem}
 .pf-page{container-type:inline-size;position:relative;width:100%;max-width:794px;aspect-ratio:1/1.414;background:#fff;overflow:hidden;margin:0 auto 22px;border:1px solid #E3E3E3;box-shadow:0 4px 18px -10px rgba(0,0,0,.25);page-break-after:always;break-after:page}
 .pf-page:last-child{page-break-after:auto;break-after:auto;margin-bottom:0}
 @media print{
-  .pf-page{width:210mm;height:297mm;max-width:none;aspect-ratio:auto;border:none;box-shadow:none;margin:0}
-  .doc-wrap,.doc{border:none!important;box-shadow:none!important;padding:0!important}
+  /* ٢٩٧مم بالضبط لا يترك هامشًا لخطأ تقريب واحد، فتفيض الصفحة على ورقة
+     ثانية فتخرج كل صفحة مقسومة على اثنتين. ننقص كسرًا ونمنع الانقسام. */
+  .pf-page{width:210mm;height:294.5mm;max-width:none;aspect-ratio:auto;
+    border:none;box-shadow:none;margin:0;padding:0;overflow:hidden;
+    break-inside:avoid;page-break-inside:avoid;
+    break-after:auto;page-break-after:auto}
+  .pf-page:last-child{break-after:auto;page-break-after:auto}
+  .doc-wrap,.doc{border:none!important;box-shadow:none!important;padding:0!important;margin:0!important}
+  html,body{margin:0!important;padding:0!important}
+  .main{padding:0!important;margin:0!important;max-width:none!important}
+  /* بلا هذا يُسقط المتصفح كل خلفية ملوّنة: الموجة والأشرطة والتظليل،
+     فتخرج الورقة بيضاء إلا من النصّ. */
+  .pf-doc,.pf-doc *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
   @page{size:A4 portrait;margin:0}
 }
 .pf-wave{position:absolute;top:0;left:0;width:100%;height:100%;z-index:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
@@ -481,6 +496,12 @@ input,select,textarea{font-family:inherit;font-size:1rem}
 /* الوثيقة تُقرأ مطبوعة، فالأصل خطّ كبير. لكن الورقة تُخفي ما فاض
    عنها (overflow:hidden)، فالنصّ الطويل يُصغَّر درجةً أو درجتين بدل
    أن يُقتطع منه سطر لا يراه المعلّم. */
+/* النصّ القصير كان يترك ثلثي الورقة بياضًا. يُكبَّر حتى يملأها. */
+.pf-text.roomy h3{font-size:4.4cqw;margin-bottom:3cqw}
+.pf-text.roomy .lead{font-size:3.1cqw;line-height:2.05}
+.pf-text.roomy .pf-sub{font-size:3.4cqw;margin:3.4cqw 0 1cqw}
+.pf-text.roomy ul li{font-size:3cqw;line-height:2}
+.pf-text.roomy .pf-chip{font-size:2.4cqw;padding:1cqw 2.5cqw}
 .pf-text.dense h3{font-size:3.2cqw}
 .pf-text.dense .lead{font-size:2.1cqw;line-height:1.85}
 .pf-text.dense .pf-sub{font-size:2.35cqw;margin:2.1cqw 0 .6cqw}
@@ -8769,7 +8790,7 @@ function generateAchievement(){
   const mergeText=hasIntro&&hasProfile&&(introTxt.length+profTxt.length)<1200;
 
   /* الحدّان مقيسان على ما تسعه الورقة بكل درجة، لا مقدّران. */
-  const pfDense=len=>len>1900?' denser':(len>1050?' dense':'');
+  const pfDense=len=>len>1900?' denser':(len>1050?' dense':(len<430?' roomy':''));
 
   let n=1;const num={cover:n++};
   /* الفهرس لا يستحق صفحة إلا إذا كان فيه ما يُفهرس. وصفحات «عناصر
