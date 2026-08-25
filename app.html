@@ -369,7 +369,10 @@ input,select,textarea{font-family:inherit;font-size:1rem}
 /* شريط الأدوات وعنوان الشاشة كانا يُطبعان مع الوثيقة، فيدفعان الصفحة
    الأولى ١٠٤ بكسل ثم تتدحرج كل صفحة إلى ورقة ثانية — الملف كله يخرج
    مقسومًا. تُخفى كلها: الورقة للوثيقة وحدها. */
+/* كل ما هو ثابت على الشاشة يُطبع مع الورقة: الإشعار كان يظهر داخل
+   ملف الإنجاز المطبوع. تُخفى جميعها. */
 @media print{.topbar,.doc-toolbar,.no-print,.subbar,.builder-head,.builder-sub,
+  #toast,.toast,.dp-overlay,.lgl-overlay,.anon-overlay,.mt-abar,
   .bottom-nav,#pf-theme-bar,.pf-swatches,.tabs,.seg{display:none!important}body{background:#fff}.main{padding:0;max-width:100%}.doc-wrap{border:none;box-shadow:none}.doc .page-break{page-break-after:always;border:none}.doc .page-break::after{display:none}.cert{page-break-after:always}}
 .cert{width:100%;box-sizing:border-box;padding:14px 0 28px}
 .cert:last-child{page-break-after:auto}
