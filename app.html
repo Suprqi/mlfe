@@ -476,13 +476,36 @@ input,select,textarea{font-family:inherit;font-size:1rem}
 .pf-div-t{font-family:var(--pf-head),'IBM Plex Sans Arabic';font-size:5.2cqw;line-height:1.7;color:#1B1B1B;text-align:right;width:100%;font-weight:500}
 
 /* --- شريط رأس صفحة الشاهد --- */
+/* عنوان القسم صار سطرًا فوق شريط السجل بدل صفحة كاملة له وحده.
+   الملف كان يبتلع صفحة لكل عنصر، فيصير عملُ شاهدين ملفًا من عشر صفحات. */
+/* الوثيقة تُقرأ مطبوعة، فالأصل خطّ كبير. لكن الورقة تُخفي ما فاض
+   عنها (overflow:hidden)، فالنصّ الطويل يُصغَّر درجةً أو درجتين بدل
+   أن يُقتطع منه سطر لا يراه المعلّم. */
+.pf-text.dense h3{font-size:3.2cqw}
+.pf-text.dense .lead{font-size:2.1cqw;line-height:1.85}
+.pf-text.dense .pf-sub{font-size:2.35cqw;margin:2.1cqw 0 .6cqw}
+.pf-text.dense ul li{font-size:2.05cqw;line-height:1.8}
+.pf-text.denser h3{font-size:2.8cqw;margin-bottom:1.6cqw}
+.pf-text.denser .lead{font-size:1.75cqw;line-height:1.75}
+.pf-text.denser .pf-sub{font-size:2cqw;margin:1.6cqw 0 .5cqw}
+.pf-text.denser ul li{font-size:1.7cqw;line-height:1.7}
+.pf-gap{height:3.4cqw;border-bottom:.18cqw solid var(--pf-line);margin-bottom:3.4cqw}
+.pf-sec-head{position:relative;z-index:3;display:flex;align-items:center;gap:1.6cqw;
+  padding:2.4cqw 4cqw 1.4cqw;background:#fff}
+.pf-sec-head .n{flex:0 0 auto;background:var(--pf-main);color:#fff;border-radius:.9cqw;
+  padding:.2cqw 1.5cqw;font-size:2.2cqw;font-weight:700;line-height:1.5}
+.pf-sec-head .t{flex:1;font-family:var(--pf-head),'IBM Plex Sans Arabic';
+  font-size:3.1cqw;font-weight:700;color:var(--pf-dark);line-height:1.4}
+.pf-sec-head .w{flex:0 0 auto;background:var(--pf-tint2);color:var(--pf-dark);
+  border-radius:2cqw;padding:.3cqw 1.6cqw;font-size:1.6cqw;font-weight:600;white-space:nowrap}
+.pf-body.has-head{height:calc(89% - 7.4cqw - 8.4cqw)}
 .pf-band{position:relative;z-index:2;display:flex;align-items:stretch;background:var(--pf-dark);color:#fff;min-height:11%;border-top:.7cqw solid var(--pf-main)}
 .pf-band-r{flex:0 0 30%;display:flex;align-items:center;padding:1.8cqw 4.2cqw 1.8cqw 1.2cqw;font-family:var(--pf-head),'IBM Plex Sans Arabic';font-size:2.7cqw;line-height:1.45}
 .pf-band-sep{flex:0 0 3.2cqw;background:var(--pf-main);transform:skewX(-13deg)}
 .pf-band-l{flex:1;display:flex;align-items:center;padding:1.8cqw 3.2cqw 1.8cqw 4.2cqw;font-size:2cqw;line-height:1.6;color:#F2F7F5}
 
 /* --- جسم صفحة الشاهد --- */
-.pf-body{position:relative;z-index:2;height:calc(89% - 7.4cqw);display:grid;align-content:center;justify-items:center;align-items:center;gap:2cqw;padding:3.2cqw 7%}
+.pf-body{position:relative;z-index:2;height:calc(89% - 7.4cqw);display:grid;align-content:center;justify-items:center;align-items:center;gap:2cqw;padding:3.2cqw 4%}
 .pf-body.g1{grid-template-columns:1fr}
 .pf-body.g2{grid-template-columns:1fr;grid-template-rows:1fr 1fr}
 .pf-body.g4{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr}
@@ -492,9 +515,11 @@ input,select,textarea{font-family:inherit;font-size:1rem}
 .pf-body.g4 .pf-nofile,.pf-body.g6 .pf-nofile{width:100%;padding:2cqw 2.2cqw}
 .pf-body.g4 .pf-nofile h4,.pf-body.g6 .pf-nofile h4{font-size:1.7cqw;margin-bottom:.8cqw}
 .pf-body.g4 .pf-nofile p,.pf-body.g6 .pf-nofile p{font-size:1.35cqw;line-height:1.6}
-.pf-nofile{width:86%;border:.22cqw dashed var(--pf-dash);border-radius:1.6cqw;padding:3.2cqw 3.6cqw;text-align:right;background:var(--pf-paper)}
-.pf-nofile h4{font-family:var(--pf-head),'IBM Plex Sans Arabic';color:var(--pf-dark);font-size:2.3cqw;margin-bottom:1.4cqw;line-height:1.5}
-.pf-nofile p{font-size:1.85cqw;color:#3E4C49;line-height:1.75;margin-bottom:.5cqw}
+/* البطاقة كانت تشغل ٨٦٪ من العرض وخطّها صغير، والصفحة حولها بيضاء.
+   وُسّعت وكُبّر خطّها: الورقة نفسها، ومحتوى يُقرأ من بُعد. */
+.pf-nofile{width:96%;border:.22cqw dashed var(--pf-dash);border-radius:1.6cqw;padding:3.6cqw 4cqw;text-align:right;background:var(--pf-paper)}
+.pf-nofile h4{font-family:var(--pf-head),'IBM Plex Sans Arabic';color:var(--pf-dark);font-size:2.9cqw;margin-bottom:1.8cqw;line-height:1.45}
+.pf-nofile p{font-size:2.25cqw;color:#3E4C49;line-height:1.8;margin-bottom:.7cqw}
 .pf-nofile p b{color:var(--pf-main)}
 
 /* --- التذييل --- */
@@ -520,20 +545,20 @@ input,select,textarea{font-family:inherit;font-size:1rem}
 
 /* --- صفحات نصية (مقدمة / تعريف / خاتمة) --- */
 .pf-text{position:relative;z-index:2;height:100%;padding:7% 8% 9%;display:flex;flex-direction:column}
-.pf-text h3{font-family:var(--pf-head),'IBM Plex Sans Arabic';font-size:3.1cqw;color:var(--pf-dark);margin-bottom:2cqw;padding-bottom:1.1cqw;border-bottom:.3cqw solid var(--pf-main)}
-.pf-text .lead{font-size:2.05cqw;line-height:2;color:#2E3A38;white-space:pre-wrap}
-.pf-sub{font-family:var(--pf-head),'IBM Plex Sans Arabic';font-size:2.3cqw;color:var(--pf-main);margin:2.6cqw 0 .8cqw}
+.pf-text h3{font-family:var(--pf-head),'IBM Plex Sans Arabic';font-size:3.8cqw;color:var(--pf-dark);margin-bottom:2.4cqw;padding-bottom:1.3cqw;border-bottom:.3cqw solid var(--pf-main)}
+.pf-text .lead{font-size:2.55cqw;line-height:1.95;color:#2E3A38;white-space:pre-wrap}
+.pf-sub{font-family:var(--pf-head),'IBM Plex Sans Arabic';font-size:2.85cqw;color:var(--pf-main);margin:2.6cqw 0 .8cqw}
 .pf-text ul{list-style:none;padding:0;margin:0}
-.pf-text ul li{position:relative;padding-right:2cqw;font-size:2cqw;line-height:1.95;color:#2E3A38}
+.pf-text ul li{position:relative;padding-right:2cqw;font-size:2.5cqw;line-height:1.9;color:#2E3A38}
 .pf-text ul li::before{content:"—";position:absolute;right:0;color:var(--pf-main)}
 .pf-meta{display:flex;flex-wrap:wrap;gap:1.2cqw;margin-bottom:2cqw}
-.pf-chip{background:var(--pf-tint2);color:var(--pf-dark);border-radius:2cqw;padding:.6cqw 1.8cqw;font-size:1.7cqw;font-weight:600}
+.pf-chip{background:var(--pf-tint2);color:var(--pf-dark);border-radius:2cqw;padding:.8cqw 2.1cqw;font-size:2.05cqw;font-weight:600}
 /* --- الفهرس --- */
 .pf-toc{list-style:none;padding:0;margin:0;flex:1}
-.pf-toc li{display:flex;align-items:baseline;gap:.8cqw;font-size:2cqw;line-height:2.5;color:#2E3A38}
+.pf-toc li{display:flex;align-items:baseline;gap:.8cqw;font-size:2.4cqw;line-height:2.45;color:#2E3A38}
 .pf-toc .d{flex:1;border-bottom:.18cqw dotted #B9C7C4;transform:translateY(-.4cqw)}
 .pf-toc .p{font-weight:700;color:var(--pf-dark);min-width:3.4cqw;text-align:left}
-.pf-toc .lv2{padding-right:3cqw;font-size:1.8cqw;color:#4A5654}
+.pf-toc .lv2{padding-right:3cqw;font-size:2.2cqw;color:#4A5654}
 .pf-toc .lv2 .p{font-weight:600}
 
 
@@ -8737,11 +8762,31 @@ function generateAchievement(){
   for(let p=0;p<critItems.length;p+=_per)critPages.push(critItems.slice(p,p+_per));
 
   /* --- ترقيم مسبق حتى يكون الفهرس صحيحًا --- */
-  let n=1;const num={cover:n++,toc:n++};
-  if(hasIntro)num.intro=n++;
+  /* المقدمة والتعريف قد تتشاركان صفحة، فيُحسب ذلك قبل الترقيم وإلا
+     أشار الفهرس إلى صفحات لا وجود لها. */
+  const introTxt=hasIntro?T(P.intro):'';
+  const profTxt=hasProfile?[T(P.bio),T(P.vision),T(P.goals)].filter(Boolean).join(' '):'';
+  const mergeText=hasIntro&&hasProfile&&(introTxt.length+profTxt.length)<1200;
+
+  /* الحدّان مقيسان على ما تسعه الورقة بكل درجة، لا مقدّران. */
+  const pfDense=len=>len>1900?' denser':(len>1050?' dense':'');
+
+  let n=1;const num={cover:n++};
+  /* الفهرس لا يستحق صفحة إلا إذا كان فيه ما يُفهرس. وصفحات «عناصر
+     التقييم» نصٌّ رسمي واحد لكل المعلمين، تسبق عمل المعلّم نفسه
+     بصفحتين. وكل قسم كان يبتلع صفحة كاملة لعنوانه وحده. حُذفت الثلاثة:
+     الملف صار عمل المعلّم من صفحته الثانية. */
+  /* الفهرس يُطبع حين يُحتاج إليه. ملفٌ من ست صفحات لا يُفهرس — تصير
+     صفحة الفهرس سُدس الملف وأكثرها بياض. */
+  const bodyPages=(mergeText?1:((hasIntro?1:0)+(hasProfile?1:0)))
+                 +secs.reduce((a,s)=>a+s.pages,0)+(hasClosing?1:0);
+  const showToc=bodyPages>=9;
+  if(showToc)num.toc=n++;
+  if(hasIntro)num.intro=n;
+  if(hasIntro&&!mergeText)n++;
   if(hasProfile)num.profile=n++;
-  num.critDiv=n++;num.crit=n;n+=critPages.length;
-  secs.forEach(sec=>{sec.divPage=n++;n+=sec.pages});
+  if(hasIntro&&!hasProfile)n++;
+  secs.forEach(sec=>{sec.divPage=n;n+=sec.pages});
   if(hasClosing)num.closing=n++;
 
   pfN=0;let html='';
@@ -8765,41 +8810,27 @@ function generateAchievement(){
   let toc='';
   if(hasIntro)toc+=tocRow('المقدمة والتمهيد',num.intro);
   if(hasProfile)toc+=tocRow(V('التعريف بالمعلم','التعريف بالمعلمة'),num.profile);
-  toc+=tocRow(critHead,num.critDiv);
   secs.forEach((sec,i)=>{toc+=tocRow(`${i+1}. ${sec.s.t}  (${sec.s.ev.length} شاهد)`,sec.divPage,true)});
   if(hasClosing)toc+=tocRow('التأمل الذاتي الختامي',num.closing);
-  html+=pfPage(`<div class="pf-text"><h3>فهرس الملف</h3><ul class="pf-toc">${toc}</ul></div>`);
+  if(showToc)html+=pfPage(`<div class="pf-text"><h3>فهرس الملف</h3><ul class="pf-toc">${toc}</ul></div>`);
 
-  /* (3) المقدمة */
-  if(hasIntro)html+=pfPage(`<div class="pf-text"><h3>المقدمة والتمهيد</h3><div class="lead">${esc(T(P.intro))}</div></div>`);
+  /* (3+4) المقدمة والتعريف — صفحة واحدة متى اتّسعتا
+     كانت كلٌّ منهما تأخذ ورقة كاملة ولو كانت ثلاثة أسطر، فيخرج الملف
+     نصفه بياضًا. تُدمجان ما لم يطُل النصّ، وتنفصلان إذا طال. */
+  const introBlock=()=>`<h3>المقدمة والتمهيد</h3><div class="lead">${esc(introTxt)}</div>`;
+  if(hasIntro&&!mergeText)html+=pfPage(`<div class="pf-text${pfDense(introTxt.length)}">${introBlock()}</div>`);
 
   /* (4) التعريف */
   if(hasProfile){
     const chips=[T(S.specialization)||T(S.subject),T(S.yearsExp)?`خبرة ${T(S.yearsExp)}`:'',T(S.grade),T(S.school)].filter(Boolean);
     const goals=T(P.goals).split('\n').map(x=>x.trim()).filter(Boolean);
-    html+=pfPage(`<div class="pf-text"><h3>${V('التعريف بالمعلم','التعريف بالمعلمة')}</h3>
+    html+=pfPage(`<div class="pf-text${pfDense((mergeText?introTxt.length:0)+profTxt.length+120)}">${mergeText?introBlock()+'<div class="pf-gap"></div>':''}<h3>${V('التعريف بالمعلم','التعريف بالمعلمة')}</h3>
       ${chips.length?`<div class="pf-meta">${chips.map(c=>`<span class="pf-chip">${esc(c)}</span>`).join('')}</div>`:''}
       ${T(P.bio)?`<div class="pf-sub">السيرة الذاتية</div><div class="lead">${esc(T(P.bio))}</div>`:''}
       ${T(P.vision)?`<div class="pf-sub">الرؤية والرسالة</div><div class="lead">${esc(T(P.vision))}</div>`:''}
       ${goals.length?`<div class="pf-sub">الأهداف المهنية</div><ul>${goals.map(g=>`<li>${esc(g)}</li>`).join('')}</ul>`:''}
     </div>`);
   }
-
-  /* (5) فاصلة عناصر التقييم + صفحاتها */
-  html+=pfPage(`<div class="pf-div-in"><div class="pf-div-t">عناصر تقييم الأداء الوظيفي</div></div>`,{wave:true});
-  critPages.forEach((grp,gi)=>{
-    html+=pfPage(`<div class="pf-crit-wrap">
-      <div class="pf-crit-title">${critHead}${critPages.length>1?` (${gi+1}/${critPages.length})`:''}</div>
-      <div class="pf-crit-grid">${grp.map(it=>`
-        <div class="pf-crit">
-          <div class="pf-crit-h"><span class="n">${it.i+1}</span><span>${esc(it.s.t)}</span>${pfWeight(it.s)!=null?`<span class="w">الوزن ${pfWeight(it.s)}٪</span>`:''}</div>
-          <div class="pf-crit-s">أمثلة على تحقق العنصر:</div>
-          <ul>${it.ex.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>
-          <div class="pf-crit-s">الشواهد:</div>
-          <ul>${it.sh.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>
-        </div>`).join('')}</div>
-    </div>`);
-  });
 
   /* (6) الأقسام: فاصلة لكل عنصر + صفحات الشواهد (السعة تتّسع حسب عدد شواهد السجل) */
   const evBody=e=>e.img
@@ -8810,22 +8841,26 @@ function generateAchievement(){
         ${e.link?`<p><b>الرابط:</b> ${esc(e.link)}</p>`:''}
         ${e.result?`<p><b>الأثر:</b> ${esc(e.result)}</p>`:''}
         ${e.reflection?`<p><b>تأمل ذاتي:</b> ${esc(e.reflection)}</p>`:''}</div>`;
-  secs.forEach(sec=>{
-    html+=pfPage(`<div class="pf-div-in"><div class="pf-div-t">${esc(sec.s.t)}</div></div>`,{wave:true});
+  secs.forEach((sec,si)=>{
+    let firstOfSec=true;
     sec.groups.forEach(g=>{
       const req=(g.items.find(e=>e.note&&e.note.trim())||{}).note||'';
       const cap=pfPerPage(g.items.length);
       for(let p=0;p<g.items.length;p+=cap){
         const chunk=g.items.slice(p,p+cap);
         const gc=chunk.length<=1?'g1':chunk.length<=2?'g2':chunk.length<=4?'g4':'g6';
-        html+=pfPage(`<div class="pf-band"><div class="pf-band-r">${esc(g.key)}</div><div class="pf-band-sep"></div><div class="pf-band-l">${esc(req)}</div></div>
-          <div class="pf-body ${gc}">${chunk.map(e=>evBody(e)).join('')}</div>`,{foot:true});
+        const head=firstOfSec
+          ? `<div class="pf-sec-head"><span class="n">${si+1}</span><span class="t">${esc(sec.s.t)}</span>${pfWeight(sec.s)!=null?`<span class="w">الوزن ${pfWeight(sec.s)}٪</span>`:''}</div>`
+          : '';
+        firstOfSec=false;
+        html+=pfPage(`${head}<div class="pf-band"><div class="pf-band-r">${esc(g.key)}</div><div class="pf-band-sep"></div><div class="pf-band-l">${esc(req)}</div></div>
+          <div class="pf-body ${gc}${head?' has-head':''}">${chunk.map(e=>evBody(e)).join('')}</div>`,{foot:true});
       }
     });
   });
 
   /* (7) التأمل الذاتي الختامي */
-  if(hasClosing)html+=pfPage(`<div class="pf-text"><h3>التأمل الذاتي الختامي</h3><div class="lead">${esc(T(P.closing))}</div></div>`,{wave:false});
+  if(hasClosing)html+=pfPage(`<div class="pf-text${pfDense(T(P.closing).length)}"><h3>التأمل الذاتي الختامي</h3><div class="lead">${esc(T(P.closing))}</div></div>`,{wave:false});
 
   /* (8) ملحق تفصيلي */
   html+=`<div class="pf-apx pf-apx-flow">
