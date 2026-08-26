@@ -383,28 +383,28 @@ input,select,textarea{font-family:inherit;font-size:1rem}
 .cert-frame{position:relative;width:100%;overflow:hidden;container-type:inline-size;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,.08)}
 .cert-bg-img{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;z-index:0}
 .cert-inner{position:absolute;inset:0;z-index:1;padding:12% 8% 4%;text-align:center;display:flex;flex-direction:column;align-items:center;line-height:1.3;overflow:hidden;box-sizing:border-box}
-.cert-bism{font-size:.88cqw;color:var(--ink-soft);margin-top:1%;flex-shrink:0}
+.cert-bism{font-size:1.05cqw;color:var(--ink-soft);margin-top:1%;flex-shrink:0}
 .cert-title-row{display:flex;align-items:center;gap:.53cqw;margin:1.5% 0 0;width:100%;justify-content:center;flex-shrink:0}
 .cert-title-row .ln{flex:0 0 1.77cqw;height:1px;background:var(--cert-ink);opacity:.5}
 .cert-orn{color:var(--cert-ink);font-size:.71cqw;transform:rotate(45deg);display:inline-block;opacity:.75}
-.cert-title{font-family:var(--cert-font,'IBM Plex Sans Arabic'),sans-serif;font-weight:700;font-size:1.77cqw;color:var(--cert-ink);;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:80%}
-.cert-lead{font-size:.79cqw;color:var(--ink-soft);max-width:82%;margin-top:1.2%;line-height:1.5;flex-shrink:0}
+.cert-title{font-family:var(--cert-font,'IBM Plex Sans Arabic'),sans-serif;font-weight:700;font-size:2cqw;color:var(--cert-ink);;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:80%}
+.cert-lead{font-size:1.05cqw;color:var(--ink-soft);max-width:82%;margin-top:1.2%;line-height:1.5;flex-shrink:0}
 .cert-name-wrap{margin:1.5% 0 0;max-width:88%;flex-shrink:0}
-.cert-name{font-family:var(--cert-font,'IBM Plex Sans Arabic'),sans-serif;font-weight:700;font-size:1.49cqw;color:var(--ink);padding:0 .53cqw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;max-width:100%}
+.cert-name{font-family:var(--cert-font,'IBM Plex Sans Arabic'),sans-serif;font-weight:700;font-size:1.72cqw;color:var(--ink);padding:0 .53cqw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;max-width:100%}
 .cert-name-rule{width:min(17.7cqw,55%);height:1.2px;background:var(--cert-ink);opacity:.7;margin:4px auto 0;position:relative}
 .cert-name-rule::before,.cert-name-rule::after{content:'';position:absolute;top:-.18cqw;width:.35cqw;height:.35cqw;border-radius:50%;background:var(--cert-ink)}
 .cert-name-rule::before{right:-2px}
 .cert-name-rule::after{left:-2px}
-.cert-reason{font-size:.79cqw;max-width:78%;line-height:1.5;color:var(--ink);margin-top:1.2%;flex-shrink:0;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.cert-reason{font-size:1.05cqw;max-width:78%;line-height:1.5;color:var(--ink);margin-top:1.2%;flex-shrink:0;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .cert-spacer{flex:1;min-height:2px}
 .cert-bottom{width:100%;display:flex;justify-content:space-between;align-items:flex-end;flex-shrink:0}
-.cert-date-block{font-size:.74cqw;color:var(--ink-soft);white-space:nowrap}
+.cert-date-block{font-size:1cqw;color:var(--ink-soft);white-space:nowrap}
 .cert-signs{display:flex;gap:6%;margin-right:auto;margin-left:auto}
 .cert-sign-col{text-align:center;flex:1;min-width:0}
-.cert-sign-col .rl{font-size:.71cqw;color:var(--ink-soft);padding-bottom:.27cqw;border-bottom:1px solid var(--ink-soft);margin-bottom:.35cqw;white-space:nowrap}
+.cert-sign-col .rl{font-size:1.05cqw;color:var(--ink-soft);padding-bottom:.27cqw;border-bottom:1px solid var(--ink-soft);margin-bottom:.35cqw;white-space:nowrap}
 /* الاسم الثلاثي يتجاوز ١١٠ بكسل، فكان يُقصّ بثلاث نقاط على الشهادة.
    يلتفّ سطرين بدل أن يُبتر — كما يفعل سبب المنح فوقه. */
-.cert-sign-col .nm{font-weight:700;color:var(--ink);font-size:.85cqw;min-height:1.1em;line-height:1.25;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow-wrap:break-word}
+.cert-sign-col .nm{font-weight:700;color:var(--ink);font-size:1.25cqw;min-height:1.1em;line-height:1.25;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow-wrap:break-word}
 .cert-tpl-thumb{border:2.5px solid transparent;border-radius:10px;overflow:hidden;cursor:pointer;padding:0;background:none;display:flex;flex-direction:column}
 .cert-tpl-thumb img{width:100%;height:70px;object-fit:cover;display:block}
 .cert-tpl-thumb span{font-size:.72rem;padding:4px 2px;color:var(--ink-soft);text-align:center}
@@ -11031,10 +11031,14 @@ function setPrintSize(b,which){
   document.querySelectorAll(scope+' button').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');
   if(which==='rpt')rptPrintSize=b.dataset.sz;else if(which==='lv')lvPrintSize=b.dataset.sz;else if(which==='exam')examPrintSize=b.dataset.sz;else if(which==='meet')meetPrintSize=b.dataset.sz;else if(which==='ct')ctPrintSize=b.dataset.sz;else if(which==='act')actPrintSize=b.dataset.sz;else certPrintSize=b.dataset.sz;
 }
-function printCertsNow(){printWithSize(certPrintSize)}
-function printWithSize(sizeName){
+/* الشهادة نسبتها عرضية تمامًا (٧٠٫٧٪ = A4 مستعرضة)، فطباعتها على ورقة
+   طولية بهامش عشرة مليمترات تحشرها في ٦٤٪ من العرض ويصغر خطّها حتى
+   يكاد لا يُقرأ. تُطبع مستعرضةً بلا هامش فتملأ الورقة. */
+function printCertsNow(){printWithSize(certPrintSize,'landscape')}
+function printWithSize(sizeName,orient){
   const sizes={A4:'A4',A5:'A5',LETTER:'letter'};
-  const css=`@page{size:${sizes[sizeName]||'A4'};margin:10mm}`;
+  const land=orient==='landscape';
+  const css=`@page{size:${sizes[sizeName]||'A4'}${land?' landscape':''};margin:${land?'0':'10mm'}}`;
   const old=document.getElementById('temp-print-size');if(old)old.remove();
   const style=document.createElement('style');style.id='temp-print-size';style.textContent=css;document.head.appendChild(style);
   const cleanup=()=>{const el=document.getElementById('temp-print-size');if(el)el.remove();window.removeEventListener('afterprint',cleanup)};
@@ -11102,7 +11106,10 @@ async function docToPdfBlob(containerId,sizeName){
     w.remove();
   };
   const fmt={A4:'a4',A5:'a5',LETTER:'letter'}[sizeName]||'a4';
-  const pdf=new jsPDF({orientation:'p',unit:'pt',format:fmt});
+  /* الشهادات مستعرضة، فتنزل بورقة مستعرضة تملؤها بدل أن تُحشر في
+     شريطٍ وسط ورقة طولية. */
+  const orient=containerId==='certs-doc'?'l':'p';
+  const pdf=new jsPDF({orientation:orient,unit:'pt',format:fmt});
   for(let i=0;i<pageEls.length;i++){
     const run=Array.isArray(pageEls[i])?pageEls[i]:null;
     const wrap=run?wrapRun(run):null;
@@ -11145,14 +11152,15 @@ async function docToPdfBlob(containerId,sizeName){
     /* لوحة بلا أبعاد تُنتج قسمةً على صفر ثم إحداثيات غير صالحة توقف
        التصدير كله. نتجاوزها بدل أن نُسقط الوثيقة. */
     if(!canvas.width||!canvas.height)continue;
-    /* أطول من الورقة بنسبته؟ إذًا يُقطَّع. صفحات A4 المبنيّة سلفًا
-       تساوي نسبة الورقة تمامًا فلا تدخل هنا. */
-    const tall=(canvas.height/canvas.width)>(ph/pw)*1.02;
+    /* يُقطَّع ما يتدفّق فقط. الصفحات والشهادات المبنيّة سلفًا تُلاءم
+       الورقة كما هي مهما كانت نسبتها — وقالب شهادة نسبته ٧٥٪ كان
+       يُعدّ «أطول من الورقة» فيُشطر إلى ورقتين. */
+    const tall=!built&&(canvas.height/canvas.width)>(ph/pw)*1.02;
     if(!tall){
       const imgData=canvas.toDataURL('image/jpeg',0.92);
       const ratio=Math.min(pw/canvas.width,ph/canvas.height);
       const w=canvas.width*ratio,h=canvas.height*ratio;
-      if(i>0)pdf.addPage(fmt,'p');
+      if(i>0)pdf.addPage(fmt,orient);
       pdf.addImage(imgData,'JPEG',(pw-w)/2,(ph-h)/2,w,h);
       continue;
     }
@@ -11181,7 +11189,7 @@ async function docToPdfBlob(containerId,sizeName){
       const cx=cut.getContext('2d');
       cx.fillStyle='#ffffff';cx.fillRect(0,0,cut.width,cut.height);
       cx.drawImage(canvas,0,y,canvas.width,hpx,0,0,canvas.width,hpx);
-      if(!first||i>0)pdf.addPage(fmt,'p');
+      if(!first||i>0)pdf.addPage(fmt,orient);
       first=false;
       pdf.addImage(cut.toDataURL('image/jpeg',0.92),'JPEG',0,0,pw,hpx/sc);
       y=end;
