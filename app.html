@@ -10925,12 +10925,48 @@ async function docToPdfBlob(containerId,sizeName){
   await pdfFontsReady();
   const {jsPDF}=window.jspdf;
   const container=$(containerId);if(!container)throw new Error('no container');
-  const pageEls=containerId==='certs-doc'?[...container.querySelectorAll('.cert')]:[container];
+  /* ملف الإنجاز مبنيّ أصلًا صفحاتٍ بمقاس A4، فتُلتقط كلٌّ على حدة
+     وتنزل ورقةً كاملة. أما الوثائق المتدفّقة فتُلتقط كتلةً واحدة ثم
+     تُقطَّع أدناه — وإلا صُغّرت كلها لتدخل ورقة واحدة. والملحق
+     التفصيلي شقيقٌ للصفحات لا واحدةً منها، فنأخذ أبناء الحاوية
+     كلهم بترتيبهم حتى لا يسقط، والمتتالي منها يُلتقط كتلةً واحدة
+     لئلّا ينفرد سطرٌ صغير كخاتمة الوثيقة بورقة كاملة. */
+  const pfPages=[...container.querySelectorAll('.pf-page')];
+  const certs=[...container.querySelectorAll('.cert')];
+  let pageEls;
+  if(containerId==='certs-doc')pageEls=certs;
+  else if(!pfPages.length)pageEls=[container];
+  else{
+    pageEls=[];let run=null;
+    [...container.children].forEach(k=>{
+      if(k.classList.contains('pf-page')){run=null;pageEls.push(k);return}
+      if(!run){run=[];pageEls.push(run)}
+      run.push(k);
+    });
+  }
   if(!pageEls.length)throw new Error('empty');
+  /* تُجمَع الأبناء المتتالية في غلافٍ مؤقّت لالتقاطها معًا، ثم تُعاد
+     إلى مواضعها كما كانت. */
+  const wrapRun=els=>{
+    const w=document.createElement('div');
+    w.style.background='#ffffff';
+    container.insertBefore(w,els[0]);
+    els.forEach(e=>w.appendChild(e));
+    return w;
+  };
+  const unwrapRun=(w,els)=>{
+    els.forEach(e=>container.insertBefore(e,w));
+    w.remove();
+  };
   const fmt={A4:'a4',A5:'a5',LETTER:'letter'}[sizeName]||'a4';
   const pdf=new jsPDF({orientation:'p',unit:'pt',format:fmt});
   for(let i=0;i<pageEls.length;i++){
-    const canvas=await window.html2canvas(pageEls[i],{scale:2,useCORS:true,backgroundColor:'#ffffff',
+    const run=Array.isArray(pageEls[i])?pageEls[i]:null;
+    const wrap=run?wrapRun(run):null;
+    const src=wrap||pageEls[i];
+    let canvas,box,marksCss;
+    try{
+    canvas=await window.html2canvas(src,{scale:2,useCORS:true,backgroundColor:'#ffffff',
       onclone:doc=>{
         /* روابط الخطوط قد لا تنتقل مع النسخة — نحقنها صراحةً */
         document.querySelectorAll('link[rel="stylesheet"],style').forEach(n=>{
@@ -10940,12 +10976,57 @@ async function docToPdfBlob(containerId,sizeName){
         s.textContent='*{text-rendering:optimizeLegibility;-webkit-font-feature-settings:"liga" 1,"calt" 1;font-feature-settings:"liga" 1,"calt" 1}';
         doc.head.appendChild(s);
       }});
-    const imgData=canvas.toDataURL('image/jpeg',0.92);
+    /* تُقاس الحاوية ومواضع الفواصل قبل فكّ الغلاف؛ بعده تصير خارج
+       الصفحة وأبعادها أصفار. */
+    box=src.getBoundingClientRect();
+    marksCss=[...src.querySelectorAll('tr,.sec-h,h3,h4,.doc-title,.band,.pf-band')]
+      .map(e=>e.getBoundingClientRect().top-box.top);
+    }finally{if(wrap)unwrapRun(wrap,run)}
     const pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight();
-    const ratio=Math.min(pw/canvas.width,ph/canvas.height);
-    const w=canvas.width*ratio,h=canvas.height*ratio;
-    if(i>0)pdf.addPage(fmt,'p');
-    pdf.addImage(imgData,'JPEG',(pw-w)/2,(ph-h)/2,w,h);
+    /* لوحة بلا أبعاد تُنتج قسمةً على صفر ثم إحداثيات غير صالحة توقف
+       التصدير كله. نتجاوزها بدل أن نُسقط الوثيقة. */
+    if(!canvas.width||!canvas.height)continue;
+    /* أطول من الورقة بنسبته؟ إذًا يُقطَّع. صفحات A4 المبنيّة سلفًا
+       تساوي نسبة الورقة تمامًا فلا تدخل هنا. */
+    const tall=(canvas.height/canvas.width)>(ph/pw)*1.02;
+    if(!tall){
+      const imgData=canvas.toDataURL('image/jpeg',0.92);
+      const ratio=Math.min(pw/canvas.width,ph/canvas.height);
+      const w=canvas.width*ratio,h=canvas.height*ratio;
+      if(i>0)pdf.addPage(fmt,'p');
+      pdf.addImage(imgData,'JPEG',(pw-w)/2,(ph-h)/2,w,h);
+      continue;
+    }
+    /* وثيقة أطول من الورقة: تُقطَّع بعرض الورقة كاملًا، ويُفضَّل القطع
+       عند حدّ صفٍّ أو عنوان حتى لا يُشطر سطر نصفين. */
+    const sc=(canvas.width/pw)||1;             /* بكسل لكل نقطة */
+    const pageH=Math.max(1,Math.floor(ph*sc));
+    /* الوثيقة قد تُصدَّر وشاشتها غير ظاهرة فيعود عرضها صفرًا؛ حينها
+       لا نثق بمواضع الفواصل ونقطع بالمسافات المتساوية. */
+    const pxPerCss=(box&&box.width>1)?canvas.width/box.width:0;
+    const marks=pxPerCss
+      ? marksCss.map(v=>Math.round(v*pxPerCss))
+          .filter(v=>Number.isFinite(v)&&v>0&&v<canvas.height).sort((a,b)=>a-b)
+      : [];
+    let y=0,first=true;
+    while(y<canvas.height-1){
+      let end=Math.min(y+pageH,canvas.height);
+      if(end<canvas.height){
+        const fits=marks.filter(m=>m>y+pageH*0.35&&m<=end);
+        if(fits.length)end=fits[fits.length-1];
+      }
+      const hpx=Math.max(1,Math.min(end,canvas.height)-y);
+      if(!Number.isFinite(hpx)||hpx<1)break;
+      const cut=document.createElement('canvas');
+      cut.width=canvas.width;cut.height=hpx;
+      const cx=cut.getContext('2d');
+      cx.fillStyle='#ffffff';cx.fillRect(0,0,cut.width,cut.height);
+      cx.drawImage(canvas,0,y,canvas.width,hpx,0,0,canvas.width,hpx);
+      if(!first||i>0)pdf.addPage(fmt,'p');
+      first=false;
+      pdf.addImage(cut.toDataURL('image/jpeg',0.92),'JPEG',0,0,pw,hpx/sc);
+      y=end;
+    }
   }
   return pdf.output('blob');
 }
