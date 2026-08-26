@@ -468,7 +468,11 @@ input,select,textarea{font-family:inherit;font-size:1rem}
 @media print{
   /* ٢٩٧مم بالضبط لا يترك هامشًا لخطأ تقريب واحد، فتفيض الصفحة على ورقة
      ثانية فتخرج كل صفحة مقسومة على اثنتين. ننقص كسرًا ونمنع الانقسام. */
-  .pf-page{width:210mm;height:294.5mm;max-width:none;aspect-ratio:auto;
+  /* حين يُفعّل المعلّم «الرؤوس والتذييلات» في نافذة الطباعة يفرض
+     المتصفّح هوامش تُصغّر المساحة المطبوعة، فتفيض الصفحة الثابتة بقليل
+     إلى ورقة تالية — فتخرج ورقة كاملة وأخرى شبه فارغة، وهكذا. نأخذ
+     أصغر الارتفاعين: مقاسنا، أو ما تعطيه الورقة فعلًا. */
+  .pf-page{width:210mm;height:min(294.5mm,calc(100vh - 1px));max-width:none;aspect-ratio:auto;
     border:none;box-shadow:none;margin:0;padding:0;overflow:hidden;
     break-inside:avoid;page-break-inside:avoid;
     break-after:auto;page-break-after:auto}
