@@ -473,7 +473,16 @@ input,select,textarea{font-family:inherit;font-size:1rem}
     break-inside:avoid;page-break-inside:avoid;
     break-after:auto;page-break-after:auto}
   .pf-page:last-child{break-after:auto;page-break-after:auto}
+  /* الصفحة أقصر من الورقة بكسر، فإن لم يُفرض الفصل حشرَ المتصفّح طرف
+     الصفحة التالية في ذيل الورقة — وهو ما يحدث على الجوّال حيث لا
+     يُحترم منع الانقسام. الفصل «قبل» لا «بعد» كيلا تخرج ورقة خاتمة
+     فارغة بعد آخر صفحة. */
+  .pf-page+.pf-page{break-before:page;page-break-before:always}
   .doc-wrap,.doc{border:none!important;box-shadow:none!important;padding:0!important;margin:0!important}
+  /* ملف الإنجاز مبنيّ صفحاتٍ بمقاس الورقة فلا يحتاج حشوًا. أما الوثائق
+     المتدفّقة — التقارير والكشوف والجداول — فبلا هامش تلامس حرف الورقة،
+     والطابعة لا تطبع في أطرافها، فتختفي نهايات الأسطر من جهة اليسار. */
+  .doc:not(.pf-doc){padding:12mm 13mm!important}
   html,body{margin:0!important;padding:0!important}
   .main{padding:0!important;margin:0!important;max-width:none!important}
   /* بلا هذا يُسقط المتصفح كل خلفية ملوّنة: الموجة والأشرطة والتظليل،
@@ -9139,7 +9148,10 @@ function generateClassicAchievement(){
   html+=`<div class="sec-h">الخاتمة</div><table><tr><td>${esc(conclusion)}</td></tr></table>`;
   html+=`<div class="sig"><div><b>${roleName()}</b>${S.name}</div><div><b>${V('مدير المدرسة','مديرة المدرسة')}</b>الاسم / التوقيع</div><div><b>${V('المشرف التربوي','المشرفة التربوية')}</b>الاسم / التوقيع</div></div>`;
 
-  $('ach-doc').innerHTML=html;(anonPaintBtn(),awRenderStatus(),go('ach-preview'));
+  /* الملف الكلاسيكي وثيقة متدفّقة لا صفحات مقاسة، فيُنزع عنه وسم الملف
+   المصمَّم وإلا طُبع بلا هامش وقُصّت أطرافه. */
+$('ach-doc').classList.remove('pf-doc');
+$('ach-doc').innerHTML=html;(anonPaintBtn(),awRenderStatus(),go('ach-preview'));
   toast('✓ ملف الإنجاز (النمط الكلاسيكي) جاهز');
 }
 
@@ -10964,6 +10976,19 @@ async function docToPdfBlob(containerId,sizeName){
     const run=Array.isArray(pageEls[i])?pageEls[i]:null;
     const wrap=run?wrapRun(run):null;
     const src=wrap||pageEls[i];
+    /* الوثيقة المتدفّقة تُلتقط بحشو الشاشة، وهو على الجوّال ١٦px فقط —
+       نحو أربعة مليمترات تبتلعها الطابعة. نضمن حدًّا أدنى آمنًا وقت
+       الالتقاط ثم نعيد ما كان. الصفحات المبنيّة تُستثنى: مقاسها مقصود. */
+    const built=src.classList&&(src.classList.contains('pf-page')||src.classList.contains('cert'));
+    let padSaved=null;
+    if(!built){
+      const cs=getComputedStyle(src),MINPAD=34;
+      const p=['Top','Right','Bottom','Left'].map(k=>parseFloat(cs['padding'+k])||0);
+      if(p.some(v=>v<MINPAD)){
+        padSaved=src.style.padding;
+        src.style.padding=p.map(v=>Math.max(v,MINPAD)+'px').join(' ');
+      }
+    }
     let canvas,box,marksCss;
     try{
     canvas=await window.html2canvas(src,{scale:2,useCORS:true,backgroundColor:'#ffffff',
@@ -10981,7 +11006,10 @@ async function docToPdfBlob(containerId,sizeName){
     box=src.getBoundingClientRect();
     marksCss=[...src.querySelectorAll('tr,.sec-h,h3,h4,.doc-title,.band,.pf-band')]
       .map(e=>e.getBoundingClientRect().top-box.top);
-    }finally{if(wrap)unwrapRun(wrap,run)}
+    }finally{
+      if(padSaved!==null)src.style.padding=padSaved;
+      if(wrap)unwrapRun(wrap,run);
+    }
     const pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight();
     /* لوحة بلا أبعاد تُنتج قسمةً على صفر ثم إحداثيات غير صالحة توقف
        التصدير كله. نتجاوزها بدل أن نُسقط الوثيقة. */
