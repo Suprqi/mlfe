@@ -9201,15 +9201,98 @@ function onQR(val){
 }
 function captureImg(input){
   const f=input.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{const box=$('curr-img-prev');box.innerHTML=`<img src="${e.target.result}" style="width:100%;border-radius:12px;border:1px solid var(--line)"><div class="note" style="margin-top:8px"><span class="ni">ℹ️</span><div>حُفظت صورة الفهرس كمرجع. اكتب العناوين في الصندوق أعلاه (استخراج النص تلقائيًا من الصورة يُفعّل في النسخة الكاملة).</div></div>`;box.style.display='block';$('curr-import').style.display='block'};r.readAsDataURL(f);input.value=''}
+/* pdf.js يسلّم قصاصات نصّ لا أسطرًا. وصْلُها بمسافات كما تأتي يُخرج
+   العربية مبعثرة، فنعيد بناء السطر من إحداثيات كل قصاصة: نجمع ما
+   تقارب ارتفاعه، ثم نرتّبه من اليمين إلى اليسار. */
+function pdfPageLines(content){
+  const rows=[];
+  (content.items||[]).forEach(it=>{
+    const s=it.str||'';if(!s.trim())return;
+    const t=it.transform||[1,0,0,1,0,0];
+    let row=rows.find(r=>Math.abs(r.y-t[5])<=2.5);
+    if(!row){row={y:t[5],items:[]};rows.push(row)}
+    row.items.push({x:t[4],w:it.width||0,h:it.height||0,s});
+  });
+  return rows.sort((a,b)=>b.y-a.y).map(r=>{
+    const its=r.items.sort((a,b)=>b.x-a.x);
+    let out='';
+    its.forEach((c,i)=>{
+      /* القصاصات تأتي بلا مسافات بينها، فتلتصق الكلمات. نُعيد المسافة
+         حين تفصل بين قصاصتين فجوةٌ أعرض من جزء من ارتفاع السطر. */
+      if(i){const p=its[i-1];if(p.x-(c.x+c.w)>Math.max(1,(c.h||8)*0.18))out+=' '}
+      out+=c.s;
+    });
+    /* كتب المنهج تخزّن الحروف بأشكالها المتّصلة (Presentation Forms)
+       لا بحروفها الأصلية، فتخرج كلامًا مخبوصًا لا يُقرأ ولا يُطابَق.
+       NFKC يردّ كل شكل إلى حرفه. */
+    try{out=out.normalize('NFKC')}catch(e){}
+    return out.replace(/\s+/g,' ').trim();
+  }).filter(Boolean);
+}
+/* صفحة الفهرس تُعرف بعنوانها، أو بأسطرٍ تنتهي برقم صفحة بعد نقاط. */
+/* عناوين صفحة الفهرس كما تَرِد في كتب المنهج. تُطابَق في صدر السطر
+   لا في وسطه، وإلا التُقطت جملةٌ تذكر «الفهرس» عرضًا. */
+const PDF_TOC_HEAD=/^\s*(الفهرس|فهرس\s*(الكتاب|المحتويات|الموضوعات)?|المحتويات|محتويات\s*الكتاب|قائمة\s*المحتويات|(دليل\s*)?الموضوعات)\s*$/;
+/* كتب المنهج ترقّم بالأرقام العربية‑الهندية لا اللاتينية، والفهرس
+   يُعرف بسطرٍ ينتهي برقم صفحة، سبقته نقاط أو لم تسبقه. */
+const TOC_DOTTED=/[.·‥…]{2,}\s*[\d٠-٩۰-۹]{1,3}\s*$/;
+const TOC_TAILNUM=/\s[\d٠-٩۰-۹]{1,3}$/;
+function pdfIsTocHead(l){return l.length<=40&&PDF_TOC_HEAD.test(l)}
+function pdfIsTocPage(lines){
+  if(lines.slice(0,8).some(pdfIsTocHead))return true;
+  const dotted=lines.filter(l=>TOC_DOTTED.test(l)||TOC_TAILNUM.test(l)).length;
+  return lines.length>=6&&dotted>=Math.max(4,Math.round(lines.length*0.4));
+}
+function pdfCleanTocLine(l){
+  return l.replace(/[.·‥…]{2,}/g,' ')
+          .replace(/^\s*[\d٠-٩۰-۹]{1,3}\s+/,'')
+          .replace(/\s*[\d٠-٩۰-۹]{1,3}\s*$/,'')
+          .replace(/\s+/g,' ').trim();
+}
 async function importPdfCurr(input){
   const f=input.files[0];if(!f)return;
   toast('⏳ جاري قراءة PDF...');
   try{
     if(!window.pdfjsLib){await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'}
-    const buf=await f.arrayBuffer();const pdf=await window.pdfjsLib.getDocument({data:buf}).promise;let text='';
-    for(let p=1;p<=Math.min(pdf.numPages,10);p++){const page=await pdf.getPage(p);const c=await page.getTextContent();text+=c.items.map(it=>it.str).join(' ')+'\n'}
-    if(text.trim().length<10){toast('الملف صورة بدون نص — اكتب العناوين يدويًا');return}
-    const ta=$('curr-text');ta.value=text.trim();$('curr-import').style.display='block';toast('✓ استُخرج النص — راجعه ونظّف العناوين ثم احفظ');
+    const buf=await f.arrayBuffer();const pdf=await window.pdfjsLib.getDocument({data:buf}).promise;
+    /* الفهرس يقع بعد الغلاف والمقدّمة، فعشر صفحات لا تبلغه غالبًا. */
+    const pages=[];
+    for(let p=1;p<=Math.min(pdf.numPages,40);p++){
+      const page=await pdf.getPage(p);
+      pages.push(pdfPageLines(await page.getTextContent()));
+    }
+    /* إن وُجد عنوان «المحتويات» بدأنا منه وتابعنا ما يليه من صفحات
+       الفهرس؛ وإلا اكتفينا بالصفحات التي تشبه الفهرس شكلًا. */
+    let tocIdx=[];
+    const headAt=pages.findIndex(l=>l.slice(0,8).some(x=>PDF_TOC_HEAD.test(x)));
+    if(headAt>=0){
+      tocIdx=[headAt];
+      for(let i=headAt+1;i<pages.length&&pdfIsTocPage(pages[i]);i++)tocIdx.push(i);
+    }else tocIdx=pages.map((l,i)=>pdfIsTocPage(l)?i:-1).filter(i=>i>=0);
+
+    /* الترويسة والتذييل يتكرّران في صدر الصفحات وأذيالها. نُحصيهما على
+       كل ما قرأناه، لا على أسطر الفهرس وحدها، وإلا تسرّبا إليه. */
+    const edge=new Map();
+    pages.forEach(l=>{if(!l.length)return;
+      [l[0],l[l.length-1]].forEach(x=>edge.set(x,(edge.get(x)||0)+1))});
+    const isChrome=l=>(edge.get(l)||0)>=2;
+
+    let lines=[];
+    if(tocIdx.length){
+      tocIdx.forEach(i=>pages[i].forEach(l=>{
+        if(PDF_TOC_HEAD.test(l)||isChrome(l))return;
+        const c=pdfCleanTocLine(l);
+        if(c.length>=3&&/[ء-ي]/.test(c))lines.push(c);
+      }));
+    }else lines=pages.slice(0,10).flat().filter(l=>!isChrome(l));
+    /* الترويسة والتذييل يتكرّران في كل صفحة، فيُسقطان. */
+    const seen=new Map();lines.forEach(l=>seen.set(l,(seen.get(l)||0)+1));
+    lines=lines.filter(l=>seen.get(l)<3);
+
+    if(!lines.length){toast('الملف صورة بدون نص — اكتب العناوين يدويًا');return}
+    const ta=$('curr-text');ta.value=lines.join('\n');$('curr-import').style.display='block';
+    toast(tocIdx.length?`✓ استُخرج فهرس الكتاب (${lines.length} سطرًا) — راجعه واحفظ`
+                       :'✓ استُخرج النص — لم أجد صفحة فهرس، نظّف العناوين ثم احفظ');
   }catch(e){toast('تعذّرت قراءة PDF — جرّب لصق العناوين')}
   input.value='';
 }
@@ -9224,7 +9307,9 @@ function renderCurrStatus(){
 }
 function parseCurriculum(text){
   return text.split('\n').map(x=>x.trim()).filter(x=>x).map(line=>{
-    const unit=/^(الوحدة|وحدة|الفصل|الباب)\b/.test(line);
+    /* \b تقوم على الحروف اللاتينية وحدها، فلا تتحقّق بعد كلمة عربية —
+       فكانت عناوين الوحدات تُعدّ دروسًا تُحضَّر. */
+    const unit=/^(الوحدة|وحدة|الفصل|الباب|المحور|محور|المجال)(\s|:|؛|-|$)/.test(line);
     return {unit,title:line};
   });
 }
@@ -9238,7 +9323,20 @@ function importCurriculum(){
   renderCurrStatus();renderLessons();toast(`✓ حُفظ منهج ${S.subject} (${S.lessons.length} درس)`);
 }
 function useSeedCurriculum(){const seed=SEED_CURRICULA[S.subject];if(!seed)return;$('curr-text').value=seed.join('\n');$('curr-import').style.display='block';toast('عُرض قالب جاهز — راجعه واحفظه')}
-function clearCurriculum(){if(!S.curricula[S.subject]){toast('لا يوجد منهج محفوظ');return}delete S.curricula[S.subject];S.units=[];renderCurrStatus();toast('🗑️ مُسح منهج المادة')}
+function clearCurriculum(){
+  if(!S.curricula[S.subject]){toast('لا يوجد منهج محفوظ');return}
+  /* كان يمسح الفهرس ويُبقي الدروس، فتظلّ القديمة معروضة كأن شيئًا لم
+     يُمسح. تُمسح معه، وتُطلب موافقة صريحة لأنها تُتلف تحضيرًا وُلّد. */
+  const n=S.lessons.length;
+  customConfirm(`سيُمسح منهج ${S.subject}${n?` و${n} درسًا مع تحضيرها`:''}. لا يمكن التراجع.`,()=>{
+    delete S.curricula[S.subject];
+    S.units=[];S.lessons=[];
+    if(S.lessonsBySubject)S.lessonsBySubject[S.subject]=[];
+    saveState();renderCurrStatus();
+    if(typeof renderLessons==='function')renderLessons();
+    toast('🗑️ مُسح منهج المادة ودروسه');
+  });
+}
 function loadCurriculumLessons(){const cur=S.curricula[S.subject];if(!cur)return;S.units=cur;S.lessons=cur.filter(i=>!i.unit).map(i=>newLesson(i.title));renderLessons()}
 async function genFromCurriculum(){
   const cur=S.curricula[S.subject];
