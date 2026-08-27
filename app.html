@@ -3792,6 +3792,25 @@ function bnGo(target){
 function openCreateSheet(){renderCreateSheetItems();$('create-sheet').classList.add('on')}
 function closeCreateSheet(){$('create-sheet').classList.remove('on')}
 function V(m,f){return S.gender==='f'?f:m}
+/* أسماء الأدوار في قوالب التقارير مكتوبة بصيغة واحدة ثابتة — أكثرها
+   مؤنّث — فتظهر «مديرة المدرسة» في تقرير معلّم و«المعلم» في تقرير
+   معلّمة. نحوّلها عند العرض إلى صيغة صاحب الملف. الأطول أوّلًا كي لا
+   يبتلع «المعلم» عبارةَ «معلم المادة»، والاستطلاع يمنع «المعلمةة». */
+const G_PAIRS=[['مدير المدرسة','مديرة المدرسة'],['وكيل المدرسة','وكيلة المدرسة'],
+  ['معلم المادة','معلمة المادة'],['مشرف النشاط','مشرفة النشاط'],
+  ['رائد الصف','رائدة الصف'],['منفذ النشاط','منفذة النشاط'],
+  ['المشرف التربوي','المشرفة التربوية'],['الطلاب','الطالبات'],
+  ['الطالب','الطالبة'],['المعلم','المعلمة'],['المشرف','المشرفة'],['المدير','المديرة']];
+function gtxt(t){
+  if(t==null)return t;
+  let out=String(t);
+  const f=S.gender==='f';
+  G_PAIRS.forEach(function(pr){
+    out=f?out.replace(new RegExp(pr[0]+'(?![ةا])','g'),pr[1])
+         :out.replace(new RegExp(pr[1],'g'),pr[0]);
+  });
+  return out;
+}
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
 
 /* ===== AI core ===== */
@@ -9110,7 +9129,7 @@ function generateClassicAchievement(){
     <div class="cover-box"><div class="field-row"><span class="k">${roleName()}:</span><span>${S.name}</span></div><div class="field-row"><span class="k">المادة:</span><span>${S.subject}</span></div><div class="field-row"><span class="k">الصف:</span><span>${S.grade}</span></div></div></div><div class="page-break"></div>`;
 
   html+=`<h3 class="doc-title">الفهرس</h3><ul class="toc">
-    ${['المقدمة','السيرة الذاتية','أهداف الملف','ميثاق أخلاقيات مهنة التعليم','الأهداف العامة للتعليم','الأهداف العامة للمادة','جدول الحصص','الدورات التدريبية','كشف أسماء الطلاب','شهادات الشكر','الخطة العلاجية','توزيع المنهج','تقييم مدير المدرسة والمشرفة','أوراق العمل والاختبارات','مشاركات منهجية وإنتاج معرفي','نماذج من أعمال '+V('المعلم','المعلمة'),'نماذج من أعمال الطلاب','التقارير','الورش','الحلقات التنشيطية','الخاتمة'].map((t,i)=>`<li><span><b>${i+1}.</b> ${t}</span></li>`).join('')}
+    ${['المقدمة','السيرة الذاتية','أهداف الملف','ميثاق أخلاقيات مهنة التعليم','الأهداف العامة للتعليم','الأهداف العامة للمادة','جدول الحصص','الدورات التدريبية','كشف أسماء '+V('الطلاب','الطالبات'),'شهادات الشكر','الخطة العلاجية','توزيع المنهج','تقييم '+V('مدير المدرسة والمشرف التربوي','مديرة المدرسة والمشرفة التربوية'),'أوراق العمل والاختبارات','مشاركات منهجية وإنتاج معرفي','نماذج من أعمال '+V('المعلم','المعلمة'),'نماذج من أعمال الطلاب','التقارير','الورش','الحلقات التنشيطية','الخاتمة'].map((t,i)=>`<li><span><b>${i+1}.</b> ${t}</span></li>`).join('')}
   </ul><div class="page-break"></div>`;
 
   html+=`<div class="sec-h">المقدمة</div><table><tr><td>${esc(intro)}</td></tr></table><div class="page-break"></div>`;
@@ -9142,7 +9161,7 @@ function generateClassicAchievement(){
   const trainRows=(name,rows)=>`<div class="sec-h">${name}</div><table><tr><th style="width:6%">م</th><th>الاسم</th><th style="width:18%">الجهة</th><th style="width:14%">التاريخ</th><th style="width:26%">الأثر — كيف طُبّقت؟</th></tr>${rows.length?rows.map((r,i)=>`<tr><td style="text-align:center">${i+1}</td><td>${esc(r.name)||'—'}</td><td>${esc(r.source)||'—'}</td><td>${esc(r.date)||'—'}</td><td>${esc(r.impact)||'—'}</td></tr>`).join(''):'<tr><td colspan="5" style="text-align:center;color:var(--ink-soft)">لا يوجد بعد</td></tr>'}</table>`;
   html+=trainRows('الدورات التدريبية',S.training)+'<div class="page-break"></div>';
 
-  html+=`<div class="sec-h">كشف أسماء ${V('الطلاب','الطالبات')} — شعبة ${esc(S.curClass)}</div><table><tr><th style="width:10%">م</th><th>اسم ${V('الطالب','الطالبة')}/ة</th></tr>${studs.length?studs.map((s,i)=>`<tr><td style="text-align:center">${i+1}</td><td>${esc(s.name)}</td></tr>`).join(''):'<tr><td colspan="2" style="text-align:center;color:var(--ink-soft)">لا يوجد طلاب مرصودون بعد لهذه الشعبة</td></tr>'}</table><div class="page-break"></div>`;
+  html+=`<div class="sec-h">كشف أسماء ${V('الطلاب','الطالبات')} — شعبة ${esc(S.curClass)}</div><table><tr><th style="width:10%">م</th><th>اسم ${V('الطالب','الطالبة')}</th></tr>${studs.length?studs.map((s,i)=>`<tr><td style="text-align:center">${i+1}</td><td>${esc(s.name)}</td></tr>`).join(''):'<tr><td colspan="2" style="text-align:center;color:var(--ink-soft)">لا يوجد طلاب مرصودون بعد لهذه الشعبة</td></tr>'}</table><div class="page-break"></div>`;
 
   html+=`<div class="sec-h">شهادات الشكر الصادرة</div><table><tr><th style="width:10%">م</th><th>الاسم</th></tr>${S.certNames.length?S.certNames.map((n,i)=>`<tr><td style="text-align:center">${i+1}</td><td>${esc(n)}</td></tr>`).join(''):'<tr><td colspan="2" style="text-align:center;color:var(--ink-soft)">لم تُصدر شهادات بعد — ولّدها من شاشة «شهادات الشكر والتفوق»</td></tr>'}</table><div class="page-break"></div>`;
 
@@ -9150,7 +9169,7 @@ function generateClassicAchievement(){
 
   html+=`<div class="sec-h">توزيع المنهج</div><table><tr><th style="width:10%">م</th><th>الدرس / الوحدة</th></tr>${lessons.length?lessons.map((l,i)=>`<tr><td style="text-align:center">${i+1}</td><td>${esc(l.title)}</td></tr>`).join(''):'<tr><td colspan="2" style="text-align:center;color:var(--ink-soft)">لا يوجد منهج محفوظ — احفظه من شاشة «تحضير الدروس»</td></tr>'}</table><div class="page-break"></div>`;
 
-  html+=`<div class="sec-h">تقييم مدير/ة المدرسة والمشرفة التربوية</div><table><tr><td>${esc(cd.principalEval)||'—'}</td></tr></table><div class="page-break"></div>`;
+  html+=`<div class="sec-h">تقييم ${V('مدير المدرسة والمشرف التربوي','مديرة المدرسة والمشرفة التربوية')}</div><table><tr><td>${esc(cd.principalEval)||'—'}</td></tr></table><div class="page-break"></div>`;
 
   html+=`<div class="sec-h">أوراق العمل والاختبارات</div><table><tr><td>بنك الأسئلة الحالي يضم <b>${S.examQuestions.length}</b> سؤال متنوع (اختيار من متعدد، صح وخطأ، أكمل الفراغ، مزاوجة، مقالي). راجع النسخة الكاملة من شاشة «إنشاء الاختبارات».</td></tr></table><div class="page-break"></div>`;
 
@@ -9864,8 +9883,8 @@ function renderCustomCertPreview(){
       <div class="cert-bottom">
         <div class="cert-date-block">٥ صفر ١٤٤٨هـ</div>
         <div class="cert-signs">
-          <div class="cert-sign-col"><div class="rl">معلم المادة</div><div class="nm">— — —</div></div>
-          <div class="cert-sign-col"><div class="rl">مدير المدرسة</div><div class="nm">— — —</div></div>
+          <div class="cert-sign-col"><div class="rl">${V('معلم المادة','معلمة المادة')}</div><div class="nm">— — —</div></div>
+          <div class="cert-sign-col"><div class="rl">${V('مدير المدرسة','مديرة المدرسة')}</div><div class="nm">— — —</div></div>
         </div>
         <div style="width:60px"></div>
       </div>
@@ -13919,7 +13938,7 @@ function buildReportDoc(){
 
   const signs=(r.signs||[]).filter(s=>s[0]);
   const signRow=signs.length?`<div class="rpt-signs">${signs.map(s=>
-      `<div>${esc(s[0])}${s[1]?' : '+esc(s[1]):' : ....................'}</div>`).join('')}</div>`:'';
+      `<div>${esc(gtxt(s[0]))}${s[1]?' : '+esc(s[1]):' : ....................'}</div>`).join('')}</div>`:'';
 
   const T=rptTplGet(r.tpl||'activity');
   $('rpt-doc').setAttribute('data-lay',docLayout());
