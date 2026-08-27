@@ -9281,6 +9281,26 @@ function pdfCleanTocLine(l){
    يخزّن الحروف بترميز خاصّ بلا جدول يردّها إلى حروفها. حينها يخرج
    كلام مخبوص، وسكبُه في الصندوق بوصفه نجاحًا أسوأ من الاعتراف بالفشل.
    نقيس نصيب الحروف العربية السليمة قبل أن نعرضه. */
+/* برامج النشر العربية تخزّن السطر أحيانًا بترتيبه البصريّ لا المنطقي،
+   فتخرج حروفه صحيحة وترتيبه مقلوبًا — يمرّ من حارس الحروف سليمًا
+   ويُقرأ مخبوصًا. نميّزه بعلامتين لا تكادان تُخطئان في العربية: التاء
+   المربوطة تختم الكلمة ولا تبدؤها، و«ال» التعريف تبدؤها ولا تختمها. */
+function pdfOrderScore(lines){
+  let s=0;
+  lines.join(' ').split(/\s+/).forEach(w=>{
+    if(w.length<3)return;
+    if(/ة$/.test(w))s++;
+    if(/^ال[ء-ي]/.test(w))s++;
+  });
+  return s;
+}
+function pdfFixOrder(lines){
+  const rev=l=>[...l].reverse().join('');
+  const flipped=lines.map(rev);
+  const a=pdfOrderScore(lines),b=pdfOrderScore(flipped);
+  /* لا نقلب إلا حين يكون المقلوب أرجح بوضوح، كي لا نُفسد كتابًا سليمًا */
+  return (b>=3&&b>a*1.5)?flipped:lines;
+}
 function pdfTextIsReadable(lines){
   const t=lines.join(' ');
   if(t.replace(/\s/g,'').length<20)return false;
@@ -9311,6 +9331,14 @@ async function importPdfCurr(input){
     for(let p=1;p<=Math.min(pdf.numPages,40);p++){
       const page=await pdf.getPage(p);
       pages.push(pdfPageLines(await page.getTextContent()));
+    }
+    /* قرار القلب يُتّخذ على الكتاب كله لا على صفحة، ثم يُطبَّق على
+       الجميع — وقبل أي تنظيف، لأن رقم الصفحة في المقلوب يقع في صدر
+       السطر لا في عَجُزه. */
+    const flat=[];pages.forEach(l=>flat.push(...l));
+    if(pdfFixOrder(flat)!==flat){
+      const rev=l=>[...l].reverse().join('');
+      for(let i=0;i<pages.length;i++)pages[i]=pages[i].map(rev);
     }
     /* إن وُجد عنوان «المحتويات» بدأنا منه وتابعنا ما يليه من صفحات
        الفهرس؛ وإلا اكتفينا بالصفحات التي تشبه الفهرس شكلًا. */
