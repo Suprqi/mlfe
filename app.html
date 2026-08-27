@@ -9254,6 +9254,9 @@ function pdfPageLines(content){
        لا بحروفها الأصلية، فتخرج كلامًا مخبوصًا لا يُقرأ ولا يُطابَق.
        NFKC يردّ كل شكل إلى حرفه. */
     try{out=out.normalize('NFKC')}catch(e){}
+    /* التطويل (ـ) زخرفةُ تصفيفٍ تُمطّ بها الحروف لتعديل الأسطر، فتخرج
+       الكلمة ممزّقة: «المحـتــويـات». حذفه لا يغيّر معنى ولا حرفًا. */
+    out=out.replace(/ـ+/g,'');
     return out.replace(/\s+/g,' ').trim();
   }).filter(Boolean);
 }
@@ -9301,6 +9304,30 @@ function pdfFixOrder(lines){
   /* لا نقلب إلا حين يكون المقلوب أرجح بوضوح، كي لا نُفسد كتابًا سليمًا */
   return (b>=3&&b>a*1.5)?flipped:lines;
 }
+/* رباطات اللام في هذه الكتب تُفكّ بترتيبها البصريّ: «الحديث» تخرج
+   «احلديث»، و«المركز» تخرج «املركز»، و«الصلاة» تخرج «الصالة». لا سبيل
+   إلى ردّها بقاعدة، لأن «أعمال» السليمة تنتهي بالحرفين نفسيهما — يلزم
+   فهمُ الكلمة. نكتفي بكشف البصمة لنقرّر: نصلحها بالذكاء أو نعتذر. */
+function pdfLigatureDamage(lines){
+  const t=' '+lines.join('  ')+' ';
+  const hits=(t.match(/\s(احل|امل|اهل|اجل|اخل|اعل|اغل)[ء-ي]/g)||[]).length;
+  const words=(t.match(/\S+/g)||[]).length||1;
+  return {hits,words,bad:hits>=3&&hits/words>0.02};
+}
+/* رباط اللام في صدر الكلمة يُردّ بيقين: لا كلمة عربية تبدأ بـ«احل»
+   ولا «اخل»، فهي «الح» و«الخ» انقلب حرفاها. أمّا وسط الكلمة فلا يُحسم
+   بقاعدة — «الثالث» صحيحة و«صالة» مقلوبة، وشكلهما واحد؛ تلك يردّها
+   النموذج أو يدُ المعلّم. */
+const LAM_HEAD=[[/^اهلل(?![ء-ي])/,'الله'],[/^احل(?=[ء-يً-ْ])/,'الح'],
+  [/^امل(?=[ء-يً-ْ])/,'الم'],[/^اخل(?=[ء-يً-ْ])/,'الخ'],[/^اجل(?=[ء-يً-ْ])/,'الج']];
+function pdfFixLamHead(lines){
+  return lines.map(l=>l.split(' ').map(w=>{
+    if(w.replace(/[^ء-ي]/g,'').length<4)return w;
+    for(let i=0;i<LAM_HEAD.length;i++)
+      if(LAM_HEAD[i][0].test(w))return w.replace(LAM_HEAD[i][0],LAM_HEAD[i][1]);
+    return w;
+  }).join(' '));
+}
 function pdfTextIsReadable(lines){
   const t=lines.join(' ');
   if(t.replace(/\s/g,'').length<20)return false;
@@ -9319,6 +9346,30 @@ function pdfTextIsReadable(lines){
   /* عناوين الدروس عربية في جوهرها؛ فإن قلّ نصيبها أو كثر التالف فالنصّ
      غير صالح للعرض. */
   return (ar/tot)>=0.45 && (bad/tot)<=0.05;
+}
+/* الإصلاح يحتاج فهم الكلمة لا قاعدة، فنستعين بالنموذج: يعيد الأسطر
+   نفسها عددًا وترتيبًا، مصحّحةً، ولا يزيد ولا يشرح. وإن تعذّر (لا مفتاح
+   أو لا شبكة) رجعنا بلا شيء ليعتذر النداء. */
+async function pdfRepairLigatures(lines){
+  if(typeof aiCall!=='function')return null;
+  const NL=String.fromCharCode(10);
+  const src=lines.slice(0,120);
+  const ask='النصّ التالي مستخرج من كتاب PDF عربي، وخطّه يفكّ رباط اللام فتخرج '+
+    '«الحديث» هكذا «احلديث»، و«المركز» هكذا «املركز»، و«الصلاة» هكذا «الصالة».'+NL+
+    'أعد كتابة كل سطر مصحّحًا كما يُقرأ في الكتاب، سطرًا مقابل سطر، بالعدد '+
+    'نفسه والترتيب نفسه. لا تحذف سطرًا ولا تضف سطرًا ولا تشرح ولا ترقّم. '+
+    'أخرج الأسطر وحدها.'+NL+NL+src.join(NL);
+  /* نداء الذكاء قد يعلّق (لا مفتاح، أو جلسة لا تُحسم)، فلا نترك المعلّم
+     أمام دوّارة لا تنتهي: مهلةٌ ثم نعتذر. */
+  const out=await Promise.race([
+    aiCall(ask).catch(()=>null),
+    new Promise(r=>setTimeout(()=>r(null),25000))
+  ]);
+  if(!out)return null;
+  const got=out.split(NL).map(x=>x.trim()).filter(Boolean);
+  /* إن اختلف العدد كثيرًا فالنموذج لم يلتزم، ولا نثق بمخرجه */
+  if(Math.abs(got.length-src.length)>Math.max(2,src.length*0.15))return null;
+  return got;
 }
 async function importPdfCurr(input){
   const f=input.files[0];if(!f)return;
@@ -9372,6 +9423,21 @@ async function importPdfCurr(input){
     if(!pdfTextIsReadable(lines)){
       toast('⚠️ نصّ هذا الكتاب مخزَّن بترميز لا يُقرأ — الصق عناوين الدروس يدويًا');
       return;
+    }
+    /* التلف يُحكم عليه مرّة واحدة قبل أي إصلاح: إصلاح الصدر يُسكت
+       الكاشف، فلو أعدنا سؤاله بعده لسكتنا عن تلف الوسط الباقي. */
+    const dmg=pdfLigatureDamage(lines);
+    if(dmg.bad){
+      lines=pdfFixLamHead(lines);
+      toast('⏳ خطّ الكتاب يفكّ رباط اللام — أُصلح ما أستطيع...');
+      const fixed=await pdfRepairLigatures(lines);
+      if(fixed&&fixed.length)lines=fixed;
+      else{
+        const ta0=$('curr-text');ta0.value=lines.join(String.fromCharCode(10));
+        $('curr-import').style.display='block';
+        toast('⚠️ صُحّحت بداية الكلمات، وبقي تلفٌ في وسطها («صلاة» تخرج «صالة») — راجع العناوين قبل الحفظ');
+        input.value='';return;
+      }
     }
     const ta=$('curr-text');ta.value=lines.join('\n');$('curr-import').style.display='block';
     toast(tocIdx.length?`✓ استُخرج فهرس الكتاب (${lines.length} سطرًا) — راجعه واحفظ`
