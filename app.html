@@ -9277,6 +9277,29 @@ function pdfCleanTocLine(l){
           .replace(/\s*[\d٠-٩۰-۹]{1,3}\s*$/,'')
           .replace(/\s+/g,' ').trim();
 }
+/* ليس كل كتاب يُخرج نصًّا صالحًا: بعض الملفات صور ممسوحة، وبعضها
+   يخزّن الحروف بترميز خاصّ بلا جدول يردّها إلى حروفها. حينها يخرج
+   كلام مخبوص، وسكبُه في الصندوق بوصفه نجاحًا أسوأ من الاعتراف بالفشل.
+   نقيس نصيب الحروف العربية السليمة قبل أن نعرضه. */
+function pdfTextIsReadable(lines){
+  const t=lines.join(' ');
+  if(t.replace(/\s/g,'').length<20)return false;
+  let ar=0,bad=0,tot=0;
+  for(const ch of t){
+    const c=ch.codePointAt(0);
+    if(ch===' '||ch==='\n')continue;
+    tot++;
+    if(c>=0x0621&&c<=0x064A)ar++;                         /* حروف عربية أصيلة */
+    else if(c>=0xFB50&&c<=0xFDFF)bad++;                   /* أشكال متّصلة لم تُطبَّع */
+    else if(c>=0xFE70&&c<=0xFEFF)bad++;
+    else if(c>=0xE000&&c<=0xF8FF)bad++;                   /* ترميز خاصّ بلا جدول */
+    else if(c===0xFFFD)bad++;
+  }
+  if(!tot)return false;
+  /* عناوين الدروس عربية في جوهرها؛ فإن قلّ نصيبها أو كثر التالف فالنصّ
+     غير صالح للعرض. */
+  return (ar/tot)>=0.45 && (bad/tot)<=0.05;
+}
 async function importPdfCurr(input){
   const f=input.files[0];if(!f)return;
   toast('⏳ جاري قراءة PDF...');
@@ -9318,6 +9341,10 @@ async function importPdfCurr(input){
     lines=lines.filter(l=>seen.get(l)<3);
 
     if(!lines.length){toast('الملف صورة بدون نص — اكتب العناوين يدويًا');return}
+    if(!pdfTextIsReadable(lines)){
+      toast('⚠️ نصّ هذا الكتاب مخزَّن بترميز لا يُقرأ — الصق عناوين الدروس يدويًا');
+      return;
+    }
     const ta=$('curr-text');ta.value=lines.join('\n');$('curr-import').style.display='block';
     toast(tocIdx.length?`✓ استُخرج فهرس الكتاب (${lines.length} سطرًا) — راجعه واحفظ`
                        :'✓ استُخرج النص — لم أجد صفحة فهرس، نظّف العناوين ثم احفظ');
