@@ -3348,6 +3348,7 @@ body.anon-printing #anon-wrap{display:block!important}
         <div class="field"><label>موضوع/عنوان الاختبار <small style="font-weight:400;color:var(--ink-soft)">(اختياري إن اخترت دروسًا فوق)</small></label><input id="exam-topic" placeholder="مثال: اختبار الوحدة الثانية — الكسور"></div>
         <div class="field"><label>أو الصق نص المحتوى <small style="font-weight:400;color:var(--ink-soft)">(يُستخدم فقط إذا لم تختر دروسًا من منهجك)</small></label><textarea id="exam-content" placeholder="الصق نص الدرس أو الوحدة هنا..." style="min-height:100px"></textarea></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+          <button class="chip" onclick="examFromBookOnly()" title="ينقل أسئلة التقويم من كتاب المادة كما هي">📕 أسئلة تقويم الكتاب</button>
           <button class="chip" onclick="document.getElementById('exam-docx').click()">📝 استيراد من Word</button>
           <button class="chip" onclick="document.getElementById('exam-pdf').click()">📕 استيراد من PDF</button>
           <button class="chip" onclick="document.getElementById('exam-img').click()">🖼️ توليد مباشر من صورة</button>
@@ -9387,6 +9388,51 @@ function pdfFixLamHead(lines){
     return w;
   }).join(' '));
 }
+/* رقم الصفحة المطبوع في الكتاب يخالف ترتيبها في الملف (أغلفة ومقدّمات
+   تسبق الصفحة ١)، والفهرس يحيل على المطبوع. فنبني جسرًا بينهما: السطر
+   الذي لا يحمل إلا رقمًا في صدر الصفحة أو ذيلها هو ترقيمها المطبوع. */
+function ar2num(t){return parseInt(String(t).replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)),10)}
+function pdfFolioMap(pages){
+  const map={};
+  pages.forEach(function(l,i){
+    const edge=l.slice(0,2).concat(l.slice(-2));
+    for(let k=0;k<edge.length;k++){
+      const m=/^\s*([\d٠-٩]{1,3})\s*$/.exec(edge[k]||'');
+      if(m){const n=ar2num(m[1]);if(n>0&&map[n]===undefined){map[n]=i;break}}
+    }
+  });
+  return map;
+}
+/* أسطر التقويم في كتب الوزارة تبدأ بفعل أمرٍ أو أداة استفهام، وقد
+   يسبقها رمز تعداد مشوّه فنتجاوز ما ليس عربيًّا في صدرها. */
+const PDF_Q=/^[^ء-ي]{0,8}(استنتج|استدل|علّل|علل|عدّد|عدد|وضّح|وضح|اذكر|بيّن|بين|اشرح|أكمل|اكمل|اختر|أجب|اجب|عرّف|عرف|قارن|استخرج|ما\s|متى\s|لماذا|كيف)/;
+function pdfLessonQuestions(lines){
+  return lines.filter(l=>PDF_Q.test(l))
+    .map(l=>l.replace(/^[^ء-ي]{0,8}/,'').trim())
+    .filter(l=>l.length>=12);
+}
+/* لكل عنوان في الفهرس صفحةٌ مطبوعة؛ ومداه ينتهي حيث يبدأ الذي يليه. */
+function pdfBuildLessons(pages,toc,folio){
+  const out=[];
+  toc.forEach(function(t,i){
+    const start=folio[t.page];
+    if(start===undefined)return;
+    let end=start;
+    for(let j=i+1;j<toc.length;j++){
+      const nx=folio[toc[j].page];
+      if(nx!==undefined&&nx>start){end=nx-1;break}
+    }
+    if(end<start)end=Math.min(start+5,pages.length-1);
+    const lines=[];
+    for(let q=start;q<=end&&q<pages.length;q++)lines.push.apply(lines,pages[q]);
+    if(!lines.length)return;
+    /* المتن يُقصّ كي لا يمتلئ تخزين الجهاز بكتابٍ كامل */
+    out.push({title:t.title,page:t.page,from:start,to:end,
+      text:lines.join(String.fromCharCode(10)).slice(0,6000),
+      q:pdfLessonQuestions(lines).slice(0,20)});
+  });
+  return out;
+}
 function pdfTextIsReadable(lines){
   const t=lines.join(' ');
   if(t.replace(/\s/g,'').length<20)return false;
@@ -9437,10 +9483,14 @@ async function importPdfCurr(input){
     if(!window.pdfjsLib){await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'}
     const buf=await f.arrayBuffer();const pdf=await window.pdfjsLib.getDocument({data:buf}).promise;
     /* الفهرس يقع بعد الغلاف والمقدّمة، فعشر صفحات لا تبلغه غالبًا. */
+    /* يُقرأ الكتاب كله مرّة واحدة: الفهرس من أوائله، والمتن والتقويم من
+       سائره. ما بعد ٣٠٠ صفحة يُترك كي لا يُثقل جهاز المعلّم. */
     const pages=[];
-    for(let p=1;p<=Math.min(pdf.numPages,40);p++){
+    const LAST=Math.min(pdf.numPages,300);
+    for(let p=1;p<=LAST;p++){
       const page=await pdf.getPage(p);
       pages.push(pdfPageLines(await page.getTextContent()));
+      if(p%25===0)toast('⏳ يقرأ الكتاب… '+p+'/'+LAST);
     }
     /* قرار القلب يُتّخذ على الكتاب كله لا على صفحة، ثم يُطبَّق على
        الجميع — وقبل أي تنظيف، لأن رقم الصفحة في المقلوب يقع في صدر
@@ -9467,11 +9517,17 @@ async function importPdfCurr(input){
     const isChrome=l=>(edge.get(l)||0)>=2;
 
     let lines=[];
+    /* نحتفظ برقم الصفحة الملحق بكل عنوان قبل تنظيفه — به يُعرف مدى الدرس */
+    const tocEntries=[];
     if(tocIdx.length){
       tocIdx.forEach(i=>pages[i].forEach(l=>{
         if(PDF_TOC_HEAD.test(l)||isChrome(l))return;
+        const num=/(?:^|\s)([\d٠-٩]{1,3})\s*$/.exec(l);
         const c=pdfCleanTocLine(l);
-        if(c.length>=3&&/[ء-ي]/.test(c))lines.push(c);
+        if(c.length>=3&&/[ء-ي]/.test(c)){
+          lines.push(c);
+          if(num)tocEntries.push({title:c,page:ar2num(num[1])});
+        }
       }));
     }else lines=pages.slice(0,10).flat().filter(l=>!isChrome(l));
     /* الترويسة والتذييل يتكرّران في كل صفحة، فيُسقطان. */
@@ -9486,6 +9542,21 @@ async function importPdfCurr(input){
     /* التلف يُحكم عليه مرّة واحدة قبل أي إصلاح: إصلاح الصدر يُسكت
        الكاشف، فلو أعدنا سؤاله بعده لسكتنا عن تلف الوسط الباقي. */
     const dmg=pdfLigatureDamage(lines);
+    /* المتن يُخزَّن مرّة قبل أي خروج مبكر، فتصير الدروس والاختبارات
+       فورية بعدها. وإصلاح صدر الكلمات يُطبَّق على صفحات الكتاب كلها
+       لا على الفهرس وحده. */
+    try{
+      const src=dmg.bad?pages.map(pdfFixLamHead):pages;
+      const ents=dmg.bad
+        ?tocEntries.map(e=>({title:pdfFixLamHead([e.title])[0],page:e.page}))
+        :tocEntries;
+      const built=pdfBuildLessons(src,ents,pdfFolioMap(src));
+      if(built.length){
+        S.bookLessons=S.bookLessons||{};
+        S.bookLessons[S.subject]=built;
+        saveState();
+      }
+    }catch(e){}
     if(dmg.bad){
       lines=pdfFixLamHead(lines);
       toast('⏳ خطّ الكتاب يفكّ رباط اللام — أُصلح ما أستطيع...');
@@ -9498,7 +9569,7 @@ async function importPdfCurr(input){
         input.value='';return;
       }
     }
-    const ta=$('curr-text');ta.value=lines.join('\n');$('curr-import').style.display='block';
+        const ta=$('curr-text');ta.value=lines.join('\n');$('curr-import').style.display='block';
     toast(tocIdx.length?`✓ استُخرج فهرس الكتاب (${lines.length} سطرًا) — راجعه واحفظ`
                        :'✓ استُخرج النص — لم أجد صفحة فهرس، نظّف العناوين ثم احفظ');
   }catch(e){toast('تعذّرت قراءة PDF — جرّب لصق العناوين')}
@@ -10035,12 +10106,53 @@ function toggleExamLessonByIndex(i,checked){
 if(typeof renderLessonWeights==='function')renderLessonWeights();}
 function _renderLW(){if(typeof renderLessonWeights==='function')renderLessonWeights()}
 function examSelectAllLessons(all){S.examMeta.selectedLessons=all?S.lessons.map(l=>l.title):[];renderExamLessonPicker();if(typeof renderLessonWeights==='function')renderLessonWeights();}
+/* الدرس كما ورد في الكتاب: يُطابَق بعنوانه، وما تعذّر فبالتقارب —
+   لأن عنوان الفهرس قد يحمل ترقيمًا أو علامات لا تُطابق حرفيًّا. */
+function bookLessonFor(title){
+  const B=(S.bookLessons||{})[S.subject]||[];
+  if(!B.length||!title)return null;
+  const norm=t=>String(t).replace(/[^ء-ي\s]/g,'').replace(/\s+/g,' ').trim();
+  const t=norm(title); if(!t)return null;
+  return B.find(l=>norm(l.title)===t)
+      || B.find(l=>{const n=norm(l.title);return n&&(n.indexOf(t)>=0||t.indexOf(n)>=0)})
+      || null;
+}
+/* تقويم الكتاب يُدرج كما هو: لا يولّده النموذج ولا يغيّره، ولا يُكرَّر. */
+function examAddBookQuestions(){
+  const sel=(S.examMeta&&S.examMeta.selectedLessons)||[];
+  const titles=sel.length?(S.lessons||[]).filter(l=>sel.includes(l.title)).map(l=>l.title)
+                         :(S.lessons||[]).map(l=>l.title);
+  const seen={}; (S.examQuestions||[]).forEach(q=>{seen[String(q.text||'').trim()]=1});
+  const essay=[];
+  titles.forEach(function(t){
+    const bl=bookLessonFor(t);
+    if(!bl||!bl.q)return;
+    bl.q.forEach(function(q){
+      const k=String(q).trim();
+      if(k&&!seen[k]){seen[k]=1;essay.push({text:k,modelAnswer:''})}
+    });
+  });
+  return essay.length?ingestExamData({essay}):0;
+}
+/* زرٌّ مستقلّ: يعمل بلا نموذج ولا مفتاح — نقلٌ مباشر من الكتاب. */
+function examFromBookOnly(){
+  const B=(S.bookLessons||{})[S.subject]||[];
+  if(!B.length){toast('ارفع كتاب المادة PDF من «تحضير الدروس» أولًا');return}
+  const n=examAddBookQuestions();
+  if(!n){toast('لم أجد أسئلة تقويم في دروس هذا الكتاب');return}
+  renderExamQuestions();renderMetrics();
+  toast('✓ أُضيف '+n+' سؤالًا من تقويم الكتاب');
+}
 function examCurriculumContext(){
   const sel=S.examMeta.selectedLessons||[];if(!sel.length)return '';
   return S.lessons.filter(l=>sel.includes(l.title)).map(l=>{
     let block=`- ${l.title}`;
     if(l.ai&&l.ai.outcomes&&l.ai.outcomes.length)block+=`\n  نواتج التعلم: ${l.ai.outcomes.join('؛ ')}`;
     else if(l.obj)block+=`\n  الأهداف: ${l.obj.replace(/\n/g,'؛ ')}`;
+    /* متن الدرس من كتاب المادة — به تُبنى الأسئلة من الدرس نفسه */
+    const bl=bookLessonFor(l.title);
+    if(bl&&bl.text)block+=`
+  من الكتاب: ${bl.text.replace(/\s+/g,' ').slice(0,1200)}`;
     return block;
   }).join('\n');
 }
@@ -10121,9 +10233,11 @@ async function aiGenerateExam(){
   }
   examClearFailure();
   const added=ingestExamData(data);
+  /* ومعها تقويم الكتاب كما هو، فيجتمع المنقول والمولَّد */
+  const fromBook=examAddBookQuestions();
   renderExamQuestions();renderMetrics();
   const usedAI=true;
-  toast(usedAI?`✓ أُضيف ${added} سؤال${currCtx?' معتمدة على منهجك':''}`:`⚠️ تعذّر الاتصال — ${toArabicDigits(added)} سؤال من بنك عام لا من منهجك، راجعها`);
+  toast(usedAI?`✓ أُضيف ${added} سؤال${fromBook?` و${fromBook} من تقويم الكتاب`:''}${currCtx?' معتمدة على منهجك':''}`:`⚠️ تعذّر الاتصال — ${toArabicDigits(added)} سؤال من بنك عام لا من منهجك، راجعها`);
 }
 async function handleExamDocx(input){
   const f=input.files[0];if(!f)return;input.value='';
