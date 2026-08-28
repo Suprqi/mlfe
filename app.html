@@ -4349,12 +4349,31 @@ function checkDeleteConfirmText(){
   btn.style.opacity=ok?'1':'.5';
   btn.style.cursor=ok?'pointer':'not-allowed';
 }
+/* محو التخزين وحده لا يكفي: جلسة الحساب تبقى في مفتاحٍ آخر، فيُعاد فتح
+   التطبيق، فيستعيد الجلسة، فيجد الجهاز فارغًا، فيسحب النسخة السحابية
+   فورًا — فيرجع المعلّم إلى الحساب نفسه كأن شيئًا لم يُحذف. ننهي الجلسة
+   على هذا الجهاز معه. والنسخة في الحساب تبقى؛ محوها من «حذف الحساب». */
+async function wipeThisDevice(){
+  const wait=(p,ms)=>Promise.race([Promise.resolve(p).catch(()=>null),
+    new Promise(r=>setTimeout(()=>r(null),ms))]);
+  try{
+    const sb=await wait(ensureSb(),6000);
+    if(sb&&sb.auth&&sb.auth.signOut)await wait(sb.auth.signOut(),6000);
+  }catch(e){}
+  try{
+    localStorage.removeItem(STORAGE_KEY);
+    /* وإن تعذّر تسجيل الخروج (لا شبكة) نمحو رمز الجلسة بأيدينا */
+    Object.keys(localStorage).filter(k=>/^sb-.*-auth-token$/.test(k))
+      .forEach(k=>{try{localStorage.removeItem(k)}catch(e){}});
+  }catch(e){}
+  location.reload();
+}
 function confirmDeleteAll(){
   if($('delete-confirm-input').value.trim()!=='حذف')return;
-  customConfirm('⚠️ تأكيد أخير: سيُحذف كل شي نهائيًا من هذا الجهاز ولا يمكن استرجاعه. متابعة؟',()=>{
-    try{localStorage.removeItem(STORAGE_KEY)}catch(e){}
-    location.reload();
-  });
+  const msg=_sbUser
+    ? '⚠️ تأكيد أخير: سيُمحى كل شيء من هذا الجهاز وتُنهى جلستك عليه. نسختك المحفوظة في حسابك تبقى، وتستردّها بتسجيل الدخول. ولحذف الحساب وبياناته نهائيًا استعمل «حذف الحساب». متابعة؟'
+    : '⚠️ تأكيد أخير: سيُحذف كل شي نهائيًا من هذا الجهاز ولا يمكن استرجاعه. متابعة؟';
+  customConfirm(msg,()=>{wipeThisDevice()});
 }
 function closeThemeModal(){$('theme-modal').classList.remove('on')}
 function pickThemeQuick(btn){document.querySelectorAll('#theme-modal .theme-sw').forEach(b=>b.classList.remove('sel'));btn.classList.add('sel');applyTheme(btn.dataset.th)}
