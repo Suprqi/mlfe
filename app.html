@@ -9314,6 +9314,9 @@ function pdfPageLines(content){
        لا بحروفها الأصلية، فتخرج كلامًا مخبوصًا لا يُقرأ ولا يُطابَق.
        NFKC يردّ كل شكل إلى حرفه. */
     try{out=out.normalize('NFKC')}catch(e){}
+    /* خطوط الزخرفة تُرمَّز في نطاق «الاستعمال الخاصّ»، فتخرج مربّعات
+       أو رموزًا شرقية غريبة لا معنى لها. تُحذف هي وما جاورها. */
+    out=out.replace(new RegExp('['+'\\uE000-\\uF8FF\\uFFFD\\u3000-\\u9FFF\\uAC00-\\uD7AF\\u0400-\\u04FF'+']','g'),'');
     /* التطويل (ـ) زخرفةُ تصفيفٍ تُمطّ بها الحروف لتعديل الأسطر، فتخرج
        الكلمة ممزّقة: «المحـتــويـات». حذفه لا يغيّر معنى ولا حرفًا. */
     out=out.replace(/ـ+/g,'');
@@ -9405,11 +9408,20 @@ function pdfFolioMap(pages){
 }
 /* أسطر التقويم في كتب الوزارة تبدأ بفعل أمرٍ أو أداة استفهام، وقد
    يسبقها رمز تعداد مشوّه فنتجاوز ما ليس عربيًّا في صدرها. */
-const PDF_Q=/^[^ء-ي]{0,8}(استنتج|استدل|علّل|علل|عدّد|عدد|وضّح|وضح|اذكر|بيّن|بين|اشرح|أكمل|اكمل|اختر|أجب|اجب|عرّف|عرف|قارن|استخرج|ما\s|متى\s|لماذا|كيف)/;
+/* «ما» موصولةً تبدأ جُملًا خبرية كثيرة في هذه الكتب، فلا تُعدّ سؤالًا
+   إلا إذا انتهى السطر بعلامة استفهام. والسطر المنتهي بنقطتين يُقدّم
+   قائمةً بعده فهو مبتور وحده. */
+const PDF_Q_CMD=/^(استنتج|استدل|علّل|علل|عدّد|عدد|وضّح|وضح|اذكر|بيّن|بين|اشرح|أكمل|اكمل|اختر|أجب|اجب|عرّف|عرف|قارن|استخرج|اكتب|صنّف|صنف|رتّب|رتب|حدّد|حدد|مثّل|مثل)(?=[\s:ً])/;
 function pdfLessonQuestions(lines){
-  return lines.filter(l=>PDF_Q.test(l))
-    .map(l=>l.replace(/^[^ء-ي]{0,8}/,'').trim())
-    .filter(l=>l.length>=12);
+  return lines
+    .map(l=>String(l).replace(/^[^ء-ي؟]{0,8}/,'').replace(/\s+/g,' ').trim())
+    .filter(function(l){
+      if(l.length<12)return false;
+      if(l.split(' ').length<3)return false;
+      if(/[:：]$/.test(l))return false;
+      if(pdfArShare(l)<0.6)return false;
+      return /؟\s*$/.test(l)||PDF_Q_CMD.test(l);
+    });
 }
 /* متن الكتاب يحمل ضجيجًا لا يفيد الاختبار: سطور الفراغ المنقّطة في
    أوراق العمل، وأرقام الصفحات وحدها، وترويسات بخطوطٍ زخرفية تخرج
@@ -10166,14 +10178,66 @@ function examAddBookQuestions(){
   });
   return essay.length?ingestExamData({essay}):0;
 }
-/* زرٌّ مستقلّ: يعمل بلا نموذج ولا مفتاح — نقلٌ مباشر من الكتاب. */
-function examFromBookOnly(){
+/* أسئلة الكتاب تُكتب لسياق صفحتها، فتخرج مبتورة وحدها: «ما اختلافهم عن
+   الخوارج؟» لا تُفهم بلا معرفة مَن هم. النموذج يعيد صياغتها مكتفيةً
+   بنفسها، ويصنّفها اختيارًا وصوابًا وخطأً وفراغًا ومقاليًّا — فتنقسم ورقة
+   الاختبار أقسامًا بدل أن تكون كتلة مقاليّة واحدة. */
+function bookSelectedLessons(){
+  const B=(S.bookLessons||{})[S.subject]||[];
+  if(!B.length)return [];
+  const sel=(S.examMeta&&S.examMeta.selectedLessons)||[];
+  const titles=sel.length?(S.lessons||[]).filter(l=>sel.includes(l.title)).map(l=>l.title)
+                         :(S.lessons||[]).map(l=>l.title);
+  const out=[];
+  titles.forEach(function(t){const bl=bookLessonFor(t);if(bl&&!out.includes(bl))out.push(bl)});
+  return out.length?out:B;
+}
+async function examBookSmart(){
+  const ls=bookSelectedLessons().filter(l=>l.q&&l.q.length).slice(0,6);
+  if(!ls.length)return null;
+  const NL=String.fromCharCode(10);
+  const body=ls.map(l=>'الدرس: '+l.title+NL+
+    'من متن الدرس: '+String(l.text||'').replace(/\s+/g,' ').slice(0,1500)+NL+
+    'أسئلة الكتاب:'+NL+l.q.map((q,i)=>(i+1)+') '+q).join(NL)).join(NL+NL);
+  const ask=
+    'هذه أسئلة تقويم منقولة من كتاب مدرسي سعودي، ومعها متن دروسها.'+NL+
+    'بعض الأسئلة تحيل على سياق صفحتها فلا تُفهم وحدها (مثل: «ما اختلافهم عن الخوارج؟» '+
+    'دون ذكر مَن هم). أعد صياغة كل سؤال ليكون مفهومًا وحده، بذكر المُحال عليه صراحةً، '+
+    'مع الحفاظ على مقصد السؤال ومستواه ولغته.'+NL+
+    'ثم صنّفها: ما يصلح اختيارًا من متعدد اجعله mcq بأربعة خيارات وواحد صحيح، '+
+    'وما يصلح صوابًا وخطأً اجعله tf، وما يصلح إكمال فراغ اجعله fill، والباقي essay '+
+    'مع إجابة نموذجية موجزة.'+NL+
+    'أخرج JSON فقط بهذا الشكل بلا أي شرح:'+NL+
+    '{"mcq":[{"text":"","options":["","","",""],"correctIdx":0}],'+
+    '"tf":[{"text":"","correct":true}],'+
+    '"fill":[{"text":"","answer":""}],'+
+    '"essay":[{"text":"","modelAnswer":""}]}'+NL+NL+body;
+  const raw=await Promise.race([
+    aiCall(ask).catch(()=>null),
+    new Promise(r=>setTimeout(()=>r(null),45000))
+  ]);
+  if(!raw)return null;
+  const data=parseJSON(raw);
+  if(!data||typeof data!=='object')return null;
+  const n=['mcq','tf','fill','essay'].reduce((a,k)=>a+((data[k]||[]).length),0);
+  return n?data:null;
+}
+async function examFromBookOnly(){
   const B=(S.bookLessons||{})[S.subject]||[];
   if(!B.length){toast('ارفع كتاب المادة PDF من «تحضير الدروس» أولًا');return}
+  toast('⏳ يجهّز أسئلة الكتاب...');
+  const smart=await examBookSmart();
+  if(smart){
+    const n=ingestExamData(smart);
+    renderExamQuestions();renderMetrics();
+    toast('✓ أُضيف '+n+' سؤالًا من الكتاب، موضَّحةً ومصنّفةً');
+    return;
+  }
+  /* بلا نموذج تُنقل كما هي — نقلٌ صادق خير من لا شيء، مع بيان حاله */
   const n=examAddBookQuestions();
   if(!n){toast('لم أجد أسئلة تقويم في دروس هذا الكتاب');return}
   renderExamQuestions();renderMetrics();
-  toast('✓ أُضيف '+n+' سؤالًا من تقويم الكتاب');
+  toast('✓ نُقل '+n+' سؤالًا من تقويم الكتاب كما هي — بعضها يحتاج توضيحًا منك');
 }
 function examCurriculumContext(){
   const sel=S.examMeta.selectedLessons||[];if(!sel.length)return '';
