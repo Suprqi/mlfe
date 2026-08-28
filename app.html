@@ -203,6 +203,10 @@ input,select,textarea{font-family:inherit;font-size:1rem}
 .dp-field:hover{border-color:var(--teal)}
 .dp-overlay{display:none;position:fixed;inset:0;background:rgba(10,30,28,.55);z-index:200;align-items:center;justify-content:center;padding:20px}
 .dp-overlay.on{display:flex}
+/* نافذة التأكيد تُفتح فوق نافذةٍ أخرى غالبًا — «حذف البيانات» مثلًا —
+   وكانتا على الطبقة نفسها، فترسم الأخيرةُ في الصفحة فوق التأكيد
+   فيختفي: يكتب المعلّم «حذف» ويضغط فلا يرى شيئًا. التأكيد فوق الجميع. */
+#custom-confirm-modal{z-index:400}
 .dp-card{background:#fff;border-radius:20px;padding:22px;width:100%;max-width:380px;box-shadow:0 30px 70px -20px rgba(0,0,0,.4)}
 .dp-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
 .dp-head b{font-family:'IBM Plex Sans Arabic';font-size:1.2rem;color:var(--teal-deep)}
@@ -4144,11 +4148,15 @@ function disableLock(){
   });
 }
 let _customConfirmCb=null;
-function customConfirm(msg,cb){_customConfirmCb=cb;$('custom-confirm-msg').textContent=msg;$('custom-confirm-modal').classList.add('on')}
+/* «إلغاء» ليست دائمًا لا شيء: مصالحة السحابة تعتمد نسخة الجهاز عندها.
+   كان الردّ الثالث يُمرَّر ويُهمَل، فيضغط المعلّم «إلغاء» فلا يقع شيء. */
+let _customConfirmNo=null;
+function customConfirm(msg,cb,noCb){_customConfirmCb=cb;_customConfirmNo=noCb||null;$('custom-confirm-msg').textContent=msg;$('custom-confirm-modal').classList.add('on')}
 function closeCustomConfirm(result){
   $('custom-confirm-modal').classList.remove('on');
-  const cb=_customConfirmCb;_customConfirmCb=null;
-  if(result&&cb)cb();
+  const cb=_customConfirmCb,no=_customConfirmNo;
+  _customConfirmCb=null;_customConfirmNo=null;
+  if(result){if(cb)cb()}else if(no)no();
 }
 /* ═══ 💾 تذكير النسخة الاحتياطية — يظهر حين يلزم لا دائمًا ═══ */
 function bkDaysSince(){
