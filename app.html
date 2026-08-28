@@ -9411,6 +9411,36 @@ function pdfLessonQuestions(lines){
     .map(l=>l.replace(/^[^ء-ي]{0,8}/,'').trim())
     .filter(l=>l.length>=12);
 }
+/* متن الكتاب يحمل ضجيجًا لا يفيد الاختبار: سطور الفراغ المنقّطة في
+   أوراق العمل، وأرقام الصفحات وحدها، وترويسات بخطوطٍ زخرفية تخرج
+   حروفًا مبعثرة. وبعض الكتب ترسم النصّ مرّتين (ظلًّا فوق أصل) فيخرج
+   السطر مكرّرًا في نفسه ويتضاعف المتن. */
+const PDF_DOTS=/[.…_ـ]{5,}|[-–—]{5,}/g;
+function pdfArShare(l){
+  const c=String(l).replace(/\s/g,'');
+  if(!c.length)return 0;
+  return (c.match(/[ء-يً-ْ]/g)||[]).length/c.length;
+}
+/* السطر المرسوم مرّتين ينتهي بمقطعٍ يسبقه المقطع نفسه — نحذف نسخةً. */
+function pdfUnrepeat(t){
+  const n=t.length;
+  for(let k=Math.floor(n/2);k>=15;k--){
+    if(t.slice(n-k)===t.slice(n-2*k,n-k))return t.slice(0,n-k).trim();
+  }
+  return t;
+}
+function pdfCleanBody(lines){
+  const out=[];
+  lines.forEach(function(l){
+    let t=String(l).replace(PDF_DOTS,' ').replace(/\s+/g,' ').trim();
+    if(!t)return;
+    if(t.replace(/\s/g,'').length<3)return;
+    if(/^[\d٠-٩\s.:،؛,\-]+$/.test(t))return;
+    if(pdfArShare(t)<0.45)return;
+    out.push(pdfUnrepeat(t));
+  });
+  return out;
+}
 /* لكل عنوان في الفهرس صفحةٌ مطبوعة؛ ومداه ينتهي حيث يبدأ الذي يليه. */
 function pdfBuildLessons(pages,toc,folio){
   const out=[];
@@ -9427,8 +9457,10 @@ function pdfBuildLessons(pages,toc,folio){
     for(let q=start;q<=end&&q<pages.length;q++)lines.push.apply(lines,pages[q]);
     if(!lines.length)return;
     /* المتن يُقصّ كي لا يمتلئ تخزين الجهاز بكتابٍ كامل */
+    const body=pdfCleanBody(lines);
+    if(!body.length)return;
     out.push({title:t.title,page:t.page,from:start,to:end,
-      text:lines.join(String.fromCharCode(10)).slice(0,6000),
+      text:body.join(String.fromCharCode(10)).slice(0,6000),
       q:pdfLessonQuestions(lines).slice(0,20)});
   });
   return out;
