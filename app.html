@@ -11258,6 +11258,15 @@ async function docToPdfBlob(containerId,sizeName){
     els.forEach(e=>container.insertBefore(e,w));
     w.remove();
   };
+  /* على الجوّال تُلتقط الوثيقة بعرض الشاشة: نصفُ دقّة الكمبيوتر، والمحتوى
+     المتدفّق يلتفّ أكثر فيتغيّر عدد الأوراق — ملفّان مختلفان لوثيقة واحدة.
+     نثبّت عرض الالتقاط على عرض الورقة مهما كان الجهاز، ثم نعيد ما كان. */
+  const REFW=794;
+  let wSaved=null;
+  if(container.getBoundingClientRect().width<REFW-1){
+    wSaved=[container.style.width,container.style.maxWidth];
+    container.style.width=REFW+'px';container.style.maxWidth='none';
+  }
   const fmt={A4:'a4',A5:'a5',LETTER:'letter'}[sizeName]||'a4';
   /* الشهادات مستعرضة، فتنزل بورقة مستعرضة تملؤها بدل أن تُحشر في
      شريطٍ وسط ورقة طولية. */
@@ -11348,6 +11357,7 @@ async function docToPdfBlob(containerId,sizeName){
       y=end;
     }
   }
+  if(wSaved){container.style.width=wSaved[0];container.style.maxWidth=wSaved[1]}
   return pdf.output('blob');
 }
 async function saveAsPdf(containerId,filename,btn){
