@@ -10182,6 +10182,19 @@ function examAddBookQuestions(){
    الخوارج؟» لا تُفهم بلا معرفة مَن هم. النموذج يعيد صياغتها مكتفيةً
    بنفسها، ويصنّفها اختيارًا وصوابًا وخطأً وفراغًا ومقاليًّا — فتنقسم ورقة
    الاختبار أقسامًا بدل أن تكون كتلة مقاليّة واحدة. */
+/* aiCall يبتلع سبب الفشل ويعيد null، وهنا يحتاجه المعلّم: أهو غير
+   مسجَّل دخول، أم الخدمة غير مهيأة، أم انقطعت الشبكة؟ بلا ذلك يظنّ أن
+   الميزة معطوبة وهي تنتظر منه خطوة واحدة. */
+async function aiCallWhy(prompt){
+  try{
+    const res=await fetch('/api/chat',{method:'POST',headers:await aiHeaders(),
+      body:JSON.stringify({max_tokens:4000,messages:[{role:'user',content:prompt}]})});
+    const d=await res.json().catch(function(){return {}});
+    if(!res.ok)return {why:d.message||'تعذّر الاتصال بخدمة الذكاء'};
+    const t=(d.content||[]).filter(i=>i.type==='text').map(i=>i.text).join(String.fromCharCode(10));
+    return t?{text:t}:{why:'جاء ردّ فارغ من الخدمة'};
+  }catch(e){return {why:'تعذّر الاتصال بالشبكة'}}
+}
 function bookSelectedLessons(){
   const B=(S.bookLessons||{})[S.subject]||[];
   if(!B.length)return [];
@@ -10212,32 +10225,33 @@ async function examBookSmart(){
     '"tf":[{"text":"","correct":true}],'+
     '"fill":[{"text":"","answer":""}],'+
     '"essay":[{"text":"","modelAnswer":""}]}'+NL+NL+body;
-  const raw=await Promise.race([
-    aiCall(ask).catch(()=>null),
-    new Promise(r=>setTimeout(()=>r(null),45000))
+  const res=await Promise.race([
+    aiCallWhy(ask),
+    new Promise(r=>setTimeout(()=>r({why:'طال انتظار الخدمة'}),45000))
   ]);
-  if(!raw)return null;
-  const data=parseJSON(raw);
-  if(!data||typeof data!=='object')return null;
+  if(!res||res.why)return {why:(res&&res.why)||'تعذّر التوضيح'};
+  const data=parseJSON(res.text);
+  if(!data||typeof data!=='object')return {why:'جاء ردّ غير مفهوم من الخدمة'};
   const n=['mcq','tf','fill','essay'].reduce((a,k)=>a+((data[k]||[]).length),0);
-  return n?data:null;
+  return n?{data}:{why:'لم تُستخرج أسئلة من الردّ'};
 }
 async function examFromBookOnly(){
   const B=(S.bookLessons||{})[S.subject]||[];
   if(!B.length){toast('ارفع كتاب المادة PDF من «تحضير الدروس» أولًا');return}
   toast('⏳ يجهّز أسئلة الكتاب...');
   const smart=await examBookSmart();
-  if(smart){
-    const n=ingestExamData(smart);
+  if(smart&&smart.data){
+    const n=ingestExamData(smart.data);
     renderExamQuestions();renderMetrics();
     toast('✓ أُضيف '+n+' سؤالًا من الكتاب، موضَّحةً ومصنّفةً');
     return;
   }
-  /* بلا نموذج تُنقل كما هي — نقلٌ صادق خير من لا شيء، مع بيان حاله */
+  /* تعذّر التوضيح: تُنقل كما هي مع بيان السبب، لا بصمتٍ يوهم العطب */
   const n=examAddBookQuestions();
   if(!n){toast('لم أجد أسئلة تقويم في دروس هذا الكتاب');return}
   renderExamQuestions();renderMetrics();
-  toast('✓ نُقل '+n+' سؤالًا من تقويم الكتاب كما هي — بعضها يحتاج توضيحًا منك');
+  const why=(smart&&smart.why)||'تعذّر التوضيح';
+  toast('نُقل '+n+' سؤالًا كما هي في الكتاب. لم تُوضَّح ولم تُصنَّف لأن: '+why);
 }
 function examCurriculumContext(){
   const sel=S.examMeta.selectedLessons||[];if(!sel.length)return '';
