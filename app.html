@@ -9595,9 +9595,12 @@ async function importPdfCurr(input){
         ?tocEntries.map(e=>({title:pdfFixLamHead([e.title])[0],page:e.page}))
         :tocEntries;
       const built=pdfBuildLessons(src,ents,pdfFolioMap(src));
-      if(built.length){
+      const units=pdfBuildUnits(src);
+      if(built.length||units.length){
         S.bookLessons=S.bookLessons||{};
-        S.bookLessons[S.subject]=built;
+        S.bookUnits=S.bookUnits||{};
+        if(built.length)S.bookLessons[S.subject]=built;
+        S.bookUnits[S.subject]=units;
         saveState();
       }
     }catch(e){}
@@ -10152,6 +10155,42 @@ function toggleExamLessonByIndex(i,checked){
 if(typeof renderLessonWeights==='function')renderLessonWeights();}
 function _renderLW(){if(typeof renderLessonWeights==='function')renderLessonWeights()}
 function examSelectAllLessons(all){S.examMeta.selectedLessons=all?S.lessons.map(l=>l.title):[];renderExamLessonPicker();if(typeof renderLessonWeights==='function')renderLessonWeights();}
+/* بعض الكتب تُنهي كل وحدة بتقويمٍ جامع، وهو أوثق مصدر لأسئلة اختبار
+   الوحدة. نلتقطه حيث وُجد، ونصرّح حين لا يوجد بدل أن نصمت. */
+const PDF_UNIT_HEAD=/^(تقويم|أسئلة|مراجعة|اختبار)\s*(ال)?(وحدة|فصل|باب|مجال)/;
+function pdfBuildUnits(pages){
+  const out=[];
+  pages.forEach(function(l,i){
+    const head=l.slice(0,6).find(x=>PDF_UNIT_HEAD.test(x));
+    if(!head)return;
+    /* التقويم قد يمتدّ صفحةً أو صفحتين بعد عنوانه */
+    const lines=[];
+    for(let p=i;p<Math.min(i+3,pages.length);p++)lines.push.apply(lines,pages[p]);
+    const q=pdfLessonQuestions(lines);
+    if(q.length>=2)out.push({title:head.trim(),page:i+1,q:q.slice(0,25)});
+  });
+  return out;
+}
+/* السؤال الذي يحيل على غائب لا يُجاب: «ما هي صفاته؟» صفاتُ مَن؟ نعدّه
+   مبهمًا إن حمل ضميرًا أو إشارةً ولم يسبقه في السؤال نفسه اسمٌ معرّف
+   يصلح مرجعًا. */
+const Q_DANGLE=/(صفاته|صفاتها|أنواعه|أنواعها|أقسامه|أقسامها|شروطه|شروطها|حكمه|حكمها|فوائده|فوائدها|أركانه|أركانها|معناه|معناها|مقاصده|مقاصدها|اختلافهم|موقفهم|عنه|عنها|عنهم|منهم|بهم|لهم|هذا|هذه|ذلك|تلك|هؤلاء)/;
+function qIsVague(t){
+  const s=String(t||'').replace(/\s+/g,' ').trim();
+  if(s.length<8)return true;
+  const w=s.split(' ');
+  let at=-1;
+  for(let i=0;i<w.length;i++){if(Q_DANGLE.test(w[i])){at=i;break}}
+  if(at<0)return false;
+  /* المرجع الصالح اسمٌ معرَّف بأل يسبق الضمير. والمصدر لا يصلح مرجعًا:
+     «كيف يمكن تطبيق هذا المعنى؟» — «تطبيق» ليست ما يعود إليه «هذا».
+     ولا يُنظر إلى ما بعد الضمير: «ما اختلافهم عن الخوارج؟» فيها اسم
+     معرَّف بعده ومع ذلك لا يُعرف مَن المقصود. */
+  for(let i=0;i<at;i++){
+    if(/^(ال|بال|وال|لل|فال|كال|بِال|لِل)[ء-ي]{3,}/.test(w[i]))return false;
+  }
+  return true;
+}
 /* الدرس كما ورد في الكتاب: يُطابَق بعنوانه، وما تعذّر فبالتقارب —
    لأن عنوان الفهرس قد يحمل ترقيمًا أو علامات لا تُطابق حرفيًّا. */
 function bookLessonFor(title){
@@ -10208,34 +10247,75 @@ function bookSelectedLessons(){
   return out.length?out:B;
 }
 async function examBookSmart(){
-  const ls=bookSelectedLessons().filter(l=>l.q&&l.q.length).slice(0,6);
-  if(!ls.length)return null;
   const NL=String.fromCharCode(10);
-  const body=ls.map(l=>'الدرس: '+l.title+NL+
-    'من متن الدرس: '+String(l.text||'').replace(/\s+/g,' ').slice(0,1500)+NL+
-    'أسئلة الكتاب:'+NL+l.q.map((q,i)=>(i+1)+') '+q).join(NL)).join(NL+NL);
-  const ask=
-    'هذه أسئلة تقويم منقولة من كتاب مدرسي سعودي، ومعها متن دروسها.'+NL+
-    'بعض الأسئلة تحيل على سياق صفحتها فلا تُفهم وحدها (مثل: «ما اختلافهم عن الخوارج؟» '+
-    'دون ذكر مَن هم). أعد صياغة كل سؤال ليكون مفهومًا وحده، بذكر المُحال عليه صراحةً، '+
-    'مع الحفاظ على مقصد السؤال ومستواه ولغته.'+NL+
-    'ثم صنّفها: ما يصلح اختيارًا من متعدد اجعله mcq بأربعة خيارات وواحد صحيح، '+
-    'وما يصلح صوابًا وخطأً اجعله tf، وما يصلح إكمال فراغ اجعله fill، والباقي essay '+
+  const sel=(S.examMeta&&S.examMeta.selectedLessons)||[];
+  const units=(S.bookUnits||{})[S.subject]||[];
+  let body='',mode='';
+  if(!sel.length&&units.length){
+    /* لم يختر دروسًا وللكتاب تقويمات وحدات: هي المصدر الأوثق */
+    mode='units';
+    body=units.slice(0,6).map(u=>u.title+NL+u.q.map((q,i)=>(i+1)+') '+q).join(NL)).join(NL+NL);
+  }else{
+    const ls=bookSelectedLessons().filter(l=>(l.q&&l.q.length)||l.text).slice(0,6);
+    if(!ls.length)return {why:'لا دروس ولا تقويمات في هذا الكتاب'};
+    mode='lessons';
+    body=ls.map(l=>'الدرس: '+l.title+NL+
+      'متن الدرس: '+String(l.text||'').replace(/\s+/g,' ').slice(0,1800)+NL+
+      (l.q&&l.q.length?('أسئلة الكتاب:'+NL+l.q.map((q,i)=>(i+1)+') '+q).join(NL)):'')).join(NL+NL);
+  }
+  /* القاعدة الحاسمة: كل سؤال يُقرأ وحده. الضمير بلا مرجع يُبطل السؤال. */
+  const RULE=
+    'قاعدة لا تُخالف: كل سؤال يجب أن يُفهم وحده، بلا نظرٍ إلى الدرس ولا إلى '+
+    'سؤال قبله. لا تكتب ضميرًا ولا اسم إشارة إلا وقد ذكرتَ مرجعه في السؤال '+
+    'نفسه. مثال مرفوض: «ما هي صفاته؟» — صفاتُ مَن؟ والصواب: «ما صفات المنافق '+
+    'كما وردت في حديث «آية المنافق ثلاث»؟». ومرفوض: «ما اختلافهم عن الخوارج؟» '+
+    'والصواب أن تُسمّى الفرقة المقصودة. سمِّ المُحال عليه دائمًا.';
+  const ask=(mode==='units'
+      ? 'هذه أسئلة تقويم وحدات منقولة من كتاب مدرسي سعودي.'+NL+
+        'أعد صياغتها لتكون واضحة مكتفية بنفسها، واحفظ مقصدها ومستواها.'
+      : 'هذا متن دروس من كتاب مدرسي سعودي، ومعه أسئلة الكتاب إن وُجدت.'+NL+
+        'استنبط من متن الدرس أسئلة اختبار دقيقة، وأعد صياغة أسئلة الكتاب '+
+        'لتكون مكتفية بنفسها. لا تسأل عمّا ليس في المتن.')+NL+
+    RULE+NL+
+    'ثم صنّفها: mcq بأربعة خيارات وواحد صحيح، وtf، وfill، والباقي essay '+
     'مع إجابة نموذجية موجزة.'+NL+
-    'أخرج JSON فقط بهذا الشكل بلا أي شرح:'+NL+
+    'أخرج JSON فقط بلا شرح:'+NL+
     '{"mcq":[{"text":"","options":["","","",""],"correctIdx":0}],'+
     '"tf":[{"text":"","correct":true}],'+
     '"fill":[{"text":"","answer":""}],'+
     '"essay":[{"text":"","modelAnswer":""}]}'+NL+NL+body;
-  const res=await Promise.race([
-    aiCallWhy(ask),
-    new Promise(r=>setTimeout(()=>r({why:'طال انتظار الخدمة'}),45000))
-  ]);
-  if(!res||res.why)return {why:(res&&res.why)||'تعذّر التوضيح'};
-  const data=parseJSON(res.text);
-  if(!data||typeof data!=='object')return {why:'جاء ردّ غير مفهوم من الخدمة'};
-  const n=['mcq','tf','fill','essay'].reduce((a,k)=>a+((data[k]||[]).length),0);
-  return n?{data}:{why:'لم تُستخرج أسئلة من الردّ'};
+
+  const call=async function(prompt){
+    const r=await Promise.race([aiCallWhy(prompt),
+      new Promise(x=>setTimeout(()=>x({why:'طال انتظار الخدمة'}),45000))]);
+    if(!r||r.why)return {why:(r&&r.why)||'تعذّر التوضيح'};
+    const d=parseJSON(r.text);
+    return (d&&typeof d==='object')?{data:d}:{why:'جاء ردّ غير مفهوم من الخدمة'};
+  };
+  let res=await call(ask);
+  if(res.why)return res;
+
+  /* لا نكتفي بالطلب: نفحص المخرَج. ما بقي مبهمًا يُعاد مرّة، ثم يُسقط. */
+  const KEYS=['mcq','tf','fill','essay'];
+  const vague=[];
+  KEYS.forEach(k=>(res.data[k]||[]).forEach(q=>{if(q&&qIsVague(q.text))vague.push(q.text)}));
+  if(vague.length){
+    const fix=await call('أعد صياغة هذه الأسئلة فقط لتكون مكتفية بنفسها، '+
+      'كلٌّ منها يُفهم وحده:'+NL+RULE+NL+NL+vague.map((t,i)=>(i+1)+') '+t).join(NL)+
+      NL+NL+'وهذا سياقها:'+NL+body.slice(0,3000)+NL+NL+
+      'أخرج JSON بالشكل نفسه المذكور سابقًا.');
+    if(fix.data){
+      KEYS.forEach(k=>{
+        const kept=(res.data[k]||[]).filter(q=>q&&!qIsVague(q.text));
+        res.data[k]=kept.concat((fix.data[k]||[]).filter(q=>q&&!qIsVague(q.text)));
+      });
+    }else{
+      KEYS.forEach(k=>{res.data[k]=(res.data[k]||[]).filter(q=>q&&!qIsVague(q.text))});
+    }
+  }
+  const n=KEYS.reduce((a,k)=>a+((res.data[k]||[]).length),0);
+  if(!n)return {why:'لم يبقَ سؤال واضح بعد الفحص'};
+  return {data:res.data,mode,dropped:vague.length};
 }
 async function examFromBookOnly(){
   const B=(S.bookLessons||{})[S.subject]||[];
@@ -10245,7 +10325,9 @@ async function examFromBookOnly(){
   if(smart&&smart.data){
     const n=ingestExamData(smart.data);
     renderExamQuestions();renderMetrics();
-    toast('✓ أُضيف '+n+' سؤالًا من الكتاب، موضَّحةً ومصنّفةً');
+    const src=smart.mode==='units'?'من تقويم الوحدات':'مستنبطة من متن الدروس المختارة';
+    toast('✓ أُضيف '+n+' سؤالًا '+src+
+      (smart.dropped?' · رُوجع '+smart.dropped+' سؤالًا مبهمًا':''));
     return;
   }
   /* تعذّر التوضيح: تُنقل كما هي مع بيان السبب، لا بصمتٍ يوهم العطب */
