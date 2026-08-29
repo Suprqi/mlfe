@@ -10018,6 +10018,8 @@ function openCustomCertModal(){
 }
 function closeCustomCertModal(){$('custom-cert-modal').classList.remove('on');_pendingCustomCert=null}
 function pickCustomInk(b){
+  /* يُنادى من زرّ اللون نفسه؛ بلا زرٍّ ولا شهادةٍ قيد التصميم لا معنى له */
+  if(!b||!_pendingCustomCert)return;
   document.querySelectorAll('#custom-cert-modal .theme-sw').forEach(x=>x.classList.remove('sel'));
   b.classList.add('sel');
   _pendingCustomCert.ink=b.dataset.ink;
@@ -10767,15 +10769,24 @@ function openContacts(i){ctStudent=i;ctDate=new Date().toISOString().slice(0,10)
 function setParentInfo(field,val){if(ctStudent==null)return;S.students[ctStudent][field]=val;renderRecTable()}
 function scTab(t){['ct','dl','iv'].forEach(x=>{$('tab-'+x).classList.toggle('on',x===t);$('sc-'+x).style.display=x===t?'block':'none'});if(t==='iv')renderInterv()}
 let ivDate='';
-function renderInterv(){const s=S.students[ctStudent];if(!s.interventions)s.interventions=[];const list=$('iv-list');if(!s.interventions.length){list.innerHTML='<div style="color:var(--ink-soft);font-size:.85rem;text-align:center;padding:10px">لا تدخلات مسجّلة بعد</div>';return}const col={'تحسّن':'#2E7D32','تحسّن جزئي':'#B8860B','لا تغيير':'#B84A3B','قيد التنفيذ':'var(--ink-soft)'};list.innerHTML=s.interventions.map((v,j)=>`<div style="background:#FBFAF6;border:1px solid var(--line);border-radius:10px;padding:9px 12px;margin-bottom:7px"><div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:.85rem">${esc(v.action)}</b><span onclick="delInterv(${j})" style="color:var(--danger);cursor:pointer;font-size:.8rem">حذف</span></div><div style="font-size:.78rem;color:var(--ink-soft);margin-top:3px">${fmtDate(v.date)} • <b style="color:${col[v.result]||'var(--ink-soft)'}">${esc(v.result)}</b></div></div>`).join('')}
-function addInterv(){const s=S.students[ctStudent];const action=$('iv-action').value.trim();if(!action){toast('اكتب الإجراء العلاجي');return}if(!s.interventions)s.interventions=[];s.interventions.push({action,date:ivDate||new Date().toISOString().slice(0,10),result:$('iv-result').value});$('iv-action').value='';renderInterv();renderRecTable();toast('✓ سُجّل التدخّل العلاجي')}
+function renderInterv(){const s=(S.students||[])[ctStudent];
+  const _lst=$('iv-list');
+  if(!s){if(_lst)_lst.innerHTML='<div style="color:var(--ink-soft);padding:10px">اختر طالبًا لعرض تدخلاته العلاجية.</div>';return}
+  if(!s.interventions)s.interventions=[];const list=$('iv-list');if(!s.interventions.length){list.innerHTML='<div style="color:var(--ink-soft);font-size:.85rem;text-align:center;padding:10px">لا تدخلات مسجّلة بعد</div>';return}const col={'تحسّن':'#2E7D32','تحسّن جزئي':'#B8860B','لا تغيير':'#B84A3B','قيد التنفيذ':'var(--ink-soft)'};list.innerHTML=s.interventions.map((v,j)=>`<div style="background:#FBFAF6;border:1px solid var(--line);border-radius:10px;padding:9px 12px;margin-bottom:7px"><div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:.85rem">${esc(v.action)}</b><span onclick="delInterv(${j})" style="color:var(--danger);cursor:pointer;font-size:.8rem">حذف</span></div><div style="font-size:.78rem;color:var(--ink-soft);margin-top:3px">${fmtDate(v.date)} • <b style="color:${col[v.result]||'var(--ink-soft)'}">${esc(v.result)}</b></div></div>`).join('')}
+function addInterv(){const s=(S.students||[])[ctStudent];
+  if(!s){toast('اختر طالبًا أولًا');return}
+  const action=$('iv-action').value.trim();if(!action){toast('اكتب الإجراء العلاجي');return}if(!s.interventions)s.interventions=[];s.interventions.push({action,date:ivDate||new Date().toISOString().slice(0,10),result:$('iv-result').value});$('iv-action').value='';renderInterv();renderRecTable();toast('✓ سُجّل التدخّل العلاجي')}
 function delInterv(j){S.students[ctStudent].interventions.splice(j,1);renderInterv()}
 let dlDate='';
 function renderDaily(){const s=S.students[ctStudent];if(!s.daily)s.daily=[];const list=$('dl-list');if(!s.daily.length){list.innerHTML='<div style="color:var(--ink-soft);font-size:.85rem;text-align:center;padding:10px">لا متابعة مسجّلة بعد</div>';return}const ic={'سلوك إيجابي':'🟢','مشاركة متميزة':'⭐','ملاحظة سلوكية':'🟡','واجب غير منجز':'📕','تأخر':'⏰','ملاحظة عامة':'📝'};list.innerHTML=s.daily.map((d,j)=>`<div style="background:#FBFAF6;border:1px solid var(--line);border-radius:10px;padding:9px 12px;margin-bottom:7px"><div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:.85rem;color:var(--teal-deep)">${ic[d.type]||'📝'} ${esc(d.type)}</b><span style="display:flex;gap:8px;align-items:center"><small style="color:var(--ink-soft)">${fmtDate(d.date)}</small><span onclick="delDaily(${j})" style="color:var(--danger);cursor:pointer;font-size:.8rem">حذف</span></span></div>${d.note?`<div style="font-size:.84rem;margin-top:4px">${esc(d.note)}</div>`:''}</div>`).join('')}
 function addDaily(){const s=S.students[ctStudent];const type=$('dl-type').value;const note=$('dl-note').value.trim();if(!note){toast('اكتب الملاحظة');return}if(!s.daily)s.daily=[];s.daily.push({type,date:dlDate||new Date().toISOString().slice(0,10),note});$('dl-note').value='';renderDaily();renderRecTable();toast('✓ سُجّلت المتابعة')}
 function delDaily(j){S.students[ctStudent].daily.splice(j,1);renderDaily();renderRecTable()}
 function studentReport(){
-  const s=S.students[ctStudent];const m=maxTotal()||1;
+  /* تُفتح الشاشة أحيانًا بلا طالب محدَّد — بعد حذف الأخير أو بفتح
+     التبويب مباشرة — فكانت تقرأ من undefined فينهار الزرّ بلا رسالة. */
+  const s=(S.students||[])[ctStudent];
+  if(!s){toast('اختر طالبًا أولًا لعرض تقريره');return}
+  const m=maxTotal()||1;
   let rows=S.periods.filter(periodHasData).map(p=>{const t=studTotalFor(s,p);return `<tr><td>${esc(p)}</td>${S.criteria.map(c=>`<td style="text-align:center">${(s.scores&&s.scores[p]&&s.scores[p][c.key])||'—'}</td>`).join('')}<td style="text-align:center"><b>${t}</b></td><td style="text-align:center">${grade(t)}</td></tr>`}).join('');
   if(!rows)rows=`<tr><td colspan="${S.criteria.length+3}" style="text-align:center;color:var(--ink-soft)">لا درجات مرصودة بعد</td></tr>`;
   const daily=(s.daily||[]);const contacts=(s.contacts||[]);const intervs=(s.interventions||[]);
@@ -10850,6 +10861,8 @@ function rowsFromSheet(ws){
   return {headers:rows[hi].map((c,i)=>String(c).trim()||('عمود '+(i+1))),rows:rows.slice(hi+1)};
 }
 function switchSheet(name){
+  /* تُنادى من قائمة الأوراق، وقد تُنادى والمصنّف لم يُرفع بعد */
+  if(!xlsxWorkbook||!xlsxWorkbook.Sheets){toast('ارفع ملف إكسل أولًا');return}
   const ws=xlsxWorkbook.Sheets[name];const parsed=ws&&rowsFromSheet(ws);
   if(!parsed){toast('هذه الورقة فارغة أو بلا بيانات');return}
   xlsxHeaders=parsed.headers;xlsxRows=parsed.rows;
@@ -10916,6 +10929,11 @@ function paintXlsxMap(){
 }
 function closeXlsx(){$('xlsx-modal').classList.remove('on');xlsxRows=null;xlsxHeaders=null;xlsxWorkbook=null}
 function applyXlsx(){
+  /* حقل الاسم ثابت في الصفحة، أمّا قوائم أعمدة المعايير فتُبنى بعد
+     رفع الملف — وهي التي كانت فارغة فينهار الزرّ. */
+  if(!$('xm-name')||!S.criteria.length||!$('xm-c0')){
+    toast('ارفع ملف إكسل وطابِق أعمدته أولًا');return;
+  }
   const nameCol=Number($('xm-name').value);
   const map=S.criteria.map((c,ci)=>({key:c.key,col:Number($('xm-c'+ci).value)}));
   const mappedCols=new Set([nameCol,...map.map(m=>m.col).filter(c=>c>=0)]);
