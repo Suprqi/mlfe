@@ -375,7 +375,14 @@ input,select,textarea{font-family:inherit;font-size:1rem}
    مقسومًا. تُخفى كلها: الورقة للوثيقة وحدها. */
 /* كل ما هو ثابت على الشاشة يُطبع مع الورقة: الإشعار كان يظهر داخل
    ملف الإنجاز المطبوع. تُخفى جميعها. */
-@media print{.topbar,.doc-toolbar,.no-print,.subbar,.builder-head,.builder-sub,
+@media print{
+  /* الطباعة من شاشةٍ فيها الوثيقة وأدواتُها معًا — «من كلامك إلى ملفات»
+     مثلًا — كانت تُخرج التعليمات وصندوق الميكروفون والأزرار مع الوثيقة:
+     سبعة عشر عنصرًا لا داعي لها. فُحصت تسع وثائق فلم تعتمد واحدة منها
+     على هذه الأصناف، فتُخفى كلها. */
+  .note,.ai-box,.field,.chip,.seg,.tabs,.bank-tabs,
+  button,select,textarea,input,#mic-ic,#mic-status,
+  .topbar,.doc-toolbar,.no-print,.subbar,.builder-head,.builder-sub,
   #toast,.toast,.dp-overlay,.lgl-overlay,.anon-overlay,.mt-abar,
   .bottom-nav,#pf-theme-bar,.pf-swatches,.tabs,.seg{display:none!important}body{background:#fff}.main{padding:0;max-width:100%}.doc-wrap{border:none;box-shadow:none}.doc .page-break{page-break-after:always;border:none}.doc .page-break::after{display:none}.cert{page-break-after:always}}
 .cert{width:100%;box-sizing:border-box;padding:14px 0 28px}
@@ -9309,7 +9316,12 @@ function pdfPageLines(content){
     its.forEach((c,i)=>{
       /* القصاصات تأتي بلا مسافات بينها، فتلتصق الكلمات. نُعيد المسافة
          حين تفصل بين قصاصتين فجوةٌ أعرض من جزء من ارتفاع السطر. */
-      if(i){const p=its[i-1];if(p.x-(c.x+c.w)>Math.max(1,(c.h||8)*0.18))out+=' '}
+      /* الحركات تأتي قصاصاتٍ مستقلّة، وبينها وبين حرفها فجوة، فكانت
+         تُفصل بمسافة: «الس ُّ نَّة ُ» بدل «السُّنَّةُ». لا مسافة قبل حركة. */
+      if(i&&!/^[ً-ْٰـ]/.test(c.s)){
+        const p=its[i-1];
+        if(p.x-(c.x+c.w)>Math.max(1,(c.h||8)*0.18))out+=' ';
+      }
       out+=c.s;
     });
     /* كتب المنهج تخزّن الحروف بأشكالها المتّصلة (Presentation Forms)
@@ -9328,7 +9340,10 @@ function pdfPageLines(content){
        يلتصق حرفاها بعد حذفه. */
     /* يُطبَّق بعد طيّ المسافات: الحرفان قد يفترقان بفراغٍ حتى تُطوى
        المسافات فيلتصقا، فلو أُصلح قبلها لأفلت. */
-    return out.replace(/\s+/g,' ').trim().replace(/[اأ](?=[أإآ])/g,'');
+    /* وما تسرّب منها يُلصق بحرفه بعد طيّ المسافات */
+    return out.replace(/\s+/g,' ').trim()
+      .replace(/\s+([ً-ْٰ])/g,'$1')
+      .replace(/[اأ](?=[أإآ])/g,'');
   }).filter(Boolean);
 }
 /* صفحة الفهرس تُعرف بعنوانها، أو بأسطرٍ تنتهي برقم صفحة بعد نقاط. */
