@@ -9444,7 +9444,9 @@ function pdfLigatureDamage(lines){
   const alef=0;
   const hits=lam;
   const words=(t.match(/\S+/g)||[]).length||1;
-  return {hits,lam,alef,words,bad:hits>=3&&hits/words>0.02};
+  /* كتاب الرياضيات فيه ٣٢ موضعًا في ٥٩٦٦ كلمة — نصف بالمئة — فكانت
+     عتبة الاثنين بالمئة تُخفيه فلا يُرسَل للتصحيح. العدد المطلق يكفي. */
+  return {hits,lam,alef,words,bad:hits>=8||(hits>=3&&hits/words>0.02)};
 }
 /* رباط اللام في صدر الكلمة يُردّ بيقين: لا كلمة عربية تبدأ بـ«احل»
    ولا «اخل»، فهي «الح» و«الخ» انقلب حرفاها. أمّا وسط الكلمة فلا يُحسم
@@ -9524,14 +9526,33 @@ function pdfCleanBody(lines){
   return out;
 }
 /* لكل عنوان في الفهرس صفحةٌ مطبوعة؛ ومداه ينتهي حيث يبدأ الذي يليه. */
+/* ترقيم الكتاب لا يظهر في كل صفحة — ثمانية عشر رقمًا من ستّين صفحة في
+   كتاب الرياضيات — فيبقى أكثر الدروس بلا موضع. والفارق بين الرقم
+   المطبوع وترتيب الصفحة ثابتٌ في الكتاب الواحد، فنستخرج الفارق الأشيع
+   ونعبر به إلى ما لم يظهر ترقيمه. */
+function pdfFolioOffset(map){
+  const c={};let best=null,n=0;
+  Object.keys(map).forEach(function(k){
+    const d=map[k]-Number(k);
+    c[d]=(c[d]||0)+1;
+    if(c[d]>n){n=c[d];best=d}
+  });
+  return n>=3?best:null;
+}
 function pdfBuildLessons(pages,toc,folio){
   const out=[];
+  const off=pdfFolioOffset(folio);
   toc.forEach(function(t,i){
-    const start=folio[t.page];
+    let start=folio[t.page];
+    if(start===undefined&&off!==null){
+      const g=t.page+off;
+      if(g>=0&&g<pages.length)start=g;
+    }
     if(start===undefined)return;
     let end=start;
     for(let j=i+1;j<toc.length;j++){
-      const nx=folio[toc[j].page];
+      let nx=folio[toc[j].page];
+      if(nx===undefined&&off!==null)nx=toc[j].page+off;
       if(nx!==undefined&&nx>start){end=nx-1;break}
     }
     if(end<start)end=Math.min(start+5,pages.length-1);
@@ -9570,20 +9591,23 @@ function pdfTextIsReadable(lines){
    نفسها عددًا وترتيبًا، مصحّحةً، ولا يزيد ولا يشرح. وإن تعذّر (لا مفتاح
    أو لا شبكة) رجعنا بلا شيء ليعتذر النداء. */
 async function pdfRepairLigatures(lines){
-  if(typeof aiCall!=='function')return null;
+  if(typeof aiCallWhy!=='function')return null;
   const NL=String.fromCharCode(10);
   const src=lines.slice(0,120);
-  const ask='النصّ التالي مستخرج من كتاب PDF عربي، وخطّه يفكّ رباط اللام فتخرج '+
-    '«الحديث» هكذا «احلديث»، و«المركز» هكذا «املركز»، و«الصلاة» هكذا «الصالة».'+NL+
+  const ask='النصّ التالي عناوين فهرس مستخرجة من كتاب PDF عربي، وقد يكون في '+
+    'حروفها تلفٌ من الاستخراج: فكُّ رباط اللام («الحديث» تخرج «احلديث»)، أو نقلُ '+
+    'حروف («الأنماط» تخرج «ألنامط»، و«على لوحة» تخرج «عىللوحة»)، أو ضياع مسافات.'+NL+
     'أعد كتابة كل سطر مصحّحًا كما يُقرأ في الكتاب، سطرًا مقابل سطر، بالعدد '+
     'نفسه والترتيب نفسه. لا تحذف سطرًا ولا تضف سطرًا ولا تشرح ولا ترقّم. '+
     'أخرج الأسطر وحدها.'+NL+NL+src.join(NL);
   /* نداء الذكاء قد يعلّق (لا مفتاح، أو جلسة لا تُحسم)، فلا نترك المعلّم
      أمام دوّارة لا تنتهي: مهلةٌ ثم نعتذر. */
-  const out=await Promise.race([
-    aiCall(ask).catch(()=>null),
-    new Promise(r=>setTimeout(()=>r(null),25000))
+  const r=await Promise.race([
+    aiCallWhy(ask),
+    new Promise(x=>setTimeout(()=>x({why:'طال انتظار الخدمة'}),25000))
   ]);
+  if(!r||r.why)return null;
+  const out=r.text;
   if(!out)return null;
   const got=out.split(NL).map(x=>x.trim()).filter(Boolean);
   /* إن اختلف العدد كثيرًا فالنموذج لم يلتزم، ولا نثق بمخرجه */
@@ -9744,6 +9768,9 @@ async function importPdfCurr(input){
     }
     /* التلف يُحكم عليه مرّة واحدة قبل أي إصلاح: إصلاح الصدر يُسكت
        الكاشف، فلو أعدنا سؤاله بعده لسكتنا عن تلف الوسط الباقي. */
+    /* لكل خطٍّ تلفُه: رباط لام هنا، ونقل حروف هناك. مطاردة كل بصمة على
+       حدة خاسرة، والفهرس أربعون سطرًا لا أكثر — فيُعرض على النموذج
+       دائمًا متى كان متاحًا، ويُترك كما هو متى لم يكن. */
     const dmg=pdfLigatureDamage(lines);
     /* المتن يُخزَّن مرّة قبل أي خروج مبكر، فتصير الدروس والاختبارات
        فورية بعدها. وإصلاح صدر الكلمات يُطبَّق على صفحات الكتاب كلها
@@ -9763,15 +9790,17 @@ async function importPdfCurr(input){
         saveState();
       }
     }catch(e){}
-    if(dmg.bad){
-      lines=pdfFixLamHead(lines);
-      toast('⏳ خطّ الكتاب يفكّ رباط اللام — أُصلح ما أستطيع...');
+    if(dmg.bad)lines=pdfFixLamHead(lines);
+    {
+      toast('⏳ يُنقّي عناوين الفهرس...');
       const fixed=await pdfRepairLigatures(lines);
       if(fixed&&fixed.length)lines=fixed;
-      else{
+      else if(dmg.bad){
         const ta0=$('curr-text');ta0.value=lines.join(String.fromCharCode(10));
         $('curr-import').style.display='block';
-        toast('⚠️ صُحّحت بداية الكلمات، وبقي تلفٌ في وسطها («صلاة» تخرج «صالة») — راجع العناوين قبل الحفظ');
+        bookImportLog({stage:'تمّ بلا تنقية',pages:pages.length,ok:true,lines:lines.length,
+          toc:tocIdx.length,lessons:((S.bookLessons||{})[S.subject]||[]).length});
+        toast('⚠️ صُحّحت بداية الكلمات، وبقي تلفٌ في وسطها — راجع العناوين قبل الحفظ');
         input.value='';return;
       }
     }
