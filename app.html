@@ -1165,16 +1165,18 @@ input,select,textarea{font-family:inherit;font-size:1rem}
 .moe{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;
   border-bottom:2.5px solid var(--teal);padding-bottom:12px;margin-bottom:18px}
 .moe-r,.moe-l{flex:1 1 0;min-width:0;font-size:.8rem;color:var(--ink-soft);line-height:1.5}
-.moe-r{text-align:right;font-size:.84rem;line-height:1.5;flex:1 1 0;min-width:0}
+.moe-r{text-align:right;font-size:.86rem;line-height:1.42;flex:1 1 0;min-width:0;margin-top:-2px}
 .moe-l{text-align:left}
 .moe-r div:first-child,.moe-r div:nth-child(2){color:var(--ink);font-weight:600}
-.moe-c{flex:0 0 auto;width:auto;min-width:80px;max-width:160px;display:grid;place-items:center}
+.moe-c{flex:0 0 auto;width:auto;min-width:96px;max-width:190px;display:grid;place-items:center}
 /* العمود كان بعرض ثابت ٥٦px والشعارات تفيض منه فوق عمود الصف/الفصل */
-.moe-c img{max-width:96px;max-height:80px;object-fit:contain}
+.moe-c img{max-width:118px;max-height:96px;object-fit:contain}
 .moe-c .crest{width:52px;height:52px;border-radius:50%;background:var(--teal-light);
   display:grid;place-items:center;font-size:24px}
-@media(max-width:480px){.moe{gap:8px}.moe-r,.moe-l{font-size:.68rem;line-height:1.6}
-  .moe-c{min-width:60px;max-width:130px}.moe-c .crest{width:38px;height:38px;font-size:18px}}
+/* كانت الترويسة تصغر على الشاشة الضيّقة، فتخرج وثيقةُ الجوّال بمقاسات
+   غير وثيقة الكمبيوتر — والوثيقة واحدة أينما طُبعت. المقاس ثابت الآن،
+   ولا يبقى للشاشة إلا تقارب الأعمدة. */
+@media(max-width:480px){.moe{gap:8px}}
 
 
 
@@ -1291,7 +1293,7 @@ input,select,textarea{font-family:inherit;font-size:1rem}
 .doc-split .ds-col{min-width:0}
 .doc-split .ds-h{font-family:'IBM Plex Sans Arabic',sans-serif;font-size:.88rem;color:var(--teal-deep);
   background:var(--bg);border-radius:9px;padding:7px 12px;margin-bottom:12px;text-align:center}
-.doc-split .moe{margin-bottom:12px;padding-bottom:9px}
+/* حتى الوثيقة المقسومة تحمل الترويسة نفسها بمقاسها */
 .doc-split .doc-title{font-size:1.05rem}
 .doc-split table{font-size:.76rem}
 .doc-split .opts{grid-template-columns:1fr;gap:4px}
@@ -1462,14 +1464,14 @@ body.anon-printing #anon-wrap{display:block!important}
 .moe-logos{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:nowrap}
 /* الشعار كان أقصر من عمود النصّ بكثير، فيبقى وسط الترويسة فارغًا.
    يكبر ليوازيه، ويرتفع النصّ بسطرٍ أضيق. */
-.moe-logos img{max-width:96px;max-height:80px;object-fit:contain;display:block}
+.moe-logos img{max-width:118px;max-height:96px;object-fit:contain;display:block}
 /* شعار المدرسة أصغر — الوزارة تتقدّم بصريًا في الوثيقة الرسمية */
 .moe-logos img:last-child:not(:only-child){max-width:40px;max-height:40px}
 .logo-slot{width:100%;height:74px;border:1.5px dashed var(--line);border-radius:12px;
   display:grid;place-items:center;background:#fff;overflow:hidden}
 .logo-slot img{max-width:92%;max-height:92%;object-fit:contain}
 .logo-slot span{font-size:1.6rem;opacity:.45}
-@media print{.moe-logos img{max-width:104px;max-height:86px}
+@media print{.moe-logos img{max-width:118px;max-height:96px}
   .moe-logos img:last-child:not(:only-child){max-width:46px;max-height:46px}}
 
 /* بطاقات القوالب — أزرار كاملة قابلة للضغط */
@@ -8552,7 +8554,9 @@ function dzOver(e){e.preventDefault();e.currentTarget.classList.add('drag')}
 function dzLeave(e){e.currentTarget.classList.remove('drag')}
 function dzDrop(e){e.preventDefault();e.currentTarget.classList.remove('drag');if(e.dataTransfer&&e.dataTransfer.files)handleEvFiles(e.dataTransfer.files)}
 function addLinkEvidence(){const url=$('ev-link').value.trim();if(!url){toast('الصق رابطًا');return}const idx=guessStd(url);const doAdd=()=>{S.standards[idx].ev.push({title:url,type:/youtu|vimeo|\.mp4/i.test(url)?'فيديو':'رابط',date:new Date().toISOString().slice(0,10),note:'',result:'',link:url});$('ev-link').value='';renderStds();toast('✓ أُضيف الرابط')};if(evDup(idx,url,'')){customConfirm('⚠️ هذا الرابط مُضاف مسبقًا. إضافته مرة ثانية؟',doAdd);return}doAdd()}
-function setEvNote(i,j,v){S.standards[i].ev[j].note=v}
+/* الوصف والأثر والتأمل كانت تُكتب ولا تُحفظ — تخرج المعلّمة من الشاشة
+   فيضيع ما كتبته. أخواتها (العنوان والتاريخ والنوع) تحفظ. */
+function setEvNote(i,j,v){S.standards[i].ev[j].note=v;saveState()}
 function setEvTitle(i,j,v){S.standards[i].ev[j].title=v;saveState()}
 function setEvDate(i,j,v){S.standards[i].ev[j].date=v;saveState()}
 function setEvType(i,j,v){S.standards[i].ev[j].type=v;saveState()}
@@ -8573,8 +8577,8 @@ function removeEvImg(i,j){
     S.standards[i].ev[j].img=''; saveState(); renderStds(); toast('✓ حُذفت الصورة');
   });
 }
-function setEvResult(i,j,v){S.standards[i].ev[j].result=v}
-function setEvReflection(i,j,v){S.standards[i].ev[j].reflection=v}
+function setEvResult(i,j,v){S.standards[i].ev[j].result=v;saveState()}
+function setEvReflection(i,j,v){S.standards[i].ev[j].reflection=v;saveState()}
 const PF_THEMES=[['green','أخضر رسمي','#12A05F'],['teal','تركوازي','#0E9E93'],['navy','كحلي','#1A5FA8'],['plum','بنفسجي','#6D3B9E'],['rose','وردي','#BE4A72'],['sand','ذهبي رملي','#A9761F']];
 const PF_FONTS=[['reem','رِيم كوفي','IBM Plex Sans Arabic'],['cairo','القاهرة','Cairo'],['tajawal','تجوّل','Tajawal'],['amiri','أميري','Amiri']];
 function pfApplyFont(k){
@@ -9626,7 +9630,7 @@ async function pdfRepairLigatures(lines){
    اللصق — فيصير التشخيص خبرًا لا تخمينًا. */
 /* رقم البناء ظاهرًا: التبويب المفتوح منذ ساعات يشغّل نسخة قديمة مهما
    رُفع الجديد، فيبدو أن شيئًا لا يُصلَح. هذا الرقم يحسم الأمر. */
-const BUILD='08-31 01:41';
+const BUILD='08-31 01:54';
 function bookImportLog(o){
   try{
     S.lastBookImport=Object.assign({at:new Date().toISOString().slice(0,16).replace('T',' ')},o);
