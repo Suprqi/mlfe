@@ -9561,6 +9561,31 @@ async function pdfRepairLigatures(lines){
   if(Math.abs(got.length-src.length)>Math.max(2,src.length*0.15))return null;
   return got;
 }
+/* القواعد تعرف شكل الفهرس، والإنسان يعرفه ولو تغيّر شكله: بلا أرقام
+   صفحات، أو بعنوان لم نُحصه، أو بحروف مشوّهة. فإن عجزت القاعدة عُرض
+   أوائل الكتاب على النموذج ليجده كما يجده القارئ، ويردّ العناوين
+   مصحّحة. */
+async function pdfFindTocByAI(pages){
+  if(typeof aiCallWhy!=='function')return {why:'الذكاء غير متاح'};
+  const NL=String.fromCharCode(10);
+  const sample=pages.slice(0,25).map(function(l,i){
+    return '--- صفحة '+(i+1)+' ---'+NL+l.slice(0,40).join(NL);
+  }).join(NL).slice(0,14000);
+  const ask='هذه أوائل صفحات كتاب مدرسي سعودي، نصُّها مستخرج آليًّا وقد يكون في '+
+    'حروفه تلف.'+NL+
+    'ابحث عن صفحة الفهرس (المحتويات) واستخرج منها عناوين الدروس أو الموضوعات، '+
+    'ومع كل عنوان رقم صفحته إن وُجد.'+NL+
+    'صحّح تلف الحروف، ولا تخترع عنوانًا ليس في النصّ، ولا تُدرج رؤوس الأعمدة '+
+    'مثل «الموضوع» و«الصفحة» ولا اسم الكتاب.'+NL+
+    'أخرج JSON فقط بلا شرح: {"toc":[{"title":"","page":0}]}'+NL+
+    'وإن لم يكن في هذه الصفحات فهرس فأخرج: {"toc":[]}'+NL+NL+sample;
+  const r=await Promise.race([aiCallWhy(ask),
+    new Promise(x=>setTimeout(()=>x({why:'طال انتظار الخدمة'}),45000))]);
+  if(!r||r.why)return {why:(r&&r.why)||'تعذّر'};
+  const d=parseJSON(r.text);
+  const t=(d&&d.toc)||[];
+  return t.length>=3?{toc:t}:{why:'لم يجد النموذج فهرسًا في أوائل الكتاب'};
+}
 async function importPdfCurr(input){
   const f=input.files[0];if(!f)return;
   toast('⏳ جاري قراءة PDF...');
@@ -9624,11 +9649,23 @@ async function importPdfCurr(input){
         }
       }));
     }else{
-      /* الفهرس مصدر العناوين وحده. ما يُلتقط من الصفحات ليس فهرسًا —
-         عناوين موضوعات وشذرات — فالمصارحة خيرٌ من ملء الصندوق بما
-         يظنّه المعلّم فهرسًا فيبني عليه تحضيره واختباراته. */
-      toast('⚠️ لم أجد صفحة الفهرس في هذا الكتاب — الصق عناوين الدروس يدويًا');
-      input.value='';return;
+      /* الفهرس مصدر العناوين وحده — لكن قبل الاعتذار نسأل النموذج. */
+      toast('⏳ لم تعرف القواعد فهرس هذا الكتاب — أقرؤه كما يقرؤه الإنسان...');
+      const ai=await pdfFindTocByAI(pages);
+      if(ai&&ai.toc){
+        ai.toc.forEach(function(e){
+          const t=String((e&&e.title)||'').replace(/\s+/g,' ').trim();
+          if(t.length<3||!/[ء-ي]/.test(t))return;
+          lines.push(t);
+          const pg=parseInt(e.page,10);
+          if(pg>0)tocEntries.push({title:t,page:pg});
+        });
+      }
+      if(!lines.length){
+        toast('⚠️ لم أجد صفحة الفهرس في هذا الكتاب'+
+          ((ai&&ai.why)?' ('+ai.why+')':'')+' — الصق عناوين الدروس يدويًا');
+        input.value='';return;
+      }
     }
     /* الترويسة والتذييل يتكرّران في كل صفحة، فيُسقطان. */
     const seen=new Map();lines.forEach(l=>seen.set(l,(seen.get(l)||0)+1));
