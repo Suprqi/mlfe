@@ -9354,11 +9354,24 @@ const PDF_TOC_HEAD=/^\s*(الفهرس|فهرس\s*(الكتاب|المحتويا�
    يُعرف بسطرٍ ينتهي برقم صفحة، سبقته نقاط أو لم تسبقه. */
 const TOC_DOTTED=/[.·‥…]{2,}\s*[\d٠-٩۰-۹]{1,3}\s*$/;
 const TOC_TAILNUM=/\s[\d٠-٩۰-۹]{1,3}$/;
-function pdfIsTocHead(l){return l.length<=40&&PDF_TOC_HEAD.test(l)}
+/* عنوان الفهرس نفسه قد يصله التلف — «الفهرس» تخرج «لفِهْرِص» — فلا
+   تنفع المطابقة الحرفية. نُسوّي الحروف المتشابهة ونُسقط التشكيل ثم
+   نكتفي بورود الكلمة في سطرٍ قصير. */
+function arNorm(t){
+  return String(t).replace(/[ً-ْٰ]/g,'').replace(/[أإآٱ]/g,'ا')
+    .replace(/ة/g,'ه').replace(/ى/g,'ي').replace(/ص/g,'س')
+    .replace(/\s+/g,' ').trim();
+}
+function pdfIsTocHead(l){
+  const b=arNorm(l);
+  if(b.length>40)return false;
+  return /(فهرس|محتويات|موضوعات)/.test(b)||PDF_TOC_HEAD.test(l);
+}
 function pdfIsTocPage(lines){
   if(lines.slice(0,8).some(pdfIsTocHead))return true;
   const dotted=lines.filter(l=>TOC_DOTTED.test(l)||TOC_TAILNUM.test(l)).length;
-  return lines.length>=6&&dotted>=Math.max(4,Math.round(lines.length*0.4));
+  /* صفحة الفهرس سطورها قليلة قصيرة، فالعتبة العالية كانت تُفوّتها */
+  return lines.length>=4&&dotted>=Math.max(3,Math.round(lines.length*0.25));
 }
 function pdfCleanTocLine(l){
   return l.replace(/[.·‥…]{2,}/g,' ')
@@ -9481,6 +9494,22 @@ function pdfCleanBody(lines){
   });
   return out;
 }
+/* كتابٌ بلا صفحة فهرس ليس بلا عناوين: أوّل سطر قصير في كل صفحة هو
+   عنوانها غالبًا. سكبُ عشر صفحات كاملة كان يُخرج ركامًا لا فهرسًا. */
+function pdfPageTitles(pages){
+  const out=[],seen={};
+  pages.forEach(function(l){
+    for(let i=0;i<Math.min(3,l.length);i++){
+      const t=String(l[i]).replace(/\s+/g,' ').trim();
+      if(t.length<6||t.length>60)continue;
+      if(/[.؟:]$/.test(t))continue;
+      if(pdfArShare(t)<0.6)continue;
+      if(seen[t])break;
+      seen[t]=1;out.push(t);break;
+    }
+  });
+  return out;
+}
 /* لكل عنوان في الفهرس صفحةٌ مطبوعة؛ ومداه ينتهي حيث يبدأ الذي يليه. */
 function pdfBuildLessons(pages,toc,folio){
   const out=[];
@@ -9575,7 +9604,7 @@ async function importPdfCurr(input){
     /* إن وُجد عنوان «المحتويات» بدأنا منه وتابعنا ما يليه من صفحات
        الفهرس؛ وإلا اكتفينا بالصفحات التي تشبه الفهرس شكلًا. */
     let tocIdx=[];
-    const headAt=pages.findIndex(l=>l.slice(0,8).some(x=>PDF_TOC_HEAD.test(x)));
+    const headAt=pages.findIndex(l=>l.slice(0,8).some(pdfIsTocHead));
     if(headAt>=0){
       tocIdx=[headAt];
       for(let i=headAt+1;i<pages.length&&pdfIsTocPage(pages[i]);i++)tocIdx.push(i);
@@ -9599,7 +9628,7 @@ async function importPdfCurr(input){
     const tocEntries=[];
     if(tocIdx.length){
       tocIdx.forEach(i=>pages[i].forEach(l=>{
-        if(PDF_TOC_HEAD.test(l)||isChrome(l)||isTocHead(l))return;
+        if(pdfIsTocHead(l)||isChrome(l)||isTocHead(l))return;
         const num=/(?:^|\s)([\d٠-٩]{1,3})\s*$/.exec(l);
         const c=pdfCleanTocLine(l);
         /* صفحة الفهرس تبدأ برؤوس أعمدتها — «الموضوع الصفحة» أو «الوحدات
@@ -9610,7 +9639,10 @@ async function importPdfCurr(input){
           if(num)tocEntries.push({title:c,page:ar2num(num[1])});
         }
       }));
-    }else lines=pages.slice(0,10).flat().filter(l=>!isChrome(l)&&!isTocHead(l));
+    }else{
+      lines=pdfPageTitles(pages).filter(l=>!isChrome(l)&&!isTocHead(l));
+      if(lines.length<3)lines=pages.slice(0,10).flat().filter(l=>!isChrome(l)&&!isTocHead(l));
+    }
     /* الترويسة والتذييل يتكرّران في كل صفحة، فيُسقطان. */
     const seen=new Map();lines.forEach(l=>seen.set(l,(seen.get(l)||0)+1));
     lines=lines.filter(l=>seen.get(l)<3);
