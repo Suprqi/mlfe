@@ -9591,7 +9591,7 @@ function pdfTextIsReadable(lines){
    نفسها عددًا وترتيبًا، مصحّحةً، ولا يزيد ولا يشرح. وإن تعذّر (لا مفتاح
    أو لا شبكة) رجعنا بلا شيء ليعتذر النداء. */
 async function pdfRepairLigatures(lines){
-  if(typeof aiCallWhy!=='function')return null;
+  if(typeof aiCallWhy!=='function')return {why:'الذكاء غير متاح'};
   const NL=String.fromCharCode(10);
   const src=lines.slice(0,120);
   const ask='النصّ التالي عناوين فهرس مستخرجة من كتاب PDF عربي، وقد يكون في '+
@@ -9606,13 +9606,14 @@ async function pdfRepairLigatures(lines){
     aiCallWhy(ask),
     new Promise(x=>setTimeout(()=>x({why:'طال انتظار الخدمة'}),25000))
   ]);
-  if(!r||r.why)return null;
+  if(!r||r.why)return {why:(r&&r.why)||'تعذّر الاتصال'};
   const out=r.text;
-  if(!out)return null;
+  if(!out)return {why:'جاء ردّ فارغ'};
   const got=out.split(NL).map(x=>x.trim()).filter(Boolean);
   /* إن اختلف العدد كثيرًا فالنموذج لم يلتزم، ولا نثق بمخرجه */
-  if(Math.abs(got.length-src.length)>Math.max(2,src.length*0.15))return null;
-  return got;
+  if(Math.abs(got.length-src.length)>Math.max(2,src.length*0.15))
+    return {why:'ردٌّ لا يطابق عدد الأسطر ('+got.length+' مقابل '+src.length+')'};
+  return {lines:got};
 }
 /* القواعد تعرف شكل الفهرس، والإنسان يعرفه ولو تغيّر شكله: بلا أرقام
    صفحات، أو بعنوان لم نُحصه، أو بحروف مشوّهة. فإن عجزت القاعدة عُرض
@@ -9623,7 +9624,7 @@ async function pdfRepairLigatures(lines){
    اللصق — فيصير التشخيص خبرًا لا تخمينًا. */
 /* رقم البناء ظاهرًا: التبويب المفتوح منذ ساعات يشغّل نسخة قديمة مهما
    رُفع الجديد، فيبدو أن شيئًا لا يُصلَح. هذا الرقم يحسم الأمر. */
-const BUILD='08-31 00:50';
+const BUILD='08-31 01:15';
 function bookImportLog(o){
   try{
     S.lastBookImport=Object.assign({at:new Date().toISOString().slice(0,16).replace('T',' ')},o);
@@ -9797,8 +9798,20 @@ async function importPdfCurr(input){
     {
       toast('⏳ يُنقّي عناوين الفهرس...');
       const fixed=await pdfRepairLigatures(lines);
-      if(fixed&&fixed.length)lines=fixed;
-      else if(dmg.bad){
+      if(fixed&&fixed.lines&&fixed.lines.length)lines=fixed.lines;
+      else{
+        /* التنقية لم تقع: يُقال ذلك ويُسجَّل سببه، ولا يُقدَّم الخام
+           نجاحًا صامتًا. */
+        const why=(fixed&&fixed.why)||'تعذّرت التنقية';
+        bookImportLog({stage:'تمّ بلا تنقية',pages:pages.length,ok:true,
+          lines:lines.length,toc:tocIdx.length,why:why,
+          lessons:((S.bookLessons||{})[S.subject]||[]).length});
+        const ta1=$('curr-text');ta1.value=lines.join(String.fromCharCode(10));
+        $('curr-import').style.display='block';
+        toast('⚠️ استُخرج الفهرس ولم تُنقَّ حروفه — '+why);
+        input.value='';return;
+      }
+      if(false){
         const ta0=$('curr-text');ta0.value=lines.join(String.fromCharCode(10));
         $('curr-import').style.display='block';
         bookImportLog({stage:'تمّ بلا تنقية',pages:pages.length,ok:true,lines:lines.length,
