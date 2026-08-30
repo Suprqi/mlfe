@@ -9630,7 +9630,7 @@ async function pdfRepairLigatures(lines){
    اللصق — فيصير التشخيص خبرًا لا تخمينًا. */
 /* رقم البناء ظاهرًا: التبويب المفتوح منذ ساعات يشغّل نسخة قديمة مهما
    رُفع الجديد، فيبدو أن شيئًا لا يُصلَح. هذا الرقم يحسم الأمر. */
-const BUILD='08-31 01:54';
+const BUILD='08-31 02:07';
 function bookImportLog(o){
   try{
     S.lastBookImport=Object.assign({at:new Date().toISOString().slice(0,16).replace('T',' ')},o);
@@ -11711,7 +11711,20 @@ function buildTable(D,tableEl){
   });
   return new D.Table({width:{size:total,type:D.WidthType.DXA},columnWidths:widths,rows:trs});
 }
-function imgFromDataUrl(D,src){try{const type=/png/i.test(src)?'png':'jpg';const bin=atob(src.split(',')[1]);const u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return new D.ImageRun({data:u,type,transformation:{width:110,height:82}})}catch(e){return null}}
+function imgFromDataUrl(D,src,w,h){try{const type=/png/i.test(src)?'png':'jpg';const bin=atob(src.split(',')[1]);const u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return new D.ImageRun({data:u,type,transformation:{width:(w||110),height:(h||82)}})}catch(e){return null}}
+/* أسطر الترويسة كما تُقرأ: كل <div> سطر، ولا تُلصق ببعضها. */
+function moeHeadLines(el){
+  const out=[];
+  el.querySelectorAll('.moe-r > div,.moe-l > div').forEach(function(d){
+    const t=String(d.textContent||'').replace(/\s+/g,' ').trim();
+    if(t)out.push(t);
+  });
+  if(!out.length){
+    const t=String(el.textContent||'').replace(/\s+/g,' ').trim();
+    if(t)out.push(t);
+  }
+  return out;
+}
 function walk(D,node,out){
   [...node.children].forEach(el=>{
     const cl=el.className||'';const tag=el.tagName;
@@ -11724,7 +11737,22 @@ function walk(D,node,out){
     if(cl.includes('doc-meta')){out.push(P(D,el.textContent.trim(),{align:D.AlignmentType.CENTER,color:'43534F',size:18,spacing:{after:120}}));return}
     if(cl.includes('sec-h')){out.push(P(D,el.textContent.trim(),{bold:true,size:22,color:'0A423C',fill:'E3EEEB',spacing:{before:120,after:60}}));return}
     if(cl.includes('field-row')){const k=el.querySelector('.k');const parts=[...el.childNodes].map(n=>n.textContent).join(' ');if(k){const v=parts.replace(k.textContent,'').trim();out.push(P(D,[R(D,k.textContent+' ',{bold:true,color:'0A423C'}),R(D,v)]))}else out.push(P(D,el.textContent.trim()));return}
-    if(cl.includes('moe')){const txt=el.textContent.replace(/\s+/g,' ').trim();out.push(P(D,txt,{color:'43534F',size:16,spacing:{after:120}}));out.push(new D.Paragraph({border:{bottom:{style:D.BorderStyle.SINGLE,size:6,color:'0E5A52',space:1}},spacing:{after:120}}));return}
+    if(cl.includes('moe')){
+      /* أخذُ نصّ الترويسة كتلةً واحدة يلصق أسطرها بلا فاصل: «المملكة
+         العربية السعوديةوزارة التعليم». كل سطر فقرةٌ على حدة، والشعار
+         صورةٌ في صدرها — كان يسقط من ملف الوورد كليًّا. */
+      const hLines=moeHeadLines(el);
+      const hImg=el.querySelector('img');
+      if(hImg&&hImg.src&&/^data:/.test(hImg.src)){
+        try{
+          const ir=imgFromDataUrl(D,hImg.src,118,90);
+          if(ir)out.push(new D.Paragraph({alignment:D.AlignmentType.CENTER,children:[ir]}));
+        }catch(e){}
+      }
+      hLines.forEach(t=>out.push(P(D,t,{color:'43534F',size:18,align:D.AlignmentType.RIGHT,spacing:{after:0}})));
+      out.push(new D.Paragraph({border:{bottom:{style:D.BorderStyle.SINGLE,size:12,color:'0A6B5A'}},spacing:{after:160}}));
+      return;
+    }
     if(cl.includes('toc')){[...el.querySelectorAll('li')].forEach(li=>out.push(P(D,'•  '+li.textContent.replace(/\s+/g,' ').trim())));return}
     if(cl.includes('ev-gallery')){const cells=[...el.children].map(ph=>{const img=ph.querySelector('img');let kids;if(img){const ir=imgFromDataUrl(D,img.src);kids=[new D.Paragraph({alignment:D.AlignmentType.CENTER,children:ir?[ir]:[R(D,ph.textContent.trim(),{size:16})]})]}else kids=[P(D,ph.textContent.trim(),{align:D.AlignmentType.CENTER,size:16})];return new D.TableCell({width:{size:3000,type:D.WidthType.DXA},borders:cellBorders(D),margins:{top:50,bottom:50,left:50,right:50},children:kids})});
       const chunks=[];for(let i=0;i<cells.length;i+=3)chunks.push(cells.slice(i,i+3));
