@@ -9630,7 +9630,7 @@ async function pdfRepairLigatures(lines){
    اللصق — فيصير التشخيص خبرًا لا تخمينًا. */
 /* رقم البناء ظاهرًا: التبويب المفتوح منذ ساعات يشغّل نسخة قديمة مهما
    رُفع الجديد، فيبدو أن شيئًا لا يُصلَح. هذا الرقم يحسم الأمر. */
-const BUILD='08-31 02:07';
+const BUILD='08-31 02:14';
 function bookImportLog(o){
   try{
     S.lastBookImport=Object.assign({at:new Date().toISOString().slice(0,16).replace('T',' ')},o);
@@ -11751,6 +11751,20 @@ function walk(D,node,out){
       }
       hLines.forEach(t=>out.push(P(D,t,{color:'43534F',size:18,align:D.AlignmentType.RIGHT,spacing:{after:0}})));
       out.push(new D.Paragraph({border:{bottom:{style:D.BorderStyle.SINGLE,size:12,color:'0A6B5A'}},spacing:{after:160}}));
+      return;
+    }
+    if(cl.includes('doc-mark')){
+      /* خاتمة الوثيقة: كان الوورد يأخذ نصّها ويُسقط شعار مَلَفّي، لأن
+         الصورة لا نصّ لها فتمرّ خاوية. */
+      const mImg=el.querySelector('img');
+      if(mImg&&/^data:/.test(mImg.src||'')){
+        try{
+          const mr=imgFromDataUrl(D,mImg.src,46,46);
+          if(mr)out.push(new D.Paragraph({alignment:D.AlignmentType.CENTER,children:[mr],spacing:{before:160}}));
+        }catch(e){}
+      }
+      const mTxt=String(el.textContent||'').replace(/\s+/g,' ').trim();
+      if(mTxt)out.push(P(D,mTxt,{align:D.AlignmentType.CENTER,color:'8A9A96',size:16}));
       return;
     }
     if(cl.includes('toc')){[...el.querySelectorAll('li')].forEach(li=>out.push(P(D,'•  '+li.textContent.replace(/\s+/g,' ').trim())));return}
