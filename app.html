@@ -520,11 +520,13 @@ input,select,textarea{font-family:inherit;font-size:1rem}
 
 /* --- الغلاف --- */
 .pf-cover-in{position:relative;z-index:2;height:100%;display:flex;flex-direction:column;justify-content:center;padding:0 8% 0 34%;text-align:right}
-.pf-cover-badge{background:var(--pf-tint);border-radius:1.8cqw;padding:2.6cqw 4.6cqw;margin-bottom:9%;align-self:flex-end}
-.pf-cover-badge b{display:block;font-family:var(--pf-head),'IBM Plex Sans Arabic';font-size:6cqw;line-height:1.25}
+.pf-cover-badge{background:var(--pf-tint);border-radius:2.4cqw;padding:3.4cqw 5.4cqw;margin-bottom:7%;align-self:flex-end}
+/* الغلاف يُقرأ من بعيد ورقةً في يد، لا بطاقةً على شاشة: عنوانه كان
+   ٦٪ من عرض الورقة فيخرج صغيرًا بين فراغها. */
+.pf-cover-badge b{display:block;font-family:var(--pf-head),'IBM Plex Sans Arabic';font-size:9cqw;line-height:1.18}
 .pf-cover-badge .l1{color:#1B1B1B;font-weight:500}
 .pf-cover-badge .l2{color:var(--pf-main);font-weight:700}
-.pf-cover-f{margin-bottom:2.2cqw;font-size:2cqw;line-height:1.6}
+.pf-cover-f{margin-bottom:2.8cqw;font-size:2.7cqw;line-height:1.55}
 .pf-cover-f span{display:block;color:#1B1B1B;font-weight:600}
 .pf-cover-f b{display:block;color:var(--pf-main);font-weight:600;margin-top:.3cqw}
 
@@ -1341,7 +1343,7 @@ input,select,textarea{font-family:inherit;font-size:1rem}
 .pf-stamp-opt{display:flex;align-items:center;gap:8px;margin-top:9px;padding-top:9px;
   border-top:1px dashed var(--line);font-size:.82rem;color:var(--ink-soft);cursor:pointer}
 .pf-stamp-opt input{width:17px;height:17px;accent-color:var(--teal);cursor:pointer}
-.pf-cover-stamp{margin-top:5cqw;font-size:2.1cqw;color:rgba(255,255,255,.72)}
+.pf-cover-stamp{margin-top:5cqw;font-size:2.6cqw;color:rgba(255,255,255,.72)}
 
 /* تذييل التطبيق — روابط نظامية */
 /* تذييل التطبيق — روابط نظامية */
@@ -11637,6 +11639,11 @@ async function docToPdfBlob(containerId,sizeName){
   if(container.getBoundingClientRect().width<REFW-1){
     wSaved=[container.style.width,container.style.maxWidth];
     container.style.width=REFW+'px';container.style.maxWidth='none';
+    /* مقاسات الصفحة محسوبة بوحدات الحاوية، ولا تُحدَّث فور تغيير العرض.
+       نمهل إطارَي رسم قبل أول التقاط، وإلا خرجت الصفحة الأولى بمقاسات
+       الشاشة الضيّقة وبقيّتها بمقاس الورقة — أشياء كبيرة وأخرى صغيرة. */
+    container.getBoundingClientRect();
+    await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
   }
   const fmt={A4:'a4',A5:'a5',LETTER:'letter'}[sizeName]||'a4';
   /* الشهادات مستعرضة، فتنزل بورقة مستعرضة تملؤها بدل أن تُحشر في
