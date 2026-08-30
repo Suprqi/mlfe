@@ -9621,6 +9621,9 @@ async function pdfRepairLigatures(lines){
 /* «ما انحلت» وحدها لا تُصلح شيئًا؛ يلزم أين توقّف. نسجّل خلاصة كل
    استيراد في الحالة نفسها، فتحملها النسخة الاحتياطية وتظهر تحت صندوق
    اللصق — فيصير التشخيص خبرًا لا تخمينًا. */
+/* رقم البناء ظاهرًا: التبويب المفتوح منذ ساعات يشغّل نسخة قديمة مهما
+   رُفع الجديد، فيبدو أن شيئًا لا يُصلَح. هذا الرقم يحسم الأمر. */
+const BUILD='08-31 00:50';
 function bookImportLog(o){
   try{
     S.lastBookImport=Object.assign({at:new Date().toISOString().slice(0,16).replace('T',' ')},o);
@@ -9820,13 +9823,14 @@ function renderCurrStatus(){
   if(!st)return;
   /* خلاصة آخر استيراد تبقى معروضة، فيقرأها المعلّم ويرسلها كما هي */
   const li=S.lastBookImport;
+  const bTxt=`<div style="margin-top:4px;font-size:.72rem;color:var(--ink-soft);opacity:.85">نسخة التطبيق: <b>${BUILD}</b></div>`;
   const liTxt=li?`<div style="margin-top:6px;font-size:.78rem;color:var(--ink-soft)">`+
     `آخر قراءة كتاب: <b>${esc(li.stage||'')}</b>`+
     (li.pages?` · ${li.pages} صفحة`:'')+
     (li.lines?` · ${li.lines} سطر فهرس`:'')+
     (li.lessons?` · ${li.lessons} درسًا`:'')+
     (li.why?` · السبب: ${esc(li.why)}`:'')+
-    ` <span style="opacity:.7">(${esc(li.at||'')})</span></div>`:'';
+    ` <span style="opacity:.7">(${esc(li.at||'')})</span></div>`+bTxt:bTxt;
   if(cur&&cur.length)st.innerHTML=`✓ منهج <b>${esc(S.subject)}</b> محفوظ: ${cur.filter(x=>!x.unit).length} درس في ${cur.filter(x=>x.unit).length} وحدة.`+liTxt;
   else st.innerHTML=`<span style="color:var(--ink-soft)">لا يوجد منهج محفوظ لـ${esc(S.subject)} بعد — الصق فهرس دروسك ليتولّد التحضير عليها.</span>`+liTxt;
 }
