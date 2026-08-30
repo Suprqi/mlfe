@@ -9494,22 +9494,6 @@ function pdfCleanBody(lines){
   });
   return out;
 }
-/* كتابٌ بلا صفحة فهرس ليس بلا عناوين: أوّل سطر قصير في كل صفحة هو
-   عنوانها غالبًا. سكبُ عشر صفحات كاملة كان يُخرج ركامًا لا فهرسًا. */
-function pdfPageTitles(pages){
-  const out=[],seen={};
-  pages.forEach(function(l){
-    for(let i=0;i<Math.min(3,l.length);i++){
-      const t=String(l[i]).replace(/\s+/g,' ').trim();
-      if(t.length<6||t.length>60)continue;
-      if(/[.؟:]$/.test(t))continue;
-      if(pdfArShare(t)<0.6)continue;
-      if(seen[t])break;
-      seen[t]=1;out.push(t);break;
-    }
-  });
-  return out;
-}
 /* لكل عنوان في الفهرس صفحةٌ مطبوعة؛ ومداه ينتهي حيث يبدأ الذي يليه. */
 function pdfBuildLessons(pages,toc,folio){
   const out=[];
@@ -9640,8 +9624,11 @@ async function importPdfCurr(input){
         }
       }));
     }else{
-      lines=pdfPageTitles(pages).filter(l=>!isChrome(l)&&!isTocHead(l));
-      if(lines.length<3)lines=pages.slice(0,10).flat().filter(l=>!isChrome(l)&&!isTocHead(l));
+      /* الفهرس مصدر العناوين وحده. ما يُلتقط من الصفحات ليس فهرسًا —
+         عناوين موضوعات وشذرات — فالمصارحة خيرٌ من ملء الصندوق بما
+         يظنّه المعلّم فهرسًا فيبني عليه تحضيره واختباراته. */
+      toast('⚠️ لم أجد صفحة الفهرس في هذا الكتاب — الصق عناوين الدروس يدويًا');
+      input.value='';return;
     }
     /* الترويسة والتذييل يتكرّران في كل صفحة، فيُسقطان. */
     const seen=new Map();lines.forEach(l=>seen.set(l,(seen.get(l)||0)+1));
@@ -9686,8 +9673,7 @@ async function importPdfCurr(input){
       }
     }
         const ta=$('curr-text');ta.value=lines.join('\n');$('curr-import').style.display='block';
-    toast(tocIdx.length?`✓ استُخرج فهرس الكتاب (${lines.length} سطرًا) — راجعه واحفظ`
-                       :'✓ استُخرج النص — لم أجد صفحة فهرس، نظّف العناوين ثم احفظ');
+    toast(`✓ استُخرج فهرس الكتاب (${lines.length} سطرًا) — راجعه واحفظ`);
   }catch(e){toast('تعذّرت قراءة PDF — جرّب لصق العناوين')}
   input.value='';
 }
