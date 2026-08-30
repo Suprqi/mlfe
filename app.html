@@ -6211,7 +6211,18 @@ function srReport(idx){
   ul{margin:0 6mm 3mm 0}li{margin-bottom:1.5mm}
   .sig{margin-top:12mm;display:flex;justify-content:space-between;font-size:10pt}
   .ft{margin-top:8mm;padding-top:3mm;border-top:1px solid #DDE5E3;font-size:8.5pt;color:#6B7674}
-  @media print{.no-print{display:none}}</style></head><body>
+  @media print{.no-print{display:none}}
+/* أزرار «شواهد بلا وصف»: كل زرّ اسمُ شاهدٍ ومعياره تحته. */
+.ud-item{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;
+  text-align:right;background:#FBF3DE;border:1px solid #E8D6A8;border-radius:9px;
+  padding:7px 10px;margin-bottom:5px;cursor:pointer;font-family:inherit}
+.ud-item:hover{background:#F6E9CC;border-color:#D9C088}
+.ud-item .ud-t{font-weight:600;color:#7A5B12;font-size:.86rem;line-height:1.4}
+.ud-item .ud-s{color:var(--ink-soft);font-size:.74rem;line-height:1.35}
+/* إبرازٌ يهدأ بعد ثانيتين، فيعرف أين وقع */
+.ud-flash{outline:2.5px solid #C9A24B!important;outline-offset:2px;
+  box-shadow:0 0 0 5px rgba(201,162,75,.18)!important;transition:box-shadow .2s}
+</style></head><body>
   <div class="hd"><h1>تقرير مستوى ${V('الطالب','الطالبة')}</h1>
     <p>${esc(S.school||'')} · ${esc(S.subject||'')} · ${esc(S.curClass?'شعبة '+S.curClass:'')} · ${fmtDate(new Date().toISOString().slice(0,10))}</p></div>
   <table><tr><td style="width:28%;background:#F6FAF9"><b>اسم ${V('الطالب','الطالبة')}</b></td><td>${esc(s.name)}</td></tr>
@@ -8617,6 +8628,32 @@ function toggleSubDone(i,k,checked){
   saveState();
 }
 function moveEvidence(i,j,ni){ni=Number(ni);if(ni===i)return;const ev=S.standards[i].ev.splice(j,1)[0];S.standards[ni].ev.push(ev);renderStds();toast('✓ نُقل إلى: '+S.standards[ni].t)}
+/* من التنبيه إلى الشاهد نفسه: تُفتح شاشة ملف الأداء، ويُفتح معياره،
+   وتُفتح تفاصيل الشاهد، ثم يُمرَّر إلى حقل الوصف ويُبرَز ثانيتين — كي لا
+   تبحث المعلّمة عنه في أحد عشر معيارًا. */
+function gotoEvidence(i,j){
+  try{
+    if(typeof go==='function')go('achievement');
+    if(typeof renderStds==='function')renderStds();
+    setTimeout(function(){
+      const card=document.querySelector('.std[data-std="'+i+'"]');
+      if(card){
+        const head=card.querySelector('.std-h,.std-head,h4,h3');
+        if(head&&card.getAttribute('data-open')!=='1'){head.click();card.setAttribute('data-open','1');}
+      }
+      const det=document.getElementById('evd-'+i+'-'+j);
+      if(det&&getComputedStyle(det).display==='none')toggleEv('evd-'+i+'-'+j);
+      setTimeout(function(){
+        const f=document.getElementById('ev-note-'+i+'-'+j);
+        if(!f){toast('تعذّر فتح الشاهد — افتح المعيار يدويًا');return}
+        f.scrollIntoView({behavior:'smooth',block:'center'});
+        f.classList.add('ud-flash');
+        try{f.focus({preventScroll:true})}catch(e){try{f.focus()}catch(e2){}}
+        setTimeout(function(){f.classList.remove('ud-flash')},2000);
+      },160);
+    },120);
+  }catch(e){}
+}
 function toggleEv(id){const el=$(id);if(el)el.style.display=el.style.display==='none'?'block':'none'}
 function evQuality(e){const miss=[];if(!e.note||!e.note.trim())miss.push('وصف');if(!e.result||!e.result.trim())miss.push('أثر');if(!(e.img||e.file||e.link||e.impact))miss.push('توثيق');return miss}
 function auditAch(){
@@ -8667,7 +8704,7 @@ function renderStds(){
     if(q&&!evs.length)return;
     shown+=evs.length;
     const opts=S.standards.map((x,k)=>`<option value="${k}" ${k===i?'selected':''}>${esc(x.t)}</option>`).join('');
-    const d=document.createElement('div');d.className='std';
+    const d=document.createElement('div');d.className='std';d.setAttribute('data-std',i);
     const evBadgeColor=s.ev.length===0?'#B84A3B':s.ev.length===1?'#C9A24B':'#3E8E63';
     const evBadgeBg=s.ev.length===0?'#FBEAE6':s.ev.length===1?'#FBF3DE':'#E9F5EE';
     const evBadgeTxt=s.ev.length===0?'بحاجة شواهد':s.ev.length===1?'شاهد واحد فقط — أضف المزيد':`موثّق جيدًا (${s.ev.length})`;
@@ -8761,7 +8798,24 @@ function renderAchMeter(){
   const undesc=totalEv-described;
   let tips='';
   if(missing.length)tips+=`<div style="margin-bottom:6px"><b style="color:#B84A3B">عناصر بلا شواهد (الأثقل أولًا):</b> ${missing.map(s=>esc(s.t)+(stdWeight(s)!=null?` (${stdWeight(s)}٪)`:'')).join('، ')} — تخسر ${100-pct}٪ من التغطية.</div>`;
-  if(undesc>0)tips+=`<div style="margin-bottom:6px"><b style="color:#B8860B">${undesc} شاهد بدون وصف</b> — أضف وصفًا ليكون مقنعًا أمام ${V('المشرف','المشرفة')}.</div>`;
+  if(undesc>0){
+    /* العدد وحده يترك المعلّمة تفتح أحد عشر معيارًا تبحث عن ثلاثة شواهد.
+       نسمّي كلَّ شاهد ومعياره، ونجعل اسمه زرًّا يذهب إليه. */
+    const items=[];
+    S.standards.forEach(function(st,si){
+      (st.ev||[]).forEach(function(e,ej){
+        if(!e.note||!String(e.note).trim())
+          items.push({si:si,ej:ej,t:e.title||'شاهد بلا عنوان',std:st.t||''});
+      });
+    });
+    tips+=`<div style="margin-bottom:6px"><b style="color:#B8860B">${undesc} شاهد بدون وصف</b>`+
+      ` — أضف وصفًا ليكون مقنعًا أمام ${V('المشرف','المشرفة')}.</div>`+
+      `<div style="margin-bottom:8px">`+items.map(function(x){
+        return `<button type="button" class="ud-item" onclick="gotoEvidence(${x.si},${x.ej})">`+
+          `<span class="ud-t">${esc(x.t)}</span>`+
+          `<span class="ud-s">${esc(x.std)}</span></button>`;
+      }).join('')+`</div>`;
+  }
   if(!tips)tips='<div style="color:#2E7D32">✓ ملفك مكتمل وموصوف — جاهز للإنشاء.</div>';
   const gapRows=S.standards.map((s,i)=>{const n=s.ev.length;const col=n===0?'#B84A3B':n<2?'#B8860B':'#2E7D32';const lbl=n===0?'لا يوجد':n+' شاهد';return `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--line);font-size:.83rem"><span>${i+1}. ${esc(s.t)}${stdWeight(s)!=null?` <span style="font-size:.72rem;color:var(--ink-soft)">${stdWeight(s)}٪</span>`:''}</span><b style="color:${col}">${lbl}</b></div>`}).join('');
   box.innerHTML=`<div style="display:flex;align-items:center;gap:14px;margin-bottom:12px"><svg class="ring-svg" viewBox="0 0 40 40" style="width:54px;height:54px"><circle class="bg" cx="20" cy="20" r="16"/><circle class="fg" cx="20" cy="20" r="16" stroke-dasharray="${2*Math.PI*16}" stroke-dashoffset="${2*Math.PI*16*(1-pct/100)}"/></svg><div><div style="font-family:'IBM Plex Sans Arabic';font-size:1.4rem;color:var(--teal-deep)">${pct}%</div><div style="font-size:.82rem;color:var(--ink-soft)">${filled}/${total} معايير • ${totalEv} شاهد • ${described} موصوف</div></div></div>${tips}<div style="margin-top:12px;background:#FBFAF6;border:1px solid var(--line);border-radius:10px;padding:10px 14px"><div style="font-weight:600;color:var(--teal-deep);margin-bottom:4px;font-size:.85rem">فجوات المعايير (قبل الزيارة الإشرافية)</div>${gapRows}</div>`;
@@ -9630,7 +9684,7 @@ async function pdfRepairLigatures(lines){
    اللصق — فيصير التشخيص خبرًا لا تخمينًا. */
 /* رقم البناء ظاهرًا: التبويب المفتوح منذ ساعات يشغّل نسخة قديمة مهما
    رُفع الجديد، فيبدو أن شيئًا لا يُصلَح. هذا الرقم يحسم الأمر. */
-const BUILD='08-31 02:14';
+const BUILD='08-31 02:36';
 function bookImportLog(o){
   try{
     S.lastBookImport=Object.assign({at:new Date().toISOString().slice(0,16).replace('T',' ')},o);
