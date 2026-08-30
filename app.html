@@ -9367,11 +9367,40 @@ function pdfIsTocHead(l){
   if(b.length>40)return false;
   return /(فهرس|محتويات|موضوعات)/.test(b)||PDF_TOC_HEAD.test(l);
 }
+/* بعد أن نتيقّن أننا في الفهرس، تكفي إشارةٌ أخفّ لصفحاته التالية:
+   الصفحة الثانية منه قد تخلو من عنوانٍ وتقلّ نقاطها، وإسقاطها يبتر
+   نصف العناوين. الصرامة للبداية، لا للاستمرار. */
+function pdfIsTocCont(lines){
+  if(pdfIsTocPage(lines))return true;
+  const dotted=lines.filter(l=>TOC_DOTTED.test(l)).length;
+  if(dotted>=2)return true;
+  const rich=lines.filter(l=>TOC_TAILNUM.test(l)&&
+    l.replace(/[^ء-ي\s]/g,'').trim().split(/\s+/).filter(Boolean).length>=3).length;
+  return rich>=4;
+}
 function pdfIsTocPage(lines){
   if(lines.slice(0,8).some(pdfIsTocHead))return true;
-  const dotted=lines.filter(l=>TOC_DOTTED.test(l)||TOC_TAILNUM.test(l)).length;
-  /* صفحة الفهرس سطورها قليلة قصيرة، فالعتبة العالية كانت تُفوّتها */
-  return lines.length>=4&&dotted>=Math.max(3,Math.round(lines.length*0.25));
+  /* النقاط الفاصلة هي علامة الفهرس التي لا تكذب: قِيست على كتاب رياضيات
+     فكانت في صفحتَي فهرسه ٢٣ و٢٨ سطرًا، وفي كل صفحة أخرى صفرًا. أمّا
+     السطر المنتهي برقم فوحده لا يكفي — صفحات الرياضيات مملوءة بالأرقام
+     فتُعدّ كلها فهارس. */
+  const dotted=lines.filter(l=>TOC_DOTTED.test(l)).length;
+  if(dotted>=5)return true;
+  /* فهرسٌ بلا نقاط: يلزم أسطرٌ تحمل عنوانًا عربيًّا حقيقيًّا وتنتهي برقم */
+  const rich=lines.filter(l=>TOC_TAILNUM.test(l)&&
+    l.replace(/[^ء-ي\s]/g,'').trim().split(/\s+/).filter(Boolean).length>=3).length;
+  return rich>=8;
+}
+/* فهرس بعمودين يضع بندين في سطر واحد: «التهيئة ....... 83 التهيئة ....... 137».
+   نفصلهما عند كل «نقاطٌ ثم رقم» فيصيرا بندين. */
+function pdfSplitTocLine(l){
+  const re=/[^]*?[.·‥…]{2,}\s*[\d٠-٩۰-۹]{1,3}/g;
+  const parts=String(l).match(re);
+  if(!parts||parts.length<2)return [l];
+  const used=parts.join('').length;
+  const tail=String(l).slice(used).trim();
+  if(tail)parts.push(tail);
+  return parts.map(x=>x.trim()).filter(Boolean);
 }
 function pdfCleanTocLine(l){
   return l.replace(/[.·‥…]{2,}/g,' ')
@@ -9603,15 +9632,21 @@ async function importPdfCurr(input){
     if(!window.pdfjsLib){await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'}
     const buf=await f.arrayBuffer();const pdf=await window.pdfjsLib.getDocument({data:buf}).promise;
     /* الفهرس يقع بعد الغلاف والمقدّمة، فعشر صفحات لا تبلغه غالبًا. */
-    /* يُقرأ الكتاب كله مرّة واحدة: الفهرس من أوائله، والمتن والتقويم من
-       سائره. ما بعد ٣٠٠ صفحة يُترك كي لا يُثقل جهاز المعلّم. */
+    /* كتابٌ من ١٦١ صفحة و٧٨ ميغابايت استغرقت قراءته كاملةً خمس دقائق —
+       والفهرس في أوّل عشرين صفحة منه. فنقرأ الأوائل أولًا حتى نجده،
+       ثم نُكمل للمتن. المعلّم يرى فهرسه في ثوانٍ لا في دقائق. */
     const pages=[];
-    const LAST=Math.min(pdf.numPages,300);
-    for(let p=1;p<=LAST;p++){
-      const page=await pdf.getPage(p);
-      pages.push(pdfPageLines(await page.getTextContent()));
-      if(p%25===0)toast('⏳ يقرأ الكتاب… '+p+'/'+LAST);
-    }
+    /* ثلاثمئة صفحة من كتابٍ ثقيل تستغرق دقائق على الجوّال. الفهرس لا
+       يحتاجها، والمتن يكفيه مئة وستون. */
+    const LAST=Math.min(pdf.numPages,160);
+    const readTo=async function(n,label){
+      for(let p=pages.length+1;p<=n;p++){
+        const page=await pdf.getPage(p);
+        pages.push(pdfPageLines(await page.getTextContent()));
+        if(p%15===0)toast('⏳ '+label+'… '+p+'/'+n);
+      }
+    };
+    await readTo(LAST,'يقرأ الكتاب');
     /* قرار القلب يُتّخذ على الكتاب كله لا على صفحة، ثم يُطبَّق على
        الجميع — وقبل أي تنظيف، لأن رقم الصفحة في المقلوب يقع في صدر
        السطر لا في عَجُزه. */
@@ -9626,8 +9661,15 @@ async function importPdfCurr(input){
     const headAt=pages.findIndex(l=>l.slice(0,8).some(pdfIsTocHead));
     if(headAt>=0){
       tocIdx=[headAt];
-      for(let i=headAt+1;i<pages.length&&pdfIsTocPage(pages[i]);i++)tocIdx.push(i);
-    }else tocIdx=pages.map((l,i)=>pdfIsTocPage(l)?i:-1).filter(i=>i>=0);
+      for(let i=headAt+1;i<pages.length&&pdfIsTocCont(pages[i]);i++)tocIdx.push(i);
+    }else{
+      tocIdx=pages.map((l,i)=>pdfIsTocPage(l)?i:-1).filter(i=>i>=0);
+      /* وصفحة تالية لآخرها قد تكون بقيّته */
+      if(tocIdx.length){
+        const last=tocIdx[tocIdx.length-1];
+        if(pages[last+1]&&pdfIsTocCont(pages[last+1]))tocIdx.push(last+1);
+      }
+    }
 
     /* صفحة الفهرس تفتتحها رؤوس أعمدتها — «الموضوع الصفحة» أو «الوحدات
        المكوّن الرئيس … الصفحة» — وهي ليست عناوين دروس. */
@@ -9646,7 +9688,9 @@ async function importPdfCurr(input){
     /* نحتفظ برقم الصفحة الملحق بكل عنوان قبل تنظيفه — به يُعرف مدى الدرس */
     const tocEntries=[];
     if(tocIdx.length){
-      tocIdx.forEach(i=>pages[i].forEach(l=>{
+      const flatToc=[];
+      tocIdx.forEach(i=>pages[i].forEach(l=>flatToc.push.apply(flatToc,pdfSplitTocLine(l))));
+      flatToc.forEach(l=>{
         if(pdfIsTocHead(l)||isChrome(l)||isTocHead(l))return;
         const num=/(?:^|\s)([\d٠-٩]{1,3})\s*$/.exec(l);
         const c=pdfCleanTocLine(l);
@@ -9657,7 +9701,7 @@ async function importPdfCurr(input){
           lines.push(c);
           if(num)tocEntries.push({title:c,page:ar2num(num[1])});
         }
-      }));
+      });
     }else{
       /* الفهرس مصدر العناوين وحده — لكن قبل الاعتذار نسأل النموذج. */
       toast('⏳ لم تعرف القواعد فهرس هذا الكتاب — أقرؤه كما يقرؤه الإنسان...');
