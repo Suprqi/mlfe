@@ -9565,6 +9565,16 @@ async function pdfRepairLigatures(lines){
    صفحات، أو بعنوان لم نُحصه، أو بحروف مشوّهة. فإن عجزت القاعدة عُرض
    أوائل الكتاب على النموذج ليجده كما يجده القارئ، ويردّ العناوين
    مصحّحة. */
+/* «ما انحلت» وحدها لا تُصلح شيئًا؛ يلزم أين توقّف. نسجّل خلاصة كل
+   استيراد في الحالة نفسها، فتحملها النسخة الاحتياطية وتظهر تحت صندوق
+   اللصق — فيصير التشخيص خبرًا لا تخمينًا. */
+function bookImportLog(o){
+  try{
+    S.lastBookImport=Object.assign({at:new Date().toISOString().slice(0,16).replace('T',' ')},o);
+    saveState();
+    if(typeof renderCurrStatus==='function')renderCurrStatus();
+  }catch(e){}
+}
 async function pdfFindTocByAI(pages){
   if(typeof aiCallWhy!=='function')return {why:'الذكاء غير متاح'};
   const NL=String.fromCharCode(10);
@@ -9662,6 +9672,8 @@ async function importPdfCurr(input){
         });
       }
       if(!lines.length){
+        bookImportLog({stage:'لا فهرس',pages:pages.length,ok:false,
+          why:(ai&&ai.why)||'—'});
         toast('⚠️ لم أجد صفحة الفهرس في هذا الكتاب'+
           ((ai&&ai.why)?' ('+ai.why+')':'')+' — الصق عناوين الدروس يدويًا');
         input.value='';return;
@@ -9671,8 +9683,10 @@ async function importPdfCurr(input){
     const seen=new Map();lines.forEach(l=>seen.set(l,(seen.get(l)||0)+1));
     lines=lines.filter(l=>seen.get(l)<3);
 
-    if(!lines.length){toast('الملف صورة بدون نص — اكتب العناوين يدويًا');return}
+    if(!lines.length){bookImportLog({stage:'لا نصّ',pages:pages.length,ok:false});
+      toast('الملف صورة بدون نص — اكتب العناوين يدويًا');return}
     if(!pdfTextIsReadable(lines)){
+      bookImportLog({stage:'ترميز لا يُقرأ',pages:pages.length,ok:false});
       toast('⚠️ نصّ هذا الكتاب مخزَّن بترميز لا يُقرأ — الصق عناوين الدروس يدويًا');
       return;
     }
@@ -9710,8 +9724,11 @@ async function importPdfCurr(input){
       }
     }
         const ta=$('curr-text');ta.value=lines.join('\n');$('curr-import').style.display='block';
+    bookImportLog({stage:'تمّ',pages:pages.length,ok:true,lines:lines.length,
+      toc:tocIdx.length,lessons:((S.bookLessons||{})[S.subject]||[]).length});
     toast(`✓ استُخرج فهرس الكتاب (${lines.length} سطرًا) — راجعه واحفظ`);
-  }catch(e){toast('تعذّرت قراءة PDF — جرّب لصق العناوين')}
+  }catch(e){bookImportLog({stage:'انهيار القراءة',ok:false,why:String(e&&e.message||e).slice(0,90)});
+    toast('تعذّرت قراءة PDF — جرّب لصق العناوين')}
   input.value='';
 }
 function toggleCurrImport(){const b=$('curr-import');b.style.display=b.style.display==='none'?'block':'none'}
@@ -9720,8 +9737,17 @@ function renderCurrStatus(){
   const cur=S.curricula[S.subject];const st=$('curr-status');
   const seedBtn=$('seed-btn');if(seedBtn)seedBtn.style.display=(SEED_CURRICULA[S.subject]&&!cur)?'inline-flex':'none';
   if(!st)return;
-  if(cur&&cur.length)st.innerHTML=`✓ منهج <b>${esc(S.subject)}</b> محفوظ: ${cur.filter(x=>!x.unit).length} درس في ${cur.filter(x=>x.unit).length} وحدة.`;
-  else st.innerHTML=`<span style="color:var(--ink-soft)">لا يوجد منهج محفوظ لـ${esc(S.subject)} بعد — الصق فهرس دروسك ليتولّد التحضير عليها.</span>`;
+  /* خلاصة آخر استيراد تبقى معروضة، فيقرأها المعلّم ويرسلها كما هي */
+  const li=S.lastBookImport;
+  const liTxt=li?`<div style="margin-top:6px;font-size:.78rem;color:var(--ink-soft)">`+
+    `آخر قراءة كتاب: <b>${esc(li.stage||'')}</b>`+
+    (li.pages?` · ${li.pages} صفحة`:'')+
+    (li.lines?` · ${li.lines} سطر فهرس`:'')+
+    (li.lessons?` · ${li.lessons} درسًا`:'')+
+    (li.why?` · السبب: ${esc(li.why)}`:'')+
+    ` <span style="opacity:.7">(${esc(li.at||'')})</span></div>`:'';
+  if(cur&&cur.length)st.innerHTML=`✓ منهج <b>${esc(S.subject)}</b> محفوظ: ${cur.filter(x=>!x.unit).length} درس في ${cur.filter(x=>x.unit).length} وحدة.`+liTxt;
+  else st.innerHTML=`<span style="color:var(--ink-soft)">لا يوجد منهج محفوظ لـ${esc(S.subject)} بعد — الصق فهرس دروسك ليتولّد التحضير عليها.</span>`+liTxt;
 }
 function parseCurriculum(text){
   return text.split('\n').map(x=>x.trim()).filter(x=>x).map(line=>{
