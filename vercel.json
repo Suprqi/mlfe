@@ -11,10 +11,19 @@
   "rewrites": [
     {
       "source": "/p/:token",
-      "destination": "/p.html"
+      "destination": "/share-view"
     }
   ],
   "headers": [
+    {
+      "source": "/share-view",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow, noarchive"
+        }
+      ]
+    },
     {
       "source": "/p/(.*)",
       "headers": [
