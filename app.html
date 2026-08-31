@@ -1790,6 +1790,32 @@ body.anon-printing #anon-wrap{display:block!important}
 .pf-qr-t{font-size:.8rem;font-weight:600;margin-bottom:8px}
 .pf-qr img{width:34mm;height:34mm}
 .pf-qr-s{font-size:.72rem;color:var(--ink-soft);margin-top:6px}
+/* بنود التقييم — الدرجة الكلية والقوالب وشريط المجموع */
+.cs-head{display:flex;align-items:center;gap:9px;margin-bottom:10px;flex-wrap:wrap}
+.cs-head label{font-size:.82rem;font-weight:600;flex:none}
+.cs-head input{width:90px;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;
+  font-family:inherit;font-size:.88rem;text-align:center}
+.cs-hint2{font-size:.74rem;color:var(--ink-soft)}
+.cs-presets{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.cs-pt{font-size:.76rem;color:var(--ink-soft);flex:none}
+.cs-presets .chip{padding:6px 12px;font-size:.78rem}
+.cs-row{display:flex;align-items:center;gap:7px;background:#fff;border:1px solid var(--line);
+  border-radius:11px;padding:7px 9px;margin-bottom:7px}
+.cs-lbl{flex:1;min-width:0;padding:8px 11px;border:1px solid var(--line);border-radius:9px;
+  font-family:inherit;font-size:.86rem;background:var(--bg)}
+.cs-max{flex:none;width:66px;padding:8px 6px;border:1px solid var(--line);border-radius:9px;
+  font-family:inherit;font-size:.86rem;text-align:center;background:var(--bg)}
+.cs-of{flex:none;font-size:.74rem;color:var(--ink-soft)}
+.cs-x{flex:none;width:28px;height:28px;border:none;background:none;color:var(--danger);
+  font-size:.9rem;cursor:pointer;border-radius:7px}
+.cs-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+  border-radius:11px;padding:11px 14px;margin-top:10px;font-size:.85rem;
+  background:var(--bg);border:1px solid var(--line);color:var(--ink-soft)}
+.cs-bar.ok{background:#E8F3EC;border-color:#BFE0CD;color:#1F6B4F}
+.cs-bar.bad{background:var(--gold-soft);border-color:var(--gold);color:#8A6A1F}
+.cs-n b{font-size:1.05rem}
+.cs-msg{font-weight:700}
+.cs-hint{font-size:.75rem;opacity:.85}
 /* شرح الباركودين — يفرّق للمعلّم بين الدائم وباركود شواهد التقرير */
 .qr-help{background:var(--teal-light);border:1px solid #CFE3D8;border-radius:11px;
   padding:11px 13px;font-size:.82rem;line-height:1.85;color:var(--teal-deep);margin-bottom:12px}
@@ -2607,8 +2633,19 @@ body.anon-printing #anon-wrap{display:block!important}
 
       <div class="panel">
         <div class="panel-title">🧩 بنود التقييم</div>
-        <div class="panel-desc">حدّد بنودك ودرجاتها — لست مقيّدًا بمشاركة/واجبات/اختبار.</div>
-        <div id="crit-list" class="ev-list"></div>
+        <div class="panel-desc">حدّد بنودك ودرجاتها كما هي في نور — توزيع الوزارة يتغيّر كل سنة، فانقل ما تراه أمامك.</div>
+        <div class="cs-head">
+          <label>الدرجة الكلية</label>
+          <input id="crit-target" type="number" min="1" placeholder="١٠٠" onchange="critSetTarget(this.value)">
+          <span class="cs-hint2">من نور</span>
+        </div>
+        <div class="cs-presets">
+          <span class="cs-pt">قوالب:</span>
+          <button class="chip" onclick="critApplyPreset(0)">نشاط ١٠٠</button>
+          <button class="chip" onclick="critApplyPreset(1)">مادة ١٠٠</button>
+          <button class="chip" onclick="critApplyPreset(2)">تقويم ٤٠</button>
+        </div>
+        <div id="crit-list"></div>
         <div class="add-line" style="flex-wrap:wrap;gap:8px">
           <input id="new-crit-label" placeholder="اسم البند... مثال: مشروع" style="flex:2;min-width:140px">
           <input id="new-crit-max" type="number" placeholder="الدرجة" style="flex:1;min-width:90px;padding:11px 14px;border:1.5px solid var(--line);border-radius:12px">
@@ -3740,9 +3777,9 @@ const S={gender:'m',role:'teacher',customRoles:{},calendar:'hijri',theme:'green'
   cv:{civilId:'',qualification:'',major:'',gradYear:'',startDate:'',email:'',mobile:''},
   classicDoc:{intro:'',fileGoals:'',subjectGoals:'',conclusion:'',principalEval:'',methodContrib:''},
   schedule:{},training:[],workshops:[],circles:[],studentWork:[],lastRemedialPlan:null,lastEnrichmentPlan:null,meetingsLog:[],committees:[],tasks:[],feedbackLog:[],activities:[],
-  lessonsBySubject:{},rubricBySubject:{},criteriaBySubject:{},studentsBySubject:{},classesBySubject:{},curClassBySubject:{},examQuestionsBySubject:{},examMetaBySubject:{},
+  lessonsBySubject:{},rubricBySubject:{},criteriaBySubject:{},critTargetBySubject:{},studentsBySubject:{},classesBySubject:{},curClassBySubject:{},examQuestionsBySubject:{},examMetaBySubject:{},
   examQuestions:[],examMeta:{title:'',duration:'45',numStyle:'ar',kind:'normal'},examBlueprint:null,savedQuestions:[],
-  criteria:[{key:'c1',label:'المشاركة',max:10},{key:'c2',label:'الواجبات',max:10},{key:'c3',label:'الاختبار',max:40}],
+  criteria:[{key:'c1',label:'المشاركة',max:10},{key:'c2',label:'الواجبات',max:10},{key:'c3',label:'الاختبار',max:40}],critTarget:60,
   periods:['الفترة الأولى','الفترة الثانية','النهائي'],curPeriod:'الفترة الأولى',reminders:[],
   thresholds:{low:50,high:90},
   formsGenerated:0,
@@ -4569,6 +4606,7 @@ function switchSubject(newSubj){
   S.lessonsBySubject[S.subject]=S.lessons;
   S.rubricBySubject[S.subject]=S.rubric||'';
   S.criteriaBySubject[S.subject]=S.criteria;
+  S.critTargetBySubject[S.subject]=S.critTarget||0;
   S.studentsBySubject[S.subject]=S.students;
   S.classesBySubject[S.subject]=S.classes;
   S.curClassBySubject[S.subject]=S.curClass;
@@ -4581,6 +4619,7 @@ function switchSubject(newSubj){
   S.lessons=S.lessonsBySubject[newSubj]||[];
   S.rubric=S.rubricBySubject[newSubj]||'';
   S.criteria=S.criteriaBySubject[newSubj]||[{key:'c1',label:'المشاركة',max:10},{key:'c2',label:'الواجبات',max:10},{key:'c3',label:'الاختبار',max:40}];
+  S.critTarget=S.critTargetBySubject[newSubj]||maxTotal();
   S.students=S.studentsBySubject[newSubj]||[];
   S.classes=S.classesBySubject[newSubj]||['أ'];
   S.curClass=S.curClassBySubject[newSubj]||S.classes[0]||'أ';
@@ -9736,7 +9775,7 @@ async function pdfRepairLigatures(lines){
    اللصق — فيصير التشخيص خبرًا لا تخمينًا. */
 /* رقم البناء ظاهرًا: التبويب المفتوح منذ ساعات يشغّل نسخة قديمة مهما
    رُفع الجديد، فيبدو أن شيئًا لا يُصلَح. هذا الرقم يحسم الأمر. */
-const BUILD='08-31 05:20';
+const BUILD='08-31 06:05';
 function bookImportLog(o){
   try{
     S.lastBookImport=Object.assign({at:new Date().toISOString().slice(0,16).replace('T',' ')},o);
@@ -11102,9 +11141,50 @@ function addClass(){
 }
 function renderPeriodPicker(){const p=$('period-picker');if(!p)return;p.innerHTML='';S.periods.forEach(pr=>{const b=document.createElement('button');b.className='chip'+(pr===S.curPeriod?' sel':'');b.textContent=pr;b.onclick=()=>{S.curPeriod=pr;renderPeriodPicker();renderRecTable()};p.appendChild(b)});const l=$('cur-period-lbl');if(l)l.textContent='• '+S.curPeriod}
 function addPeriod(){const v=$('new-period').value.trim();if(!v)return;if(!S.periods.includes(v))S.periods.push(v);S.curPeriod=v;$('new-period').value='';renderPeriodPicker();renderRecTable();toast('✓ أُضيفت فترة')}
-function renderCrit(){const c=$('crit-list');if(!c)return;c.innerHTML=S.criteria.map((cr,i)=>`<div class="ev-item"><div class="ei">📊</div><div class="et">${esc(cr.label)}<small>من ${cr.max} درجة</small></div>${S.criteria.length>1?`<span class="ex" onclick="delCrit(${i})">حذف</span>`:''}</div>`).join('')}
-function addCrit(){const label=$('new-crit-label').value.trim();const max=Number($('new-crit-max').value)||0;if(!label){toast('اكتب اسم البند');return}if(max<=0){toast('حدد درجة البند');return}S.criteria.push({key:'c'+Date.now(),label,max});$('new-crit-label').value='';$('new-crit-max').value='';renderCrit();renderRecTable();toast('✓ أُضيف البند')}
-function delCrit(i){S.criteria.splice(i,1);renderCrit();renderRecTable()}
+function renderCrit(){const c=$('crit-list');if(!c)return;c.innerHTML=S.criteria.map((cr,i)=>`<div class="cs-row"><input class="cs-lbl" value="${esc(cr.label)}" onchange="critEditLabel(${i},this.value)"><input class="cs-max" type="number" min="1" value="${cr.max}" onchange="critEditMax(${i},this.value)"><span class="cs-of">درجة</span>${S.criteria.length>1?`<button class="cs-x" onclick="delCrit(${i})">✕</button>`:'<span class="cs-x"></span>'}</div>`).join('')+critSumBar();const tb=$('crit-target');if(tb)tb.value=critTarget()||''}
+/* ══════════ 📊 مجموع البنود والقوالب ══════════
+   قالت معلّمة: «كل سنة تحديث جديد لتوزيع الدرجات».
+   فلا بنود ثابتة — المعلّم ينقل ما يراه في نور،
+   والتطبيق يتحقق أن المجموع يطابق الدرجة الكلية.
+   والدرجة الكلية تُحفظ لكل مادة كما تُحفظ البنود —
+   فمادة من ١٠٠ لا تُنذر المعلّم حين يفتح مادة من ٤٠. */
+const CRIT_PRESETS=[
+  {n:'نشاط — ١٠٠', total:100,
+   c:[['المشاركة والتفاعل',50],['المهام',50]]},
+  {n:'مادة — ١٠٠', total:100,
+   c:[['المشاركة',20],['الواجبات',20],['الاختبارات القصيرة',20],['المشروع',10],['الاختبار النهائي',30]]},
+  {n:'تقويم مستمر — ٤٠', total:40,
+   c:[['المشاركة',10],['الواجبات',10],['الأنشطة',10],['السلوك',10]]}
+];
+function critTarget(){return Number(S.critTarget||0)}
+function critSetTarget(v){S.critTarget=Number(v)||0;saveState();renderCrit()}
+function critApplyPreset(i){
+  const p=CRIT_PRESETS[i]; if(!p)return;
+  customConfirm('استبدال بنودك بـ«'+p.n+'»؟ الدرجات المرصودة لا تُحذف لكنها قد لا تطابق البنود الجديدة.',function(){
+    S.criteria=p.c.map(function(x,k){return {key:'c'+Date.now()+k,label:x[0],max:x[1]}});
+    S.critTarget=p.total; saveState(); renderCrit();
+    if(typeof renderRecTable==='function')renderRecTable();
+    toast('✓ طُبّق «'+p.n+'»');
+  });
+}
+function critEditMax(i,v){const n=Number(v);if(!(n>0)){renderCrit();return}
+  S.criteria[i].max=n;saveState();renderCrit();
+  if(typeof renderRecTable==='function')renderRecTable()}
+function critEditLabel(i,v){const s=(v||'').trim();if(!s){renderCrit();return}
+  S.criteria[i].label=s;saveState();
+  if(typeof renderRecTable==='function')renderRecTable()}
+function critSumBar(){
+  const sum=maxTotal(), tgt=critTarget();
+  if(!tgt)return '<div class="cs-bar"><span class="cs-n">المجموع: <b>'+toArabicDigits(sum)
+    +'</b></span><span class="cs-hint">حدّد الدرجة الكلية للتحقق</span></div>';
+  const ok=sum===tgt, diff=tgt-sum;
+  return '<div class="cs-bar '+(ok?'ok':'bad')+'"><span class="cs-n">المجموع: <b>'
+    +toArabicDigits(sum)+'</b> من '+toArabicDigits(tgt)+'</span><span class="cs-msg">'
+    +(ok?'✅ مطابق':(diff>0?'⚠️ ناقص '+toArabicDigits(diff):'⚠️ زائد '+toArabicDigits(-diff)))
+    +'</span></div>';
+}
+function addCrit(){const label=$('new-crit-label').value.trim();const max=Number($('new-crit-max').value)||0;if(!label){toast('اكتب اسم البند');return}if(max<=0){toast('حدد درجة البند');return}S.criteria.push({key:'c'+Date.now(),label,max});$('new-crit-label').value='';$('new-crit-max').value='';saveState();renderCrit();renderRecTable();toast('✓ أُضيف البند')}
+function delCrit(i){S.criteria.splice(i,1);saveState();renderCrit();renderRecTable()}
 function maxTotal(){return S.criteria.reduce((a,c)=>a+(Number(c.max)||0),0)}
 function getScore(s,ck){return (s.scores&&s.scores[S.curPeriod]&&s.scores[S.curPeriod][ck])||''}
 function setScore(i,ck,val){const s=S.students[i];if(!s.scores)s.scores={};if(!s.scores[S.curPeriod])s.scores[S.curPeriod]={};s.scores[S.curPeriod][ck]=val;recTotal(i);renderInsights()}
