@@ -1790,6 +1790,11 @@ body.anon-printing #anon-wrap{display:block!important}
 .pf-qr-t{font-size:.8rem;font-weight:600;margin-bottom:8px}
 .pf-qr img{width:34mm;height:34mm}
 .pf-qr-s{font-size:.72rem;color:var(--ink-soft);margin-top:6px}
+/* شرح الباركودين — يفرّق للمعلّم بين الدائم وباركود شواهد التقرير */
+.qr-help{background:var(--teal-light);border:1px solid #CFE3D8;border-radius:11px;
+  padding:11px 13px;font-size:.82rem;line-height:1.85;color:var(--teal-deep);margin-bottom:12px}
+.qr-help b{font-weight:700}
+@media print{.qr-help{display:none!important}}
 </style>
 </head>
 <body>
@@ -2199,7 +2204,12 @@ body.anon-printing #anon-wrap{display:block!important}
           </div>
 
           <div class="field"><label>🔗 باركود ملفي الدائم</label>
-            <div id="share-box" style="margin-top:10px"></div>
+            <div class="qr-help" style="margin-top:10px">
+              <b>وين يُستعمل؟</b>
+              يُطبع في <b>نهاية ملف الأداء</b> — والمشرف يمسحه ليرى شواهدك وأثرك بلا حساب.
+              رابط واحد لا يتغيّر أبدًا.
+            </div>
+            <div id="share-box"></div>
           </div>
 
           <div class="field"><label>🔗 رمزي الشخصي <small style="font-weight:400;color:var(--ink-soft)">(اختياري)</small></label>
@@ -9726,7 +9736,7 @@ async function pdfRepairLigatures(lines){
    اللصق — فيصير التشخيص خبرًا لا تخمينًا. */
 /* رقم البناء ظاهرًا: التبويب المفتوح منذ ساعات يشغّل نسخة قديمة مهما
    رُفع الجديد، فيبدو أن شيئًا لا يُصلَح. هذا الرقم يحسم الأمر. */
-const BUILD='08-31 03:44';
+const BUILD='08-31 05:20';
 function bookImportLog(o){
   try{
     S.lastBookImport=Object.assign({at:new Date().toISOString().slice(0,16).replace('T',' ')},o);
@@ -15304,6 +15314,10 @@ function rptEditor(r){
       ${(S.driveBase||'').trim()?`<button class="btn btn-ghost btn-sm" onclick="rptUseBase()">📌 مجلدي الأساسي</button>`:''}
     </div>
     <div id="rpt-upload-state"></div>
+    <div class="qr-help">
+      <b>باركود الشواهد:</b> يخصّ <b>هذا التقرير وحده</b> — يفتح مجلد صوره.
+      يتغيّر مع كل تقرير، غير باركود ملفك الدائم.
+    </div>
     <div class="field"><label>رابط مجلد الشواهد</label>
       <input value="${esc(r.driveUrl)}" oninput="rptSet('driveUrl',this.value)" placeholder="https://drive.google.com/drive/folders/…" dir="ltr" style="text-align:left"></div>
     ${(r.driveUrl||'').trim()?`

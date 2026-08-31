@@ -8,7 +8,22 @@
       "maxDuration": 60
     }
   },
+  "rewrites": [
+    {
+      "source": "/p/:token",
+      "destination": "/p.html"
+    }
+  ],
   "headers": [
+    {
+      "source": "/p/(.*)",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow, noarchive"
+        }
+      ]
+    },
     {
       "source": "/app-v25",
       "headers": [

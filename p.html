@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow,noarchive,nosnippet">
+<meta name="googlebot" content="noindex,nofollow">
+<meta name="theme-color" content="#0F4239">
+<title>ملف الأداء الوظيفي — مَلَفّي</title>
+<link href="https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@500;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --teal:#0F4239; --teal-2:#1A6B57; --teal-lt:#E8F1ED;
+  --gold:#B8934A; --gold-lt:#FAF4E8;
+  --ink:#1A1A1A; --soft:#6B6B63; --line:#E3DFD3;
+  --bg:#F5F1E8; --paper:#FFFFFF; --danger:#9C3B2E;
+  --shadow:0 4px 20px -8px rgba(0,0,0,.18);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--bg);color:var(--ink);
+  line-height:1.9;font-size:15px;-webkit-text-size-adjust:100%}
+.wrap{max-width:820px;margin:0 auto;padding:0 14px 60px}
+
+/* ── الترويسة ── */
+.hd{background:var(--teal);color:#fff;padding:22px 0 26px;margin-bottom:20px}
+.hd-in{max-width:820px;margin:0 auto;padding:0 16px;display:flex;align-items:center;gap:14px}
+.hd-mark{width:46px;height:46px;background:#fff;border-radius:12px;display:grid;place-items:center;
+  flex:none;font-size:22px}
+.hd-t{flex:1;min-width:0}
+.hd-t b{display:block;font-family:'Reem Kufi',sans-serif;font-size:1.15rem;line-height:1.5}
+.hd-t small{display:block;font-size:.78rem;opacity:.82;margin-top:2px}
+
+/* ── بطاقة المعلّم ── */
+.who{background:var(--paper);border:1px solid var(--line);border-radius:18px;
+  padding:22px 20px;margin-bottom:18px;box-shadow:var(--shadow)}
+.who h1{font-family:'Reem Kufi',sans-serif;font-size:1.5rem;color:var(--teal);
+  line-height:1.6;margin-bottom:4px}
+.who .role{font-size:.92rem;color:var(--soft);margin-bottom:14px}
+.who-meta{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media(min-width:560px){.who-meta{grid-template-columns:repeat(4,1fr)}}
+.who-meta span{background:var(--bg);border:1px solid var(--line);border-radius:10px;
+  padding:8px 10px;font-size:.8rem;text-align:center;color:var(--soft);
+  display:flex;align-items:center;justify-content:center;min-height:40px}
+.who-meta span:empty{display:none}
+
+/* ── الملخّص ── */
+.sum{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
+@media(min-width:560px){.sum{grid-template-columns:repeat(4,1fr)}}
+.sum-c{background:var(--paper);border:1px solid var(--line);border-radius:14px;
+  padding:15px 12px;text-align:center}
+.sum-c b{display:block;font-size:1.7rem;color:var(--teal);font-family:'Reem Kufi',sans-serif;
+  line-height:1.3}
+.sum-c small{display:block;font-size:.74rem;color:var(--soft);margin-top:3px}
+
+/* ── قسم ── */
+.sec{margin-bottom:26px}
+.sec-h{display:flex;align-items:center;gap:9px;margin-bottom:12px;padding-bottom:9px;
+  border-bottom:2px solid var(--teal)}
+.sec-h b{flex:1;min-width:0;font-family:'Reem Kufi',sans-serif;font-size:1.08rem;color:var(--teal)}
+.sec-h em{flex:none;font-style:normal;font-size:.76rem;color:var(--soft);
+  background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:3px 10px}
+
+/* ── معيار ── */
+.std{background:var(--paper);border:1px solid var(--line);border-radius:14px;
+  margin-bottom:10px;overflow:hidden}
+.std-h{display:flex;align-items:center;gap:10px;padding:13px 15px;cursor:pointer;
+  -webkit-tap-highlight-color:transparent}
+.std-h>*{pointer-events:none}
+.std-n{flex:none;width:26px;height:26px;border-radius:50%;background:var(--teal-lt);
+  color:var(--teal);display:grid;place-items:center;font-size:.76rem;font-weight:700}
+.std-t{flex:1;min-width:0;font-weight:600;font-size:.92rem;line-height:1.55}
+.std-c{flex:none;font-size:.74rem;color:var(--soft);background:var(--bg);
+  border:1px solid var(--line);border-radius:999px;padding:2px 9px}
+.std-x{flex:none;color:var(--teal);font-size:.8rem;transition:.2s}
+.std.on .std-x{transform:rotate(180deg)}
+.std-b{display:none;padding:0 15px 14px}
+.std.on .std-b{display:block}
+.ev{border-inline-start:3px solid var(--teal-lt);padding:8px 0 8px 0;
+  padding-inline-start:12px;margin-bottom:8px}
+.ev:last-child{margin-bottom:0}
+.ev b{display:block;font-size:.88rem;font-weight:600;line-height:1.6}
+.ev small{display:block;font-size:.74rem;color:var(--soft);margin-top:2px}
+.std-empty{font-size:.82rem;color:var(--soft);padding:4px 0}
+
+/* ── الأثر ── */
+.imp{background:var(--gold-lt);border:1px solid var(--gold);border-radius:16px;padding:18px 17px}
+.imp-h{font-family:'Reem Kufi',sans-serif;font-size:1rem;color:#7A5F22;margin-bottom:12px}
+.imp-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;text-align:center;margin-bottom:12px}
+.imp-row div b{display:block;font-size:1.5rem;color:var(--teal);font-family:'Reem Kufi',sans-serif}
+.imp-row div small{display:block;font-size:.72rem;color:var(--soft)}
+.imp p{font-size:.85rem;line-height:1.85;color:#6B5418;margin:0}
+
+/* ── حالات ── */
+.state{background:var(--paper);border:1px solid var(--line);border-radius:18px;
+  padding:40px 24px;text-align:center;margin-top:30px;box-shadow:var(--shadow)}
+.state .ic{font-size:2.4rem;display:block;margin-bottom:12px}
+.state b{display:block;font-family:'Reem Kufi',sans-serif;font-size:1.2rem;
+  color:var(--teal);margin-bottom:8px}
+.state p{font-size:.9rem;color:var(--soft);line-height:1.9;max-width:38ch;margin:0 auto}
+.state.err b{color:var(--danger)}
+
+/* ── التذييل ── */
+.ft{margin-top:34px;padding-top:18px;border-top:1px solid var(--line);text-align:center}
+.ft-mark{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:8px;
+  font-size:.8rem;color:var(--soft)}
+.ft-mark b{color:var(--teal);font-weight:700}
+.ft small{display:block;font-size:.72rem;color:var(--soft);line-height:1.8}
+.ft a{color:var(--teal);text-decoration:none}
+
+.priv{background:var(--teal-lt);border:1px solid var(--teal-2);border-radius:12px;
+  padding:11px 14px;font-size:.8rem;color:var(--teal);line-height:1.75;margin-bottom:18px;
+  display:flex;gap:9px;align-items:flex-start}
+.priv i{flex:none;font-style:normal}
+
+@media print{
+  .hd{background:#fff;color:var(--ink);border-bottom:2px solid var(--teal)}
+  .std-b{display:block!important}
+  .std-x,.priv{display:none}
+  body{background:#fff}
+}
+</style>
+</head>
+<body>
+
+<div class="hd">
+  <div class="hd-in">
+    <div class="hd-mark">📁</div>
+    <div class="hd-t">
+      <b>ملف الأداء الوظيفي</b>
+      <small id="hd-sub">—</small>
+    </div>
+  </div>
+</div>
+
+<div class="wrap" id="app">
+  <div class="state"><span class="ic">⏳</span><b>جارٍ التحميل…</b></div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════════
+   صفحة عرض ملف الأداء — يفتحها المشرف بمسح الباركود
+   
+   ⚠️ لموسى: هذه واجهة عرض فقط. البيانات تأتي من الخادم عبر
+   GET /api/share/:token  ويعيد الشكل الموصوف في SHARE_SHAPE أدناه.
+   
+   الخادم مسؤول عن:
+   • التحقق من صلاحية الرمز (٩٠ يومًا)
+   • تطبيق مستوى الخصوصية قبل الإرسال — لا ترسل ما لا يُعرض
+   • تسجيل كل فتح: الوقت + IP مجزوء (لعرضه للمعلّم)
+   • رأس X-Robots-Tag: noindex على الاستجابة
+   ══════════════════════════════════════════════════════════ */
+
+/* ── الشكل المتوقَّع من الخادم ── */
+const SHARE_SHAPE = {
+  status: 'ok',            // ok | expired | revoked | notfound
+  privacy: 'full',         // full | masked | summary
+  updatedAt: '2026-08-24',
+  teacher: { name:'', role:'', school:'', subject:'', grade:'', region:'' },
+  standards: [ { t:'', ev:[ {title:'', type:'', date:''} ] } ],
+  impact: { students:0, interventions:0, before:null, after:null, improved:null, note:'' },
+  show: { standards:true, reports:true, impact:true },
+  reports: [ { title:'', type:'', date:'' } ]
+};
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s==null?'':s)
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const ar = n => String(n==null?'':n).replace(/[0-9]/g, d => '٠١٢٣٤٥٦٧٨٩'[+d]);
+
+function token(){
+  const m = location.pathname.match(/\/p\/([A-Za-z0-9_-]{4,})/);
+  if (m) return m[1];
+  return new URLSearchParams(location.search).get('t') || '';
+}
+
+async function load(){
+  const t = token();
+  if (!t) return render({ status:'notfound' });
+  try{
+    const r = await fetch('/api/share/' + encodeURIComponent(t), { headers:{'Accept':'application/json'} });
+    if (r.status === 404) return render({ status:'notfound' });
+    if (r.status === 410) return render({ status:'expired' });
+    if (r.status === 403) return render({ status:'revoked' });
+    if (!r.ok) throw new Error('http ' + r.status);
+    render(await r.json());
+  } catch(e){
+    render({ status:'error' });
+  }
+}
+
+const STATES = {
+  expired: ['⏱️','انتهت صلاحية المشاركة',
+    'صاحب الملف يستطيع تجديدها بضغطة من التطبيق — والباركود نفسه سيعمل بعدها.'],
+  revoked: ['🔒','أُوقفت المشاركة',
+    'أوقف صاحب الملف مشاركة هذا الرابط.'],
+  notfound:['🔍','الرابط غير صحيح',
+    'تأكّد من مسح الباركود كاملًا، أو اطلب الرابط من صاحب الملف.'],
+  error:   ['⚠️','تعذّر التحميل',
+    'حدث خلل مؤقت. أعد المحاولة بعد قليل.']
+};
+
+function render(d){
+  const app = $('app');
+  if (!d || d.status !== 'ok'){
+    const s = STATES[(d && d.status) || 'error'] || STATES.error;
+    app.innerHTML = `<div class="state${d && d.status==='error' ? ' err':''}">
+      <span class="ic">${s[0]}</span><b>${s[1]}</b><p>${s[2]}</p></div>` + footer();
+    return;
+  }
+
+  const T = d.teacher || {};
+  $('hd-sub').textContent = [T.school, T.subject].filter(Boolean).join(' · ') || '—';
+  document.title = (T.name ? T.name + ' — ' : '') + 'ملف الأداء الوظيفي';
+
+  const show = d.show || {};
+  let h = '';
+
+  /* تنبيه مستوى الخصوصية — يُقرأ قبل المحتوى */
+  if (d.privacy === 'masked')
+    h += `<div class="priv"><i>🔐</i><div>هذه نسخة <b>مجرّدة</b> — أسماء الطلاب مستبدلة برموز، والصور مطموسة.</div></div>`;
+  else if (d.privacy === 'summary')
+    h += `<div class="priv"><i>📊</i><div>هذه نسخة <b>ملخّصة</b> — الشواهد والأرقام بلا بيانات طلاب.</div></div>`;
+
+  /* بطاقة المعلّم */
+  h += `<div class="who">
+    <h1>${esc(T.name || '—')}</h1>
+    <div class="role">${esc(T.role || '')}</div>
+    <div class="who-meta">
+      <span>${esc(T.school || '')}</span>
+      <span>${esc(T.subject || '')}</span>
+      <span>${esc(T.grade || '')}</span>
+      <span>${esc(T.region || '')}</span>
+    </div>
+  </div>`;
+
+  /* الملخّص */
+  const stds = d.standards || [];
+  const covered = stds.filter(s => (s.ev || []).length).length;
+  const evTotal = stds.reduce((a, s) => a + (s.ev || []).length, 0);
+  const I = d.impact || {};
+  h += `<div class="sum">
+    <div class="sum-c"><b>${ar(covered)}</b><small>معيارًا موثَّقًا</small></div>
+    <div class="sum-c"><b>${ar(evTotal)}</b><small>شاهدًا</small></div>
+    <div class="sum-c"><b>${ar((d.reports || []).length)}</b><small>تقريرًا</small></div>
+    <div class="sum-c"><b>${ar(I.students || 0)}</b><small>طالبًا</small></div>
+  </div>`;
+
+  /* الأثر المُثبت — الفرق الحقيقي */
+  if (show.impact !== false && I.before != null && I.after != null){
+    h += `<div class="sec"><div class="imp">
+      <div class="imp-h">📈 الأثر المُثبَت — محسوب من سجل الرصد</div>
+      <div class="imp-row">
+        <div><b>${ar(I.before)}٪</b><small>القياس القبلي</small></div>
+        <div><b>${ar(I.after)}٪</b><small>القياس البعدي</small></div>
+        <div><b>${ar(I.improved || 0)}</b><small>تحسّن مستواهم</small></div>
+      </div>
+      ${I.note ? `<p>${esc(I.note)}</p>` : ''}
+    </div></div>`;
+  }
+
+  /* المعايير والشواهد */
+  if (show.standards !== false && stds.length){
+    h += `<div class="sec">
+      <div class="sec-h"><b>الشواهد على معايير الأداء</b><em>${ar(covered)} من ${ar(stds.length)}</em></div>`;
+    stds.forEach((s, i) => {
+      const ev = s.ev || [];
+      h += `<div class="std${i === 0 && ev.length ? ' on' : ''}" onclick="this.classList.toggle('on')">
+        <div class="std-h">
+          <span class="std-n">${ar(i + 1)}</span>
+          <span class="std-t">${esc(s.t)}</span>
+          <span class="std-c">${ar(ev.length)}</span>
+          <span class="std-x">▾</span>
+        </div>
+        <div class="std-b">
+          ${ev.length ? ev.map(e => `<div class="ev">
+            <b>${esc(e.title)}</b>
+            <small>${[e.type, e.date].filter(Boolean).map(esc).join(' · ')}</small>
+          </div>`).join('') : '<div class="std-empty">لا شواهد بعد.</div>'}
+        </div>
+      </div>`;
+    });
+    h += `</div>`;
+  }
+
+  /* التقارير */
+  if (show.reports !== false && (d.reports || []).length){
+    h += `<div class="sec">
+      <div class="sec-h"><b>التقارير المهنية</b><em>${ar(d.reports.length)}</em></div>`;
+    d.reports.forEach(r => {
+      h += `<div class="std"><div class="std-h" style="cursor:default">
+        <span class="std-n">📄</span>
+        <span class="std-t">${esc(r.title)}</span>
+        <span class="std-c">${esc(r.date || '')}</span>
+      </div></div>`;
+    });
+    h += `</div>`;
+  }
+
+  h += footer(d.updatedAt);
+  app.innerHTML = h;
+}
+
+function footer(updated){
+  return `<div class="ft">
+    <div class="ft-mark">أُنشئ عبر <b>مَلَفّي</b></div>
+    <small>
+      ${updated ? 'آخر تحديث: ' + esc(updated) + '<br>' : ''}
+      مجموعة بجيلة القابضة · سجل تجاري ٧٠٣١٩٢٣٠٢٧<br>
+      <a href="https://malafi.sa">malafi.sa</a>
+    </small>
+  </div>`;
+}
+
+/* الإنتاج: يقرأ الرمز من المسار /p/:token ويسأل الخادم.
+   ما دامت /api/share/:token غير مبنية، تظهر «تعذّر التحميل» — وهو الصدق. */
+load();
+</script>
+</body>
+</html>
