@@ -1760,6 +1760,36 @@ body.anon-printing #anon-wrap{display:block!important}
    وهو ما يبني PDF المُنزَّل — يرسم كل حرف وحده متى وجد تباعدًا، فتخرج
    «اسم النشاط» هكذا: «لس م لنش اط». القاعدة تمنع عودته من أي إضافة. */
 .doc,.doc *,.pf-doc,.pf-doc *,.cert,.cert *,#rpt-doc *,#lv-doc *{letter-spacing:normal!important}
+/* لوحة الباركود الدائم */
+.sh-top{margin-bottom:10px}
+.sh-b{display:inline-block;font-size:.72rem;font-weight:700;padding:3px 11px;border-radius:999px}
+.sh-on{background:#E8F3EC;color:#1F6B4F;border:1px solid #BFE0CD}
+.sh-soon{background:var(--gold-soft,#FAF4E8);color:#8A6A1F;border:1px solid var(--gold,#B8934A)}
+.sh-exp{background:#FDF0EC;color:#9C3B2E;border:1px solid #E8C4BB}
+.sh-off{background:#EFEFEC;color:#6B6B63;border:1px solid var(--line)}
+.sh-demo{background:#EEF3FA;color:#33526E;border:1px solid #C9D9EA}
+.sh-url{background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 12px;
+  font-size:.8rem;word-break:break-all;margin-bottom:10px}
+.sh-qr{display:flex;justify-content:center;margin-bottom:12px}
+.sh-qr img{width:170px;height:170px;border:1px solid var(--line);border-radius:12px;background:#fff;padding:8px}
+.sh-acts{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.sh-sec{border-top:1px solid var(--line);padding-top:12px;margin-bottom:12px}
+.sh-t{display:block;font-size:.8rem;font-weight:700;margin-bottom:8px}
+.sh-r{display:flex;gap:9px;align-items:flex-start;padding:8px 10px;border:1px solid var(--line);
+  border-radius:10px;margin-bottom:6px;cursor:pointer}
+.sh-r.sel{border-color:var(--teal);background:var(--teal-light,#E8F1ED)}
+.sh-r b{display:block;font-size:.84rem}
+.sh-r small{display:block;font-size:.74rem;color:var(--ink-soft);line-height:1.7}
+.sh-chks{display:flex;flex-direction:column;gap:6px}
+.sh-log{font-size:.8rem;color:var(--ink-soft)}
+.sh-log.muted{opacity:.75}
+.sh-rot{display:block;width:100%;background:none;border:none;color:var(--ink-soft);
+  font-family:inherit;font-size:.76rem;text-decoration:underline;cursor:pointer;padding:8px 0}
+/* باركود ملف الأداء */
+.pf-qr{text-align:center;margin-top:24px;padding-top:18px;border-top:1px solid var(--line)}
+.pf-qr-t{font-size:.8rem;font-weight:600;margin-bottom:8px}
+.pf-qr img{width:34mm;height:34mm}
+.pf-qr-s{font-size:.72rem;color:var(--ink-soft);margin-top:6px}
 </style>
 </head>
 <body>
@@ -2166,6 +2196,10 @@ body.anon-printing #anon-wrap{display:block!important}
           <div class="field">
             <label>📳 الاهتزاز</label>
             <div id="haptics-box"></div>
+          </div>
+
+          <div class="field"><label>🔗 باركود ملفي الدائم</label>
+            <div id="share-box" style="margin-top:10px"></div>
           </div>
 
           <div class="field"><label>🔗 رمزي الشخصي <small style="font-weight:400;color:var(--ink-soft)">(اختياري)</small></label>
@@ -9080,7 +9114,15 @@ function generateAchievement(){
     </div>
   </div>`;
 
-  const d=$('ach-doc');d.classList.add('pf-doc');d.innerHTML=html+docMark();
+  /* باركود ملف الأداء الدائم: يُطبع مرة، والمشرف يمسحه ليرى الشواهد
+     والأثر بلا حساب ولا رابط يُرسَل. */
+  const _pfQR=(typeof shareUrl==='function'&&shareUrl())?qrDataUrl(shareUrl(),340):'';
+  const _pfQRBlock=_pfQR?`<div class="pf-qr">
+      <div class="pf-qr-t">ملف ${V('المعلّم','المعلّمة')} — الشواهد والأثر</div>
+      <img src="${_pfQR}" alt="باركود ملف الأداء">
+      <div class="pf-qr-s">امسح الرمز للاطّلاع على الشواهد كاملةً</div>
+    </div>`:'';
+  const d=$('ach-doc');d.classList.add('pf-doc');d.innerHTML=html+_pfQRBlock+docMark();
   const bar=$('pf-theme-bar');if(bar)bar.innerHTML=pfDesignPicker()+pfSwatches()+pfFontPicker()+pfStampToggle();
   pfApplyTheme(S.pfTheme||'green');
   pfApplyFont(S.pfFont||'reem');
@@ -9684,7 +9726,7 @@ async function pdfRepairLigatures(lines){
    اللصق — فيصير التشخيص خبرًا لا تخمينًا. */
 /* رقم البناء ظاهرًا: التبويب المفتوح منذ ساعات يشغّل نسخة قديمة مهما
    رُفع الجديد، فيبدو أن شيئًا لا يُصلَح. هذا الرقم يحسم الأمر. */
-const BUILD='08-31 02:36';
+const BUILD='08-31 03:44';
 function bookImportLog(o){
   try{
     S.lastBookImport=Object.assign({at:new Date().toISOString().slice(0,16).replace('T',' ')},o);
@@ -14628,11 +14670,19 @@ function buildReportDoc(){
 
   /* الباركود صفٌّ في الجدول لا كتلة في التذييل — كما في النموذج المعتمد */
   const qr=((r.driveUrl||'').trim()&&r.showQR!==false)?qrDataUrl(r.driveUrl,340):'';
-  const qrRow=qr?`<tr><th>باركود الشواهد</th><td colspan="3" style="text-align:center;padding:14px">
-      <img src="${qr}" alt="باركود الشواهد" style="width:32mm;height:32mm">
-      ${r.driveLabel?`<div style="font-size:.76rem;margin-top:5px">${esc(r.driveLabel)}</div>`:''}
-    </td></tr>`:'';
 
+  /* باركود الشواهد وباركود المعلّم — إن اجتمعا فبعنوانين، فلا يخمّن المشرف */
+  const shareQR=(S.rptMyQR&&typeof shareUrl==='function'&&shareUrl())?qrDataUrl(shareUrl(),320):'';
+  const qrCell=(src,ttl,sub)=>`<div style="display:inline-block;text-align:center;margin:0 9px">
+      <div style="font-size:.7rem;color:#6B6B63;margin-bottom:4px">${esc(ttl)}</div>
+      <img src="${src}" alt="${esc(ttl)}" style="width:${shareQR&&qr?'26mm':'32mm'};height:${shareQR&&qr?'26mm':'32mm'}">
+      ${sub?`<div style="font-size:.68rem;margin-top:3px">${esc(sub)}</div>`:''}
+    </div>`;
+  const qrRow=(qr||shareQR)?`<tr><th>${qr&&shareQR?'الباركودات':(qr?'باركود الشواهد':'باركود ملف المعلّم')}</th>
+    <td colspan="3" style="text-align:center;padding:12px">
+      ${qr?qrCell(qr,'شواهد النشاط',r.driveLabel||''):''}
+      ${shareQR?qrCell(shareQR,'ملف '+V('المعلّم','المعلّمة'),''):''}
+    </td></tr>`:'';
   const signs=(r.signs||[]).filter(s=>s[0]);
   const signRow=signs.length?`<div class="rpt-signs">${signs.map(s=>
       `<div>${esc(gtxt(s[0]))}${s[1]?' : '+esc(s[1]):' : ....................'}</div>`).join('')}</div>`:'';
@@ -14920,6 +14970,8 @@ function toggleMoeLogo(){S.hideMoeLogo=!S.hideMoeLogo;saveState();docIdentityRen
   toast(S.hideMoeLogo?'أُخفي شعار الوزارة من الوثائق':'✓ ظهر شعار الوزارة')}
 
 function docIdentityRender(){
+  /* لوحة الباركود تُرسم مع الهوية المهنية — هي موضعها */
+  if(typeof shareRender==='function')setTimeout(shareRender,0);
   const box=$('doc-identity-box');if(!box)return;
   box.innerHTML=`
     <div style="font-size:.82rem;color:var(--ink-soft);margin-bottom:10px">تسري على كل وثيقة: التقارير وملف الأداء والتحضير وتوزيع المنهج والنماذج.</div>
@@ -15266,6 +15318,8 @@ function rptEditor(r){
     <div class="panel-title">⚙️ تخصيص متقدّم</div>
 
     <div style="margin-bottom:16px">${styPanel('rptRender()')}</div>
+
+    <label class="chk-line" style="margin-bottom:16px"><input type="checkbox" ${S.rptMyQR?'checked':''} onchange="rptToggleMyQR()"> أضف باركود ملفي في هذا التقرير</label>
 
     <div style="margin-bottom:16px">
       <label style="font-size:.84rem;font-weight:700;display:block;margin-bottom:7px">التوقيعات</label>
@@ -15626,6 +15680,185 @@ function pfShowSubjects(){
   });
   pfPaintAddBtn();
 }
+
+/* ══════════ 🔗 الباركود الدائم — لوحة المشاركة ══════════
+   رابط واحد لا يتغيّر: malafi.sa/p/xxxxxxxxxxxx
+   يُطبع مرة في غلاف ملف الأداء ويبقى للعمر.
+   الصلاحية ٩٠ يومًا تُجدَّد بضغطة — الباركود نفسه يعود يعمل.
+   SHARE_ENDPOINT فارغ حتى تُبنى نقاط النهاية الستّ؛ وحتى ذلك الحين
+   يعمل «وضع التجربة» بباركود وهمي لمعاينة الشكل. */
+const SHARE_ENDPOINT = '';          /* مثال: 'https://malafi.sa/api/share' */
+const SHARE_BASE     = 'https://malafi.sa/p/';
+const SHARE_DAYS     = 90;
+
+function shareReady(){ return !!(SHARE_ENDPOINT||'').trim() }
+function shareDemo(){ return !shareReady() && !!S.shareDemo }
+function shareSt(){
+  if(!S.share)S.share={token:'',expires:'',privacy:'full',
+    show:{standards:true,reports:true,impact:true},revoked:false,opens:[]};
+  if(!S.share.show)S.share.show={standards:true,reports:true,impact:true};
+  return S.share;
+}
+function shareUrl(){ const s=shareSt(); return s.token?SHARE_BASE+s.token:'' }
+function shareDaysLeft(){
+  const s=shareSt(); if(!s.expires)return null;
+  return Math.ceil((new Date(s.expires)-new Date())/86400000);
+}
+function shareState(){
+  const s=shareSt();
+  if(!s.token)return 'none';
+  if(s.revoked)return 'revoked';
+  const d=shareDaysLeft();
+  if(d===null)return 'active';
+  if(d<0)return 'expired';
+  if(d<=7)return 'soon';
+  return 'active';
+}
+/* وضع تجربة — يُمسح تلقائيًا أول ما تُفعَّل الخدمة الحقيقية */
+function shareToggleDemo(){
+  if(!S.shareDemo){
+    S.shareDemo=true; shareSt();
+    S.share.token='DEMO12345678';
+    S.share.expires=new Date(Date.now()+SHARE_DAYS*86400000).toISOString();
+    S.share.revoked=false;
+    toast('✓ وضع التجربة — باركود وهمي لمعاينة الشكل فقط');
+  }else{
+    S.shareDemo=false;
+    if(S.share&&S.share.token==='DEMO12345678'){S.share.token='';S.share.expires=''}
+    toast('أُوقف وضع التجربة');
+  }
+  saveState(); shareRender();
+  if(typeof rptRender==='function'&&$('rpt-wrap'))rptRender();
+}
+/* ── العمليات — كلها تمرّ بالخادم ── */
+async function shareApi(path,body){
+  if(!shareReady()){toast('⚠️ خدمة المشاركة غير مفعّلة بعد');return null}
+  try{
+    const r=await fetch(SHARE_ENDPOINT+path,{
+      method:body?'POST':'GET',
+      headers:{'Content-Type':'application/json'},
+      body:body?JSON.stringify(body):undefined
+    });
+    if(!r.ok)throw new Error('http '+r.status);
+    return await r.json();
+  }catch(e){ toast('⚠️ تعذّر الاتصال — حاول لاحقًا'); return null }
+}
+async function shareCreate(){
+  const d=await shareApi('/create',{privacy:shareSt().privacy});
+  if(!d||!d.token)return;
+  const s=shareSt(); s.token=d.token; s.expires=d.expires; s.revoked=false;
+  saveState(); shareRender(); toast('✓ أُنشئ رابطك الدائم');
+}
+async function shareRenew(){
+  const d=await shareApi('/renew',{token:shareSt().token});
+  if(!d)return;
+  const s=shareSt(); s.expires=d.expires; s.revoked=false;
+  saveState(); shareRender(); toast('✓ جُدِّدت ٩٠ يومًا — الباركود نفسه يعمل');
+}
+function shareRevoke(){
+  customConfirm('إيقاف المشاركة؟ من يمسح الباركود سيرى «أُوقفت المشاركة». تقدر تعيد تفعيلها لاحقًا.',async()=>{
+    const d=await shareApi('/revoke',{token:shareSt().token}); if(!d)return;
+    shareSt().revoked=true; saveState(); shareRender(); toast('✓ أُوقفت المشاركة');
+  });
+}
+function shareRotate(){
+  customConfirm('إنشاء رابط جديد؟ الباركود المطبوع على غلافك لن يعمل، وستحتاج طباعته من جديد. استعمله فقط إن شككت أن أحدًا يتداول رابطك.',async()=>{
+    const d=await shareApi('/rotate',{token:shareSt().token}); if(!d||!d.token)return;
+    const s=shareSt(); s.token=d.token; s.expires=d.expires; s.revoked=false; s.opens=[];
+    saveState(); shareRender(); toast('✓ رابط جديد — أعد طباعة الغلاف');
+  });
+}
+function shareSetPrivacy(v){
+  shareSt().privacy=v; saveState(); shareRender();
+  if(shareReady())shareApi('/settings',{token:shareSt().token,privacy:v});
+}
+function shareToggleShow(k){
+  const s=shareSt(); s.show[k]=!s.show[k]; saveState(); shareRender();
+  if(shareReady())shareApi('/settings',{token:s.token,show:s.show});
+}
+function shareCopy(){
+  const u=shareUrl(); if(!u)return;
+  try{navigator.clipboard.writeText(u);toast('✓ نُسخ الرابط')}catch(e){toast('انسخه يدويًا: '+u)}
+}
+function shareDownloadQR(){
+  const u=shareUrl(); if(!u){toast('أنشئ الرابط أولًا');return}
+  qrDownload(u,'باركود-'+String(S.name||'ملفي').replace(/[^ء-ي٠-٩A-Za-z0-9 _-]/g,''));
+}
+const SHARE_PRIV=[
+  ['full','كامل','بالأسماء والصور — للمشرف المباشر ومدير المدرسة'],
+  ['masked','مجرَّد','أسماء الطلاب رموز والوجوه مطموسة'],
+  ['summary','ملخّص','الشواهد والأرقام بلا بيانات طلاب']
+];
+function shareRender(){
+  const box=$('share-box'); if(!box)return;
+  const s=shareSt(), st=shareState(), left=shareDaysLeft();
+  if(!shareReady()&&!shareDemo()){
+    box.innerHTML='<div class="note"><span class="ni">🔒</span><div><b>خدمة المشاركة تُفعَّل قريبًا.</b><br>'
+      +'رابط دائم لا يتغيّر، تطبع باركوده مرة في غلاف ملفك — والمشرف يمسحه ليرى شواهدك وأثرك.</div></div>'
+      +'<button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="shareToggleDemo()">🧪 جرّب الشكل بباركود وهمي</button>';
+    return;
+  }
+  if(st==='none'){
+    box.innerHTML='<p style="font-size:.85rem;color:var(--ink-soft);line-height:1.9;margin:0 0 12px">'
+      +'رابط دائم لا يتغيّر، تطبع باركوده مرة في غلاف ملفك — والمشرف يمسحه ليرى شواهدك وأثرك.</p>'
+      +'<button class="btn btn-gold" onclick="shareCreate()">🔗 أنشئ رابطي الدائم</button>';
+    return;
+  }
+  const badge = st==='revoked' ? '<span class="sh-b sh-off">موقوف</span>'
+    : st==='expired' ? '<span class="sh-b sh-exp">منتهي</span>'
+    : st==='soon' ? '<span class="sh-b sh-soon">ينتهي بعد '+toArabicDigits(left)+' أيام</span>'
+    : '<span class="sh-b sh-on">فعّال · '+toArabicDigits(left)+' يومًا</span>';
+  let h='<div class="sh-top">'+badge
+    +(shareDemo()?' <span class="sh-b sh-demo">🧪 وضع تجربة</span>':'')+'</div>'
+    +(shareDemo()?'<div class="note" style="margin-bottom:10px"><span class="ni">🧪</span><div>'
+      +'باركود وهمي لمعاينة الشكل فقط — لا يفتح شيئًا. '
+      +'<button class="sh-rot" style="display:inline;padding:0;width:auto" onclick="shareToggleDemo()">إيقافه</button></div></div>':'');
+  h+='<div class="sh-url" dir="ltr">'+esc(shareUrl())+'</div>';
+  h+='<div id="share-qr" class="sh-qr"></div>';
+  h+='<div class="sh-acts">'
+    +'<button class="btn btn-ghost btn-sm" onclick="shareCopy()">📋 نسخ الرابط</button>'
+    +'<button class="btn btn-ghost btn-sm" onclick="shareDownloadQR()">⬇️ الباركود PNG</button>'
+    +((st==='expired'||st==='soon'||st==='revoked')
+      ? '<button class="btn btn-primary btn-sm" onclick="shareRenew()">↻ جدّد ٩٠ يومًا</button>' : '')
+    +(st!=='revoked' ? '<button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="shareRevoke()">⏸️ إيقاف</button>' : '')
+    +'</div>';
+  h+='<div class="sh-sec"><span class="sh-t">ما يراه من يمسح الباركود</span>';
+  SHARE_PRIV.forEach(function(pv){
+    h+='<label class="sh-r'+(s.privacy===pv[0]?' sel':'')+'">'
+      +'<input type="radio" name="shpriv" '+(s.privacy===pv[0]?'checked':'')
+      +' onchange="shareSetPrivacy(\''+pv[0]+'\')">'
+      +'<span><b>'+pv[1]+'</b><small>'+pv[2]+'</small></span></label>';
+  });
+  h+='</div>';
+  h+='<div class="sh-sec"><span class="sh-t">الأقسام المعروضة</span><div class="sh-chks">';
+  [['standards','الشواهد والمعايير'],['impact','الأثر المُثبَت'],['reports','التقارير']].forEach(function(x){
+    h+='<label class="chk-line"><input type="checkbox" '+(s.show[x[0]]!==false?'checked':'')
+      +' onchange="shareToggleShow(\''+x[0]+'\')"> '+x[1]+'</label>';
+  });
+  h+='</div></div>';
+  const op=s.opens||[];
+  h+='<div class="sh-sec"><span class="sh-t">سجل الفتح</span>'
+    +(op.length
+      ? '<div class="sh-log">فُتح '+toArabicDigits(op.length)+' مرة · آخرها '+esc(op[0])+'</div>'
+      : '<div class="sh-log muted">لم يُفتح بعد.</div>')
+    +'</div>';
+  h+='<button class="sh-rot" onclick="shareRotate()">إنشاء رابط جديد (يُبطل الباركود المطبوع)</button>';
+  box.innerHTML=h;
+  const q=$('share-qr');
+  if(q&&st!=='revoked'){
+    const src=qrDataUrl(shareUrl(),320);
+    q.innerHTML=src?'<img src="'+src+'" alt="باركود ملفي">':'';
+  }
+}
+/* باركود المعلّم في التقارير — مطفأ افتراضيًا */
+function rptToggleMyQR(){
+  S.rptMyQR=!S.rptMyQR; saveState();
+  if(typeof rptRender==='function')rptRender();
+  if(S.rptMyQR&&!shareUrl())
+    toast('أنشئ باركودك الدائم أولًا من «الهوية المهنية»');
+  else toast(S.rptMyQR?'✓ سيظهر باركودك في التقرير':'أُخفي باركودك');
+}
+
 </script>
 
 <div class="lgl-overlay" id="lgl-overlay">
