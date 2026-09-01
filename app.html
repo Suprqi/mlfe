@@ -9857,7 +9857,7 @@ async function pdfRepairLigatures(lines){
    اللصق — فيصير التشخيص خبرًا لا تخمينًا. */
 /* رقم البناء ظاهرًا: التبويب المفتوح منذ ساعات يشغّل نسخة قديمة مهما
    رُفع الجديد، فيبدو أن شيئًا لا يُصلَح. هذا الرقم يحسم الأمر. */
-const BUILD='09-01 05:00';
+const BUILD='09-01 06:15';
 function bookImportLog(o){
   try{
     S.lastBookImport=Object.assign({at:new Date().toISOString().slice(0,16).replace('T',' ')},o);
@@ -14874,20 +14874,62 @@ function buildReportDoc(){
   toast('✓ التقرير جاهز');
 }
 
+/* حقل التقرير ليس نصًّا دائمًا: الأهداف قائمة، والمدة تاريخان،
+   والوسائل اختيارات متعددة. الدالة القديمة كانت تنادي trim على
+   المصفوفة فترمي خطأً، فلا يفعل الزرّ شيئًا. */
+function rptFieldText(f){
+  if(!f)return '';
+  const v=f.v;
+  if(f.t==='list'||f.t==='multi'){
+    if(!Array.isArray(v))return '';
+    return v.map(x=>String(x==null?'':x).trim()).filter(Boolean).join('، ');
+  }
+  if(f.t==='range'){
+    const a=v&&v.from, b=v&&v.to;
+    if(!a&&!b)return '';
+    return 'من '+(a?fmtDate(a):'—')+' إلى '+(b?fmtDate(b):'—');
+  }
+  if(f.t==='date')return v?fmtDate(v):'';
+  return String(v==null?'':v).trim();
+}
 function rptToEvidence(){
   const r=rptCur();
-  if(!r||!(r.title||'').trim()){toast('اكتب عنوان التقرير أولًا');return}
-  const idx=guessStd(r.title+' تقرير');
-  const filled=r.fields.filter(f=>(f.v||'').trim());
-  S.standards[idx].ev.push({
-    title:r.title, type:'تقرير',
+  if(!r||!(r.title||'').trim()){
+    toast('اكتب عنوان التقرير أولًا');
+    const t=$('rpt-title'); if(t&&t.focus)t.focus();
+    return;
+  }
+  if(!S.standards||!S.standards.length){
+    toast('لا توجد معايير في ملفك بعد');return;
+  }
+  let idx=guessStd(r.title+' تقرير');
+  if(!(idx>=0&&idx<S.standards.length))idx=0;      /* لا نضيف إلى معيار غير موجود */
+
+  const parts=[];
+  r.fields.forEach(f=>{ const v=rptFieldText(f); if(v)parts.push(f.l+': '+v) });
+  const note=parts.join(' — ').slice(0,600);
+
+  /* ضغطُه مرّتين لا يُكرّر الشاهد — يحدّثه */
+  const src='rpt:'+r.id;
+  let ev=null, si=idx, ej=-1;
+  S.standards.forEach((st,i)=>(st.ev||[]).forEach((e,j)=>{ if(e._src===src){ev=e;si=i;ej=j} }));
+  const data={
+    _src:src, title:r.title, type:'تقرير',
     date:new Date().toISOString().slice(0,10),
-    note:filled.map(f=>f.l+': '+f.v).join(' — ').slice(0,600),
-    result:'', reflection:'', record:'',
-    link:(r.driveUrl||'')||undefined
-  });
-  saveState();renderStds();
-  toast('✓ أُضيف شاهدًا في «'+S.standards[idx].t+'»');
+    note:note, link:(r.driveUrl||'')||undefined
+  };
+  if(ev){
+    Object.assign(ev,data);
+  }else{
+    S.standards[idx].ev.push(Object.assign({result:'',reflection:'',record:''},data));
+    ej=S.standards[idx].ev.length-1; si=idx;
+  }
+  saveState();
+  if(typeof renderStds==='function')renderStds();
+  if(typeof renderMetrics==='function')renderMetrics();
+  if(typeof logAct==='function')logAct('📁','حوّلت تقريرًا لشاهد');
+  toast((ev?'✓ حُدِّث الشاهد في «':'✓ أُضيف شاهدًا في «')+S.standards[si].t+'»',
+    {go:()=>gotoEvidence(si,ej), label:'افتح الشاهد'});
 }
 
 /* ══════════ ☁️ الرفع إلى درايف المعلّم — بنية جاهزة للتوصيل ══════════
@@ -15450,7 +15492,7 @@ function rptEditor(r){
       ${rptIsDraft(r)?'<span class="dr-tag">مسوّدة</span>':'<span class="dr-tag done">مكتمل</span>'}
     </div>
     <div class="field"><label>عنوان التقرير</label>
-      <input value="${esc(r.title)}" oninput="rptSet('title',this.value)" placeholder="مثال: تقرير معرض العلوم — الفصل الأول">
+      <input id="rpt-title" value="${esc(r.title)}" oninput="rptSet('title',this.value)" placeholder="مثال: تقرير معرض العلوم — الفصل الأول">
     </div>
     <button class="btn btn-ai btn-sm" onclick="rptGenerate(this)">✨ ساعدني في صياغة التقرير</button>
     <div class="note" style="margin-top:9px"><span class="ni">⚠️</span><div>ما يُقترح <b>مسوّدة تُراجَع</b> — التقرير يحمل اسمك، وما فيه مسؤوليتك.</div></div>
