@@ -1838,6 +1838,12 @@ body.anon-printing #anon-wrap{display:block!important}
 /* إبرازٌ يهدأ بعد ثانيتين، فيعرف أين وقع */
 .ud-flash{outline:2.5px solid #C9A24B!important;outline-offset:2px;
   box-shadow:0 0 0 5px rgba(201,162,75,.18)!important;transition:box-shadow .2s}
+/* زرّ الرئيسية في الترويسة: على الكمبيوتر لا شريط سفلي، وكان الطريق
+   الوحيد شعارًا لا نصّ عليه، أو كلمة «رجوع» داخل الأدوات. */
+.tb-home{white-space:nowrap}
+.tb-home.on{background:var(--teal-deep);color:#fff;border-color:var(--teal-deep);
+  pointer-events:none;opacity:.9}
+@media(max-width:640px){.tb-home{display:none}}
 /* بنود التقييم — الدرجة الكلية والقوالب وشريط المجموع */
 .cs-head{display:flex;align-items:center;gap:9px;margin-bottom:10px;flex-wrap:wrap}
 .cs-head label{font-size:.82rem;font-weight:600;flex:none}
@@ -1965,7 +1971,7 @@ body.anon-printing #anon-wrap{display:block!important}
   <div id="app" class="app" style="display:none">
   <div class="topbar">
     <div class="brand" onclick="go('dashboard')"><div class="mark"><img src="data:image/png;base64,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" alt="مَلَفّي"></div><div><span class="name">مَلَفّي <span style="font-size:.6rem;color:var(--gold);font-weight:700;vertical-align:super">v4.3</span></span><span class="sub">من بجيلة للتقنية</span></div></div>
-    <div class="who"><span class="name-tb" id="tb-name"></span><div class="av" id="tb-av">م</div><button class="edit" onclick="openProfileScreen()">👤 الهوية المهنية</button><button class="edit" onclick="openMoreMenu()" title="المزيد" aria-label="المزيد" style="padding:11px 14px;margin:-6px -4px">⋮</button></div>
+    <div class="who"><span class="name-tb" id="tb-name"></span><div class="av" id="tb-av">م</div><button class="edit tb-home" id="tb-home" onclick="go('dashboard')" title="العودة إلى الرئيسية">🏠 الرئيسية</button><button class="edit" onclick="openProfileScreen()">👤 الهوية المهنية</button><button class="edit" onclick="openMoreMenu()" title="المزيد" aria-label="المزيد" style="padding:11px 14px;margin:-6px -4px">⋮</button></div>
   </div>
   <div class="subbar">
     <select id="subj-switch" onchange="switchSubject(this.value)" style="display:none;background:#fff;color:var(--teal-deep);border:1.5px solid var(--line);border-radius:9px;padding:5px 9px;font-size:.78rem;font-weight:600"></select>
@@ -3959,6 +3965,9 @@ function syncBottomNav(s){
   const map={dashboard:'dashboard',records:'records',achievement:'achievement'};
   const key=map[s]||null;
   document.querySelectorAll('.bn-item').forEach(b=>b.classList.toggle('active',b.dataset.bn===key));
+  /* وزرّ الترويسة يتبع الشاشة نفسها: يُعلَّم حين تكون الرئيسية مفتوحة
+     فلا يبدو زرًّا يقود إلى مكانك. */
+  const h=$('tb-home'); if(h)h.classList.toggle('on',s==='dashboard');
 }
 function bnGo(target){
   if(target==='dashboard'){go('dashboard');return}
@@ -9857,7 +9866,7 @@ async function pdfRepairLigatures(lines){
    اللصق — فيصير التشخيص خبرًا لا تخمينًا. */
 /* رقم البناء ظاهرًا: التبويب المفتوح منذ ساعات يشغّل نسخة قديمة مهما
    رُفع الجديد، فيبدو أن شيئًا لا يُصلَح. هذا الرقم يحسم الأمر. */
-const BUILD='09-02 05:10';
+const BUILD='09-02 05:45';
 function bookImportLog(o){
   try{
     S.lastBookImport=Object.assign({at:new Date().toISOString().slice(0,16).replace('T',' ')},o);
