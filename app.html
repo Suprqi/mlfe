@@ -56,9 +56,6 @@ input,select,textarea{font-family:inherit;font-size:1rem}
   .bn-item.active{color:var(--teal-deep);font-weight:700}
   .bn-item.active .bn-ic{transform:scale(1.1)}
   .bn-create{width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--teal-deep));color:#fff;border:none;font-size:26px;font-weight:700;cursor:pointer;box-shadow:0 6px 18px -6px rgba(14,90,82,.5);margin-top:-18px;flex-shrink:0;display:grid;place-items:center;line-height:1}
-  /* الإشعار كان يقف عند ٢٦ بكسل بينما يشغل الشريط ٩٠، فيغطّي أزرار
-     التنقّل حتى يختفي. يُرفع فوقه، ويعود لمكانه قبل الدخول. */
-  body:not(.pre-app) .toast{bottom:calc(100px + env(safe-area-inset-bottom,0px))}
   .main{padding-bottom:calc(90px + env(safe-area-inset-bottom,0px))!important}
 }
 .brand{display:flex;align-items:center;gap:11px;cursor:pointer}
@@ -301,8 +298,24 @@ input,select,textarea{font-family:inherit;font-size:1rem}
 .doc .toc li b{color:var(--teal-deep)}
 /* الإشعار لا يستقبل لمسًا: كان يغطّي ما تحته فتضيع الضغطة على شريط
    التنقّل، والمعلّم يظنّ الزر لا يعمل. وأصغر حجمًا لأنه يظهر كثيرًا. */
-.toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(120px);background:var(--teal-deep);color:#fff;padding:10px 18px;border-radius:12px;box-shadow:var(--shadow);font-weight:500;font-size:.88rem;z-index:200;transition:.28s;display:flex;align-items:center;gap:8px;max-width:88%;pointer-events:none}
-.toast.show{transform:translateX(-50%) translateY(0)}
+/* كان يقف أسفل الشاشة فيختفي نصفه خلف شريط التنقّل مهما رُفع.
+   نقلناه إلى وسطها — لا شيء يغطّيه هناك — وأعطيناه ✕ لمن يريد إبعاده،
+   وجعلنا ضغطه ينقل إلى ما ينبّه عليه حين يكون له وجهة. */
+.toast{position:fixed;top:34%;left:50%;
+  transform:translate(-50%,-14px) scale(.97);opacity:0;
+  background:var(--teal-deep);color:#fff;padding:11px 14px 11px 8px;border-radius:14px;
+  box-shadow:0 14px 40px -12px rgba(0,0,0,.45);font-weight:500;font-size:.88rem;
+  z-index:200;transition:.24s;display:flex;align-items:center;gap:10px;
+  max-width:min(88%,420px);pointer-events:none;text-align:right}
+.toast.show{transform:translate(-50%,0) scale(1);opacity:1;pointer-events:auto}
+.toast-msg{flex:1;min-width:0;line-height:1.7;overflow-wrap:anywhere}
+.toast-x{flex:none;width:32px;height:32px;border:none;border-radius:8px;cursor:pointer;
+  background:rgba(255,255,255,.16);color:#fff;font-size:.78rem;font-family:inherit;
+  display:grid;place-items:center;line-height:1;padding:0}
+.toast-x:hover,.toast-x:active{background:rgba(255,255,255,.3)}
+.toast.tappable .toast-msg{cursor:pointer}
+.toast-go{display:block;font-size:.72rem;opacity:.85;margin-top:3px}
+@media(max-width:640px){.toast{top:38%;font-size:.86rem}}
 .empty{text-align:center;padding:30px;color:var(--ink-soft);font-size:.9rem}
 .note{background:var(--gold-soft);border:1px solid var(--gold);border-radius:13px;padding:14px 18px;font-size:.86rem;color:var(--teal-deep);margin-bottom:20px;display:flex;gap:11px;align-items:flex-start}
 .note .ni{font-size:1.2rem;flex-shrink:0}
@@ -3893,19 +3906,43 @@ function basicTextCleanup(text){
   return text.trim().replace(/\s+/g,' ').replace(/([.!؟,،])\1+/g,'$1').replace(/ ،/g,'،').replace(/ \./g,'.');
 }
 let _toastLast='',_toastAt=0,_toastTimer=null;
-function toast(m){
+/* toast(الرسالة) كما كانت — و toast(الرسالة, {go:دالة, label:'نصّ'})
+   تجعل ضغط التنبيه ينقل إلى ما ينبّه عليه. */
+function toastHide(){
+  const t=$('toast'); if(!t)return;
+  t.classList.remove('show');
+  if(_toastTimer){clearTimeout(_toastTimer);_toastTimer=null}
+  _toastLast='';                       /* أُبعد عمدًا، فلا يُكتم إن تكرّر السبب */
+}
+function toast(m,act){
   const t=$('toast');const s=String(m);
   /* الرسالة نفسها مرتين متتاليتين لا تُعاد: المعلّم يضيف عشر صور فتومض
      «✓ أُضيفت» عشر مرات فوق الشاشة. */
   const now=Date.now();
   if(s===_toastLast&&now-_toastAt<1200)return;
   _toastLast=s;_toastAt=now;
-  t.innerHTML=m;t.classList.add('show');
+  const go=act&&typeof act.go==='function'?act.go:null;
+  t.innerHTML='';
+  const msg=document.createElement('span');
+  msg.className='toast-msg'; msg.innerHTML=m;
+  if(go){
+    const hint=document.createElement('b');
+    hint.className='toast-go'; hint.textContent=(act.label||'اضغط للانتقال')+' ←';
+    msg.appendChild(hint);
+    msg.onclick=function(){ toastHide(); try{ go() }catch(e){} };
+  }
+  const x=document.createElement('button');
+  x.className='toast-x'; x.type='button';
+  x.setAttribute('aria-label','إغلاق التنبيه'); x.textContent='✕';
+  x.onclick=function(e){ e.stopPropagation(); toastHide() };
+  t.appendChild(msg); t.appendChild(x);
+  t.classList.toggle('tappable',!!go);
+  t.classList.add('show');
   /* التأكيد الروتيني نتيجته ظاهرة على الشاشة، فلا يحتاج ثلاث ثوانٍ.
      التحذير يبقى، لأنه وحده ما قد يفوت المعلّم. */
   const warn=/⚠️|تعذّر|فشل|خطأ|ممتلئ|لم يُسمح|غير مدعوم/.test(s);
   if(_toastTimer)clearTimeout(_toastTimer);
-  _toastTimer=setTimeout(()=>t.classList.remove('show'),warn?3200:1500);
+  _toastTimer=setTimeout(()=>t.classList.remove('show'),go?7000:(warn?3200:1500));
   /* نبرة الاهتزاز تتبع نبرة الرسالة — نقطة واحدة تغطّي التطبيق كله */
   if(typeof vib==='function'){
     const s=String(m);
@@ -9048,7 +9085,18 @@ function generateAchievement(){
   if(totalEv===0){toast('أضف شاهدًا واحدًا على الأقل');return}
   S.lastPortfolio=new Date().toISOString(); saveState();
   const undesc=[];S.standards.forEach(s=>s.ev.forEach(e=>{if(!e.note||!e.note.trim())undesc.push(e.title)}));
-  if(undesc.length){toast('⚠️ '+undesc.length+' شاهد بدون وصف — اضغط «تفاصيل» وأضف الوصف لكل شاهد ليكون موثّقًا');renderStds();const box=$('ach-meter');if(box)box.scrollIntoView({behavior:'smooth'});return}
+  if(undesc.length){
+    /* بدل أن نقول له «اضغط تفاصيل» ونتركه يبحث، نجعل التنبيه نفسه يفتح
+       أوّل شاهد ناقص الوصف. */
+    let first=null;
+    S.standards.forEach((st,i)=>(st.ev||[]).forEach((e,j)=>{
+      if(first===null&&(!e.note||!String(e.note).trim()))first=[i,j];
+    }));
+    toast('⚠️ '+undesc.length+' شاهد بدون وصف — أضف الوصف لكل شاهد ليكون موثّقًا',
+      first?{go:()=>gotoEvidence(first[0],first[1]),label:'افتح أوّل شاهد ناقص'}:null);
+    renderStds();
+    if(!first){const box=$('ach-meter');if(box)box.scrollIntoView({behavior:'smooth'})}
+    return}
   const active=S.standards.filter(s=>s.ev.length>0);
   const P=S.profile||{};
   const T=v=>(v&&String(v).trim())?String(v).trim():'';
@@ -9802,7 +9850,7 @@ async function pdfRepairLigatures(lines){
    اللصق — فيصير التشخيص خبرًا لا تخمينًا. */
 /* رقم البناء ظاهرًا: التبويب المفتوح منذ ساعات يشغّل نسخة قديمة مهما
    رُفع الجديد، فيبدو أن شيئًا لا يُصلَح. هذا الرقم يحسم الأمر. */
-const BUILD='09-01 03:10';
+const BUILD='09-01 04:05';
 function bookImportLog(o){
   try{
     S.lastBookImport=Object.assign({at:new Date().toISOString().slice(0,16).replace('T',' ')},o);
@@ -15976,7 +16024,9 @@ function rptToggleMyQR(){
   S.rptMyQR=!S.rptMyQR; saveState();
   if(typeof rptRender==='function')rptRender();
   if(S.rptMyQR&&!shareUrl())
-    toast('أنشئ باركودك الدائم أولًا من «الهوية المهنية»');
+    toast('أنشئ باركودك الدائم أولًا من «الهوية المهنية»',
+      {go:()=>{ go('profile'); const b=$('share-box'); if(b)b.scrollIntoView({behavior:'smooth',block:'center'}) },
+       label:'افتح الهوية المهنية'});
   else toast(S.rptMyQR?'✓ سيظهر باركودك في التقرير':'أُخفي باركودك');
 }
 
