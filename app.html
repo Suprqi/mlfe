@@ -9866,7 +9866,7 @@ async function pdfRepairLigatures(lines){
    اللصق — فيصير التشخيص خبرًا لا تخمينًا. */
 /* رقم البناء ظاهرًا: التبويب المفتوح منذ ساعات يشغّل نسخة قديمة مهما
    رُفع الجديد، فيبدو أن شيئًا لا يُصلَح. هذا الرقم يحسم الأمر. */
-const BUILD='09-02 05:45';
+const BUILD='09-02 06:30';
 function bookImportLog(o){
   try{
     S.lastBookImport=Object.assign({at:new Date().toISOString().slice(0,16).replace('T',' ')},o);
@@ -14097,7 +14097,11 @@ function stopMic(){if(voiceMic)voiceMic.stop()}
    لا شيفرة إدارة ولا مفاتيح قاعدة بيانات على أجهزة المعلمات.
    الإخفاء هنا يمنع الفضول لا الاختراق — الحماية الحقيقية
    تسجيل دخول على الخادم، ولا بديل عنه. */
-const FOUNDER_ROOM_URL='https://malafi.sa/room';
+/* كان يشير إلى malafi.sa وهو نطاق لا يستجيب بعد، فيفتح الزرّ صفحة ميتة.
+   نجعله على مضيف التطبيق نفسه — يعمل اليوم على mlfe.vercel.app، ويعمل
+   من تلقائه حين يُشغَّل النطاق. ونُبقي المطلق بديلًا إن فُتح من ملف محلّي. */
+const FOUNDER_ROOM_URL=(location.protocol==='http:'||location.protocol==='https:')
+  ? location.origin+'/room' : 'https://malafi.sa/room';
 const FOUNDER_KEY='malaffi_room_unlocked';
 
 function roomUnlocked(){
