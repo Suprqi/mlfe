@@ -3929,7 +3929,12 @@ function toast(m,act){
     const hint=document.createElement('b');
     hint.className='toast-go'; hint.textContent=(act.label||'اضغط للانتقال')+' ←';
     msg.appendChild(hint);
-    msg.onclick=function(){ toastHide(); try{ go() }catch(e){} };
+    let fired=false;
+    msg.onclick=function(){
+      if(fired)return;            /* نقرتان سريعتان لا تنقلان مرتين */
+      fired=true; toastHide();
+      try{ go() }catch(e){}
+    };
   }
   const x=document.createElement('button');
   x.className='toast-x'; x.type='button';
@@ -5692,14 +5697,14 @@ function prepEvAll(){
   toast(n?`✓ أُضيف ${n} ${n===1?'درس':'دروس'} شواهد`:'كل الدروس مُضافة من قبل');
 }
 function addCertsEvidence(){
-  if(!S.certNames.length){toast('ولّد شهادات أولًا');return}
+  if(!S.certNames.length){toast('ولّد شهادات أولًا',{go:()=>openCerts(),label:'افتح الشهادات'});return}
   const idx=guessStd('تحفيز نتائج المتعلمين');
   S.standards[idx].ev.push({title:'تكريم وتحفيز الطلاب — '+S.certNames.length+' شهادة',type:'شهادات تحفيز',date:new Date().toISOString().slice(0,10),note:'منح '+S.certNames.length+' شهادة شكر وتفوق لطلاب '+S.subject+' تحفيزًا لهم على التميز والمواظبة.',result:'رفع الدافعية وتعزيز التنافس الإيجابي بين الطلاب.',_src:'certs:bulk'});
   renderStds&&renderStds();renderMetrics();logAct('📁','حوّلت الشهادات لشاهد');
   toast('✓ أُضيفت الشهادات شاهدًا تحت: '+S.standards[idx].t);
 }
 function addActivitiesEvidence(){
-  if(!S.activities.length){toast('أضف نشاطًا واحدًا على الأقل أولًا');return}
+  if(!S.activities.length){toast('أضف نشاطًا واحدًا على الأقل أولًا',{go:()=>openActivitiesLog(),label:'افتح سجل الأنشطة'});return}
   const byType={};S.activities.forEach(a=>{const t=(a.type||'').trim()||'غير مصنّف';byType[t]=(byType[t]||0)+1});
   const summary=Object.entries(byType).map(([t,n])=>t+' ('+n+')').join('، ');
   const idx=guessStd('نشاط أنشطة فعاليات');
@@ -5789,7 +5794,7 @@ function renderCirculars(){
     </div>`).join(''):'<div class="empty">'+(q?'لا نتائج لبحثك':'لا تعاميم بعد — أضف أول تعميم فوق')+'</div>';
 }
 function buildCircularsDoc(){
-  if(!S.circulars.length){toast('أضف تعميمًا واحدًا على الأقل أولًا');return}
+  if(!S.circulars.length){toast('أضف تعميمًا واحدًا على الأقل أولًا',{go:()=>openCirculars(),label:'افتح التعاميم'});return}
   let html=`${moeHeader()}<h3 class="doc-title">سجل التعاميم الواردة</h3>
   <table><tr><th style="width:6%">م</th><th style="width:12%">الرقم</th><th style="width:14%">التاريخ</th><th style="width:18%">الجهة</th><th>الموضوع</th><th style="width:14%">التصنيف</th></tr>
   ${S.circulars.map((c,i)=>`<tr><td style="text-align:center">${i+1}</td><td style="text-align:center">${esc(c.num)||'—'}</td><td>${esc(c.date)||'—'}</td><td>${esc(c.from)||'—'}</td><td>${esc(c.subject)}</td><td>${esc(c.cat||'عام')}</td></tr>`).join('')}
@@ -6435,7 +6440,7 @@ function plSet(i,state){
 function plOpenPicker(i){
   const l=S.lessons[i]; if(!l)return;
   const list=(S.students||[]).filter(s=>(s.cls||'أ')===S.curClass);
-  if(!list.length){toast('أضف طلابك أولًا من سجل المتابعة');return}
+  if(!list.length){toast('أضف طلابك أولًا من سجل المتابعة',{go:()=>openRecords(),label:'افتح سجل المتابعة'});return}
   const sel=new Set((l.post&&l.post.weak)||[]);
   $('pl-title').textContent=l.title||'الدرس';
   $('pl-body').innerHTML=list.map(s=>`<label class="pl-s${sel.has(s.name)?' on':''}">
@@ -8238,7 +8243,7 @@ function buildTeacherEvalDoc(i){
 }
 function buildEvalsSummaryDoc(){
   const withEvals=S.teacherEvals.filter(t=>Object.keys(t.evals).length);
-  if(!withEvals.length){toast('قيّم معلمًا واحدًا على الأقل أولًا');return}
+  if(!withEvals.length){toast('قيّم معلمًا واحدًا على الأقل أولًا',{go:()=>openTeacherEvals(),label:'افتح تقييم المعلمين'});return}
   let html=`${moeHeader()}<h3 class="doc-title">ملخص تقييمات الأداء الوظيفي</h3>
   <table><tr><th>م</th><th>الاسم</th><th>التخصص</th><th>الفترة الأولى</th><th>الفترة الثانية</th><th>${'تقييم '+V('المشرف','المشرفة')}</th><th>المتوسط</th></tr>
   ${withEvals.map((t,i)=>{
@@ -8292,7 +8297,7 @@ function renderAnnualPlan(){
   renderMetrics();
 }
 function buildPlanDoc(){
-  if(!S.annualPlan.length){toast('أضف بنود الخطة أولًا');return}
+  if(!S.annualPlan.length){toast('أضف بنود الخطة أولًا',{go:()=>openAnnualPlan(),label:'افتح الخطة السنوية'});return}
   const st=planStats();
   let html=`${moeHeader()}<h3 class="doc-title">الخطة السنوية ومتابعة التنفيذ</h3><div class="doc-meta">نسبة التنفيذ: ${st.pct}%</div>`;
   S.annualPlan.forEach((g,i)=>{
@@ -8375,7 +8380,7 @@ function renderActivitiesTable(){
   renderMetrics();
 }
 function buildActivitiesDoc(){
-  if(!S.activities.length){toast('أضف نشاطًا واحدًا على الأقل أولًا');return}
+  if(!S.activities.length){toast('أضف نشاطًا واحدًا على الأقل أولًا',{go:()=>openActivitiesLog(),label:'افتح سجل الأنشطة'});return}
   const byType={};
   S.activities.forEach(r=>{const t=(r.type||'').trim()||'غير مصنّف';(byType[t]=byType[t]||[]).push(r)});
   const orderedTypes=[...ACTIVITY_TYPES.filter(t=>byType[t]),...Object.keys(byType).filter(t=>!ACTIVITY_TYPES.includes(t))];
@@ -8466,7 +8471,7 @@ function renderFdbkHistory(){
   wrap.innerHTML=S.feedbackLog.length?S.feedbackLog.map(e=>`<div class="panel" style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px"><b>${e.type==='idea'?'💡':'📝'} ${esc(e.title)}</b><small style="color:var(--ink-soft)">${e.dateLabel}</small></div><div style="font-size:.82rem;color:var(--ink-soft);margin-top:4px">مرجع: ${e.id}</div></div>`).join(''):'<div class="empty">ما أرسلت شي بعد</div>';
 }
 function buildCommitteesTasksDoc(){
-  if(!S.committees.length&&!S.tasks.length){toast('أضف لجنة أو مهمة واحدة على الأقل أولًا');return}
+  if(!S.committees.length&&!S.tasks.length){toast('أضف لجنة أو مهمة واحدة على الأقل أولًا',{go:()=>openCommitteesTasks(),label:'افتح اللجان والمهام'});return}
   let html=`${moeHeader()}<h3 class="doc-title">اللجان المدرسية والمهام</h3>`;
   html+=`<div class="sec-h">اللجان المدرسية</div><table><tr><th style="width:10%">م</th><th style="width:38%">اللجنة</th><th style="width:26%">الدور/المهمة بها</th><th>تاريخ التكليف</th></tr>${S.committees.length?S.committees.map((r,i)=>`<tr><td style="text-align:center">${i+1}</td><td>${esc(r.name)||'—'}</td><td>${esc(r.source)||'—'}</td><td>${esc(r.date)||'—'}</td></tr>`).join(''):'<tr><td colspan="4" style="text-align:center;color:var(--ink-soft)">لا يوجد</td></tr>'}</table>`;
   html+=`<div class="sec-h">المهام المكلف بها</div><table><tr><th style="width:10%">م</th><th style="width:38%">المهمة</th><th style="width:26%">الجهة المكلِّفة</th><th>تاريخ التكليف</th></tr>${S.tasks.length?S.tasks.map((r,i)=>`<tr><td style="text-align:center">${i+1}</td><td>${esc(r.name)||'—'}</td><td>${esc(r.source)||'—'}</td><td>${esc(r.date)||'—'}</td></tr>`).join(''):'<tr><td colspan="4" style="text-align:center;color:var(--ink-soft)">لا يوجد</td></tr>'}</table>`;
@@ -8510,7 +8515,7 @@ function meetingsStats(){
   return {count:parentMeetings.length,totalAttendance};
 }
 function buildMeetingsDoc(){
-  if(!S.meetingsLog.length){toast('أضف اجتماعًا واحدًا على الأقل أولًا');return}
+  if(!S.meetingsLog.length){toast('أضف اجتماعًا واحدًا على الأقل أولًا',{go:()=>openMeetingsLog(),label:'افتح سجل الاجتماعات'});return}
   const st=meetingsStats();
   let html=`${moeHeader()}<h3 class="doc-title">سجل الاجتماعات</h3>
     ${st.count?`<div class="doc-meta">📊 اجتماعات أولياء الأمور/مجلس الأمهات: ${st.count} — إجمالي الحضور: ${st.totalAttendance}</div>`:''}
@@ -9082,7 +9087,9 @@ function pfPage(inner,opt){
 }
 function generateAchievement(){
   const totalEv=S.standards.reduce((a,s)=>a+s.ev.length,0);
-  if(totalEv===0){toast('أضف شاهدًا واحدًا على الأقل');return}
+  if(totalEv===0){toast('أضف شاهدًا واحدًا على الأقل',
+    {go:()=>{const c=$('std-list');if(c)c.scrollIntoView({behavior:'smooth',block:'start'})},
+     label:'انزل إلى المعايير'});return}
   S.lastPortfolio=new Date().toISOString(); saveState();
   const undesc=[];S.standards.forEach(s=>s.ev.forEach(e=>{if(!e.note||!e.note.trim())undesc.push(e.title)}));
   if(undesc.length){
@@ -9850,7 +9857,7 @@ async function pdfRepairLigatures(lines){
    اللصق — فيصير التشخيص خبرًا لا تخمينًا. */
 /* رقم البناء ظاهرًا: التبويب المفتوح منذ ساعات يشغّل نسخة قديمة مهما
    رُفع الجديد، فيبدو أن شيئًا لا يُصلَح. هذا الرقم يحسم الأمر. */
-const BUILD='09-01 04:05';
+const BUILD='09-01 05:00';
 function bookImportLog(o){
   try{
     S.lastBookImport=Object.assign({at:new Date().toISOString().slice(0,16).replace('T',' ')},o);
@@ -10761,7 +10768,7 @@ async function examBookSmart(){
 }
 async function examFromBookOnly(){
   const B=(S.bookLessons||{})[S.subject]||[];
-  if(!B.length){toast('ارفع كتاب المادة PDF من «تحضير الدروس» أولًا');return}
+  if(!B.length){toast('ارفع كتاب المادة PDF من «تحضير الدروس» أولًا',{go:()=>openPrep(),label:'افتح تحضير الدروس'});return}
   toast('⏳ يجهّز أسئلة الكتاب...');
   const smart=await examBookSmart();
   if(smart&&smart.data){
@@ -11087,7 +11094,7 @@ function renderExamQuestions(){
 }
 const examData={};let curExamTab='sheet';
 function buildExamDocs(){
-  if(!S.examQuestions.length){toast('أضف أسئلة أولًا');return}
+  if(!S.examQuestions.length){toast('أضف أسئلة أولًا',{go:()=>openExam(),label:'افتح بناء الاختبار'});return}
   const _orig=S.examQuestions;
   if(typeof examVariant==='function'&&examForm==='B')S.examQuestions=examVariant('B');
   try{ _buildExamDocs(); } finally { S.examQuestions=_orig; }
@@ -11314,7 +11321,7 @@ function useEvTemplate(i){
 }
 function addImpactEvidence(){
   const imp=computeImpact();
-  if(!imp){toast('ارصد درجات الطلاب أولًا في «سجلات الرصد»');return}
+  if(!imp){toast('ارصد درجات الطلاب أولًا في «سجلات الرصد»',{go:()=>openRecords(),label:'افتح سجلات الرصد'});return}
   let title,result;
   const note=`بيانات فعلية من سجل الرصد — شعبة ${S.curClass}، مادة ${S.subject}، عدد ${V('الطلاب','الطالبات')} ${imp.n}.`;
   if(imp.type==='periods'){
@@ -11376,7 +11383,7 @@ function parentStdIndex(){const i=S.standards.findIndex(s=>/أولياء الأ�
 function addParentEvidence(){
   const all=curStudents().map(o=>o.s).filter(s=>s.contacts&&s.contacts.length);
   const total=all.reduce((a,s)=>a+s.contacts.length,0);
-  if(!total){toast('سجّل تواصلًا واحدًا على الأقل من زر 📞 في جدول الطلاب');return}
+  if(!total){toast('سجّل تواصلًا واحدًا على الأقل من زر 📞 في جدول الطلاب',{go:()=>openRecords(),label:'افتح جدول الطلاب'});return}
   const lines=all.map(s=>`${s.name}: ${s.contacts.map(c=>c.type+' ('+fmtDate(c.date)+')').join('، ')}`).join(' | ');
   const idx=parentStdIndex();
   S.standards[idx].ev.push({title:`سجل التواصل مع أولياء الأمور — ${S.curClass}`,type:'نص/تقرير',date:new Date().toISOString().slice(0,10),note:`${total} تواصل موثّق مع ${all.length} ولي أمر في شعبة ${S.curClass}.`,result:lines,impact:true,_src:'parent:'+S.curClass});
@@ -11729,7 +11736,7 @@ function localAnalyze(){
     enrichment:['مهام إثرائية وتحديات للمتفوقين','تكليفهم بقيادة مجموعات التعلم التعاوني','مشاريع بحثية قصيرة موسّعة'],_ai:false};
 }
 async function aiAnalyze(){
-  const list=anList();if(list.length===0){toast('أضف طلابًا ودرجاتهم أولًا');return}
+  const list=anList();if(list.length===0){toast('أضف طلابًا ودرجاتهم أولًا',{go:()=>openRecords(),label:'افتح سجل المتابعة'});return}
   const m=maxTotal();const btn=$('an-btn');btn.innerHTML='<span class="spinner"></span> يحلّل...';
   const lo=S.thresholds.low,hi=S.thresholds.high;
   const rows=list.map(s=>`${s.name}: ${S.criteria.map(c=>c.label+' '+(getScore(s,c.key)||0)+'/'+c.max).join('، ')}، غياب ${getAbs(s)||0}، المجموع ${studTotal(s)}/${m}`).join('\n');
@@ -12404,7 +12411,8 @@ function saveState(){
     return true}
   catch(e){
     if(!_quotaWarned){_quotaWarned=true;
-      try{toast('⚠️ مساحة التخزين ممتلئة — آخر تغيير لم يُحفظ. صدّر الملف الآن، ثم احذف شواهد قديمة لتحرير مساحة.')}catch(_){}}
+      try{toast('⚠️ مساحة التخزين ممتلئة — آخر تغيير لم يُحفظ. صدّر نسختك الآن، ثم احذف شواهد قديمة لتحرير مساحة.',
+    {go:()=>downloadBackup(),label:'نزّل نسخة احتياطية الآن'})}catch(_){}}
     return false;
   }
 }
@@ -13360,7 +13368,7 @@ function awSubmit(){
 
 async function awSend(){
   const payload=awBuildPayload();
-  if(!payload){toast('ولّد ملف الإنجاز أولًا');return}
+  if(!payload){toast('ولّد ملف الإنجاز أولًا',{go:()=>openAchievement(),label:'افتح ملف الإنجاز'});return}
   const btn=$('aw-send');
   if(btn){btn.disabled=true;btn.textContent='جارٍ الإرسال…'}
   try{
@@ -13750,7 +13758,7 @@ async function cloudResetPass(){
 }
 
 async function cloudSyncNow(){
-  if(!_sbUser){toast('سجّل دخولك أولًا');return}
+  if(!_sbUser){toast('سجّل دخولك أولًا',{go:()=>openAccountSync(),label:'افتح حسابك'});return}
   _syncing=true;renderCloudUI();
   const ok=await cloudPush();
   _syncing=false;renderCloudUI();
@@ -13793,7 +13801,7 @@ async function checkPaidReturn(){
 }
 
 function deleteAccount(){
-  if(!_sbUser){toast('سجّل دخولك أولًا');return}
+  if(!_sbUser){toast('سجّل دخولك أولًا',{go:()=>openAccountSync(),label:'افتح حسابك'});return}
   const b=$('cloud-body');if(!b)return;
   b.innerHTML=`
     <div class="note" style="border-color:#E8C7BE"><span class="ni">🚫</span><div>
@@ -14790,7 +14798,7 @@ function rptFileName(){
 }
 function buildReportDoc(){
   const r=rptCur();
-  if(!r){toast('أنشئ تقريرًا أولًا');return}
+  if(!r){toast('أنشئ تقريرًا أولًا',{go:()=>openReports(),label:'أنشئ تقريرًا'});return}
   if(!(r.title||'').trim()){
     const an=r.fields.find(f=>f.k==='aname');
     if(an&&(an.v||'').trim()){r.title=an.v.trim();saveState()}
@@ -14920,7 +14928,7 @@ function rptPickFiles(){
 async function rptUploadFiles(input){
   const files=[...(input.files||[])]; input.value='';
   if(!files.length)return;
-  const r=rptCur(); if(!r){toast('أنشئ تقريرًا أولًا');return}
+  const r=rptCur(); if(!r){toast('أنشئ تقريرًا أولًا',{go:()=>openReports(),label:'أنشئ تقريرًا'});return}
 
   const big=files.filter(f=>f.size>DRIVE_MAX_MB*1024*1024);
   if(big.length){
